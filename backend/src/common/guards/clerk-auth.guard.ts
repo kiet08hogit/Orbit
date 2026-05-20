@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
-import { clerkClient } from '@clerk/backend';
+import { verifyToken, users } from '@clerk/backend';
 
 @Injectable()
 export class ClerkAuthGuard implements CanActivate {
@@ -16,12 +16,12 @@ export class ClerkAuthGuard implements CanActivate {
 
     try {
       // 2. Verify the token using Clerk
-      const verifiedSession = await clerkClient.verifyToken(token, {
+      const verifiedSession = await verifyToken(token, {
         secretKey: process.env.CLERK_SECRET_KEY,
       });
 
       // 3. Get the user from Clerk to check their email
-      const clerkUser = await clerkClient.users.getUser(verifiedSession.sub);
+      const clerkUser = await users.getUser(verifiedSession.sub);
       const primaryEmail = clerkUser.emailAddresses.find(
         (email) => email.id === clerkUser.primaryEmailAddressId
       )?.emailAddress;
