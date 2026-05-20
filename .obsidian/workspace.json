@@ -13,10 +13,10 @@
             "state": {
               "type": "excalidraw",
               "state": {
-                "file": "Architecture/High Level Architecture.excalidraw"
+                "file": "Architecture/DB Relation.excalidraw"
               },
               "icon": "excalidraw-icon",
-              "title": "High Level Architecture"
+              "title": "DB Relation"
             }
           }
         ]
@@ -76,7 +76,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 200,
+    "collapsed": true
   },
   "right": {
     "id": "8afc61279ea3adb0",
@@ -186,16 +187,16 @@
   "lastOpenFiles": [
     "Architecture/Core Req.excalidraw",
     "Architecture/Backend.excalidraw",
+    "Architecture/02 - Database.md",
+    "Architecture/DB Relation.excalidraw",
+    "Architecture/High Level Architecture.excalidraw",
     "Architecture/00 - Architecture Overview.md",
     "Architecture/03 - API Design.md",
     "Architecture/05 - Real-time Chat.md",
     "Architecture/06 - Deployment.md",
     "Architecture/04 - Auth.md",
-    "Architecture/02 - Database.md",
     "Architecture/01 - Features.md",
     "Untitled.base",
-    "Architecture/High Level Architecture.excalidraw",
-    "Architecture/DB Relation.excalidraw",
     "Architecture/Backend.canvas",
     "Architecture/Core Req.canvas",
     "Architecture/DB Relation.canvas",
