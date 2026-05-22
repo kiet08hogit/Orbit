@@ -6,6 +6,7 @@ import { UsersModule } from './modules/users/users.module';
 import { ListingsModule } from './modules/listings/listings.module';
 // You'll import your other modules (Health, Users, etc.) here later
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
     imports: [
@@ -16,7 +17,8 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
         HealthModule,
         UsersModule,
         ListingsModule,
-        WebhooksModule
+        WebhooksModule,
+        ChatModule
 
     ],
     controllers: [],

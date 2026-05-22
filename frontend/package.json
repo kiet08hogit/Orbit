@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.0",
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
