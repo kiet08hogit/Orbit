@@ -1,4 +1,5 @@
-import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException } from '@nestjs/common';
+import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ListingsService } from './listings.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -11,8 +12,12 @@ export class ListingsController {
 
     @Post()
     @UseGuards(ClerkAuthGuard)
-    async createListing(@CurrentUser() clerkUser: any, @Body() createListingDto: CreateListingDto) {
-        return this.listingsService.create(clerkUser.clerkUserId, createListingDto);
+    @UseInterceptors(FileInterceptor('image'))
+    async createListing(@CurrentUser() clerkUser: any, @Body() createListingDto: CreateListingDto,@UploadedFile() file: any)
+     {
+        console.log("Create listing request body:", createListingDto);
+        console.log("Uploaded file:", file);
+        return this.listingsService.create(clerkUser.clerkUserId, clerkUser.email, createListingDto, file);
     }
 
     @Get()

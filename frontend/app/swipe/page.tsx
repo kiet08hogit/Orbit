@@ -5,6 +5,9 @@ import { useAuth } from '@clerk/nextjs';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { X, Heart, Loader2, Frown, Sparkles, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface Seller {
   id: string;
@@ -20,6 +23,7 @@ interface Listing {
   price: number;
   category: string;
   seller: Seller;
+  images?: { url: string }[];
 }
 
 export default function SwipePage() {
@@ -102,8 +106,10 @@ export default function SwipePage() {
       <div className="absolute bottom-0 left-0 -z-10 h-96 w-96 rounded-full bg-rose-500/10 blur-[100px]" />
 
       <div className="absolute top-6 right-6 z-50">
-        <Link href="/add-product" className="flex items-center gap-2 rounded-full bg-white dark:bg-zinc-900 px-5 py-2.5 font-bold text-zinc-800 dark:text-zinc-200 shadow-lg border border-zinc-200 dark:border-zinc-800 hover:scale-105 active:scale-95 transition-all">
-          <PlusCircle className="h-5 w-5 text-red-500" /> List an Item
+        <Link href="/add-product">
+          <Button variant="outline" className="rounded-full shadow-lg border-zinc-200 dark:border-zinc-800 hover:scale-105 active:scale-95 transition-all">
+            <PlusCircle className="mr-2 h-5 w-5 text-red-500" /> List an Item
+          </Button>
         </Link>
       </div>
 
@@ -127,16 +133,27 @@ export default function SwipePage() {
             >
               <div className="flex flex-1 flex-col justify-end p-8 text-white relative h-full">
                 
-                {/* Fallback pattern for when images are missing */}
-                <div className="absolute inset-0 opacity-10 flex items-center justify-center">
-                  <Sparkles className="h-48 w-48 text-white" />
-                </div>
+                {/* Background Image or Fallback */}
+                {activeListing.images && activeListing.images.length > 0 ? (
+                  <>
+                    <img 
+                      src={`http://localhost:3000${activeListing.images[0].url}`} 
+                      alt={activeListing.title}
+                      className="absolute inset-0 h-full w-full object-cover z-0"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 opacity-10 flex items-center justify-center z-0">
+                    <Sparkles className="h-48 w-48 text-white" />
+                  </div>
+                )}
                 
                 <div className="relative z-20 space-y-3">
                   <div className="flex items-start justify-between">
-                    <span className="inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
+                    <Badge variant="outline" className="bg-white/20 text-white border-white/30 backdrop-blur-md">
                       {activeListing.category}
-                    </span>
+                    </Badge>
                     <span className="text-3xl font-extrabold text-white drop-shadow-md bg-white/10 px-3 py-1 rounded-2xl backdrop-blur-sm">
                       ${activeListing.price}
                     </span>
@@ -146,9 +163,11 @@ export default function SwipePage() {
                   <p className="text-sm text-zinc-300 line-clamp-3">{activeListing.description}</p>
                   
                   <div className="flex items-center gap-3 pt-4 mt-2 border-t border-white/20">
-                    <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center font-bold text-sm shadow-inner">
-                      {activeListing.seller?.name?.[0]?.toUpperCase() || 'U'}
-                    </div>
+                    <Avatar className="h-8 w-8 bg-red-500 border border-white/20">
+                      <AvatarFallback className="bg-red-500 text-white font-bold text-sm">
+                        {activeListing.seller?.name?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="text-sm font-medium">
                       Sold by {activeListing.seller?.name || 'Unknown Student'}
                     </div>
@@ -170,20 +189,24 @@ export default function SwipePage() {
 
       {/* Swipe Controls */}
       <div className="mt-10 flex items-center justify-center gap-6 z-20">
-        <button
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => handleSwipe('left')}
           disabled={!activeListing}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-rose-500 shadow-xl transition-all hover:scale-110 hover:shadow-rose-500/20 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
+          className="h-16 w-16 rounded-full border-zinc-200 dark:border-zinc-800 text-rose-500 shadow-xl transition-all hover:scale-110 hover:shadow-rose-500/20 active:scale-95"
         >
           <X className="h-8 w-8 stroke-[3]" />
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => handleSwipe('right')}
           disabled={!activeListing}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-emerald-500 shadow-xl transition-all hover:scale-110 hover:shadow-emerald-500/20 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:shadow-none"
+          className="h-16 w-16 rounded-full border-zinc-200 dark:border-zinc-800 text-emerald-500 shadow-xl transition-all hover:scale-110 hover:shadow-emerald-500/20 active:scale-95"
         >
           <Heart className="h-8 w-8 stroke-[3] fill-emerald-500/20" />
-        </button>
+        </Button>
       </div>
     </div>
   );

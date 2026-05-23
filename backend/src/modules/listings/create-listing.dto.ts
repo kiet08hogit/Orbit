@@ -1,4 +1,5 @@
 import { IsString, IsNumber, IsEnum, IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ListingCategory } from '@prisma/client';
 
 export class CreateListingDto {
@@ -10,6 +11,7 @@ export class CreateListingDto {
   @IsNotEmpty()
   description: string;
 
+  @Type(() => Number)
   @IsNumber()
   price: number;
 

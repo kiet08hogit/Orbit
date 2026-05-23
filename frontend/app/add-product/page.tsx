@@ -4,8 +4,14 @@ import { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Tag, AlignLeft, DollarSign, ListPlus, Loader2, Sparkles, ImagePlus } from 'lucide-react';
+import { ArrowLeft, Tag, AlignLeft, DollarSign, ListPlus, Loader2, Sparkles, ImagePlus, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import axios from 'axios';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AddProductPage() {
   const { getToken } = useAuth();
@@ -23,7 +29,7 @@ export default function AddProductPage() {
     category: 'SCHOOL',
   });
 
-  const categories = ['SCHOOL', 'CLOTHES', 'HOUSING', 'LEISURE'];
+  const categories = ['SCHOOL', 'CLOTHES', 'HOUSING', 'LEISURE', 'ACCESSORIES', 'OTHER'];
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -45,28 +51,32 @@ export default function AddProductPage() {
     try {
       const token = await getToken();
       
-      const response = await fetch('http://localhost:3000/listings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: formData.title,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          category: formData.category,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create listing. Please check your inputs.');
+      const submitData = new FormData();
+      submitData.append('title', formData.title);
+      submitData.append('description', formData.description);
+      submitData.append('price', formData.price.toString());
+      submitData.append('category', formData.category);
+      if (imageFile) {
+        submitData.append('image', imageFile);
       }
+
+      const response = await axios.post('http://localhost:3000/listings', submitData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // axios automatically sets the correct Content-Type for FormData
+        },
+      });
 
       // Automatically redirect to the marketplace/swipe page on success
       router.push('/listings');
     } catch (err: any) {
-      setError(err.message || 'An error occurred while creating the listing.');
+      // Axios wraps the response in err.response
+      const errData = err.response?.data;
+      const backendMessage = errData?.message 
+        ? (Array.isArray(errData.message) ? errData.message.join(', ') : errData.message) 
+        : (err.message || 'An error occurred while creating the listing.');
+      
+      setError(backendMessage);
     } finally {
       setIsLoading(false);
     }
@@ -106,9 +116,11 @@ export default function AddProductPage() {
         <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-xl shadow-zinc-200/50 relative">
           
           {error && (
-            <div className="mb-6 p-4 bg-red-50 text-[#DC2626] text-sm font-bold rounded-xl border border-red-100">
-              {error}
-            </div>
+            <Alert variant="destructive" className="mb-6 rounded-xl">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -119,13 +131,13 @@ export default function AddProductPage() {
                 <Tag className="h-4 w-4 text-zinc-400" />
                 Title
               </label>
-              <input
+              <Input
                 required
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="e.g. TI-84 Plus CE Calculator"
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3.5 text-black focus:outline-none focus:ring-2 focus:ring-[#3252DF]/50 transition-all placeholder:text-zinc-400 font-medium"
+                className="w-full rounded-xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
               />
             </div>
 
@@ -135,14 +147,14 @@ export default function AddProductPage() {
                 <AlignLeft className="h-4 w-4 text-zinc-400" />
                 Description
               </label>
-              <textarea
+              <Textarea
                 required
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
                 placeholder="Describe the condition, location to meet up, etc."
-                className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3.5 text-black focus:outline-none focus:ring-2 focus:ring-[#3252DF]/50 transition-all placeholder:text-zinc-400 resize-none font-medium"
+                className="w-full rounded-xl p-4 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50 resize-none"
               />
             </div>
 
@@ -162,8 +174,8 @@ export default function AddProductPage() {
                 />
                 
                 {imagePreview ? (
-                  <div className="relative h-48 w-full rounded-xl overflow-hidden shadow-inner">
-                    <img src={imagePreview} alt="Preview" className="object-cover w-full h-full" />
+                  <div className="relative w-full rounded-xl overflow-hidden shadow-inner bg-zinc-100 flex items-center justify-center">
+                    <img src={imagePreview} alt="Preview" className="object-contain w-full h-auto max-h-[400px]" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold backdrop-blur-sm">
                       Click to change image
                     </div>
@@ -191,7 +203,7 @@ export default function AddProductPage() {
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold">$</span>
-                  <input
+                  <Input
                     required
                     type="number"
                     step="0.01"
@@ -200,7 +212,7 @@ export default function AddProductPage() {
                     value={formData.price}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="w-full bg-zinc-50 border border-zinc-200 rounded-xl pl-8 pr-4 py-3.5 text-black focus:outline-none focus:ring-2 focus:ring-[#3252DF]/50 transition-all placeholder:text-zinc-400 font-medium"
+                    className="w-full rounded-xl pl-8 py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
                   />
                 </div>
               </div>
@@ -211,37 +223,40 @@ export default function AddProductPage() {
                   <ListPlus className="h-4 w-4 text-zinc-400" />
                   Category
                 </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3.5 text-black focus:outline-none focus:ring-2 focus:ring-[#3252DF]/50 transition-all appearance-none cursor-pointer font-medium"
+                <Select 
+                  value={formData.category} 
+                  onValueChange={(val) => setFormData({ ...formData, category: val || 'SCHOOL' })}
                 >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat.charAt(0) + cat.slice(1).toLowerCase()}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full rounded-xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat.charAt(0) + cat.slice(1).toLowerCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             {/* Submit Button */}
             <div className="pt-4">
-              <button
+              <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full cursor-pointer flex items-center justify-center gap-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-red-600/20 transition-all hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                className="w-full h-14 text-lg font-bold bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-xl shadow-lg shadow-red-600/20"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Creating Listing...
                   </>
                 ) : (
                   'Publish Listing'
                 )}
-              </button>
+              </Button>
             </div>
 
           </form>

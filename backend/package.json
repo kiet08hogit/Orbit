@@ -17,6 +17,7 @@
     "@nestjs/core": "^11.1.21",
     "@nestjs/platform-express": "^11.1.21",
     "@nestjs/platform-socket.io": "^11.1.21",
+    "@nestjs/serve-static": "^5.0.5",
     "@nestjs/websockets": "^11.1.21",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
@@ -27,11 +28,14 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "socket.io": "^4.8.3",
-    "svix": "^1.94.0"
+    "svix": "^1.94.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.21",
+    "@types/multer": "^2.1.0",
     "@types/pg": "^8.20.0",
+    "@types/uuid": "^10.0.0",
     "prisma": "^7.8.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"

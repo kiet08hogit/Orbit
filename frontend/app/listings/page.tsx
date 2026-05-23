@@ -3,15 +3,19 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
-import { Loader2, Search, Filter, Sparkles } from 'lucide-react';
+import { Loader2, Search, Filter, Sparkles, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface Seller {
   id: string;
   name?: string;
   username?: string;
   avatarUrl?: string;
+  email?: string;
 }
 
 interface Listing {
@@ -20,8 +24,10 @@ interface Listing {
   description: string;
   price: number;
   category: string;
+  status: string;
   seller: Seller;
   createdAt: string;
+  images?: { url: string }[];
 }
 
 const CATEGORIES = [
@@ -29,6 +35,8 @@ const CATEGORIES = [
   { id: 'CLOTHES', label: 'CLOTHES' },
   { id: 'SCHOOL', label: 'SCHOOL' },
   { id: 'LEISURE', label: 'LEISURE' },
+  { id: 'ACCESSORIES', label: 'ACCESSORIES' },
+  { id: 'OTHER', label: 'OTHER' },
   { id: 'ALL', label: 'ALL PRODUCTS' },
 ];
 
@@ -46,14 +54,14 @@ export default function ListingsGridPage() {
       try {
         const token = await getToken();
         // If 'ALL' is selected, don't pass the category query parameter
-        const url = activeCategory === 'ALL' 
-          ? 'http://localhost:3000/listings/all' 
+        const url = activeCategory === 'ALL'
+          ? 'http://localhost:3000/listings/all'
           : `http://localhost:3000/listings/all?category=${activeCategory}`;
-          
+
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (res.ok) {
           const data = await res.json();
           setListings(data);
@@ -64,7 +72,7 @@ export default function ListingsGridPage() {
         setIsLoading(false);
       }
     };
-    
+
     fetchListings();
   }, [isLoaded, isSignedIn, getToken, activeCategory]);
 
@@ -78,12 +86,38 @@ export default function ListingsGridPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white flex flex-col font-sans">
-      
-      {/* Main Content Grid */}
 
-      {/* Main Content Grid */}
+      {/* Main Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8">
-        
+
+        {/* Hero Banner for ALL PRODUCTS */}
+        {activeCategory === 'ALL' && (
+          <div className="relative w-full h-[500px] mb-12 rounded-2xl overflow-hidden shadow-sm group">
+            <img
+              src="/hero1.jpg"
+              alt="FlamesPorium Hero"
+              className="absolute inset-0 w-full h-[65vh] object-cover z-0"
+            />
+            {/* The white card overlay */}
+            <div className="absolute left-8 md:left-16 top-2/3 -translate-y-1/2 bg-white rounded-2xl p-8 shadow-xl max-w-sm z-10">
+              <h2 className="text-2xl font-black text-black mb-6 leading-tight">
+                Trying to pass down your items?
+              </h2>
+              <Link
+                href="/add-product"
+                className="block w-full text-center bg-[#3252DF] hover:bg-[#272343] text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4"
+              >
+                Sell now
+              </Link>
+              <div className="text-center">
+                <a href="#" className="text-sm font-bold text-zinc-600 underline hover:text-black">
+                  How it works
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-[#DC2626]" />
@@ -91,37 +125,56 @@ export default function ListingsGridPage() {
         ) : listings.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {listings.map((listing) => (
-              <motion.div 
-                key={listing.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="group cursor-pointer bg-white border border-zinc-100 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-              >
-                {/* Image Placeholder */}
-                <div className="aspect-square bg-zinc-50 relative flex items-center justify-center overflow-hidden border-b border-zinc-100">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent z-10" />
-                  <Sparkles className="h-10 w-10 text-zinc-200" />
-                </div>
-                
-                {/* Content */}
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-extrabold text-lg text-black">${listing.price}</span>
-                    <span className="text-[10px] font-bold px-2 py-1 bg-zinc-100 text-zinc-600 rounded uppercase tracking-widest">
-                      {listing.category}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-zinc-800 line-clamp-1 group-hover:text-[#3252DF] transition-colors">
-                    {listing.title}
-                  </h3>
-                  <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1.5 font-medium">
-                    <span className="w-4 h-4 bg-zinc-200 rounded-full flex items-center justify-center font-bold text-[8px] text-zinc-500">
-                      {listing.seller?.name?.[0] || 'U'}
-                    </span>
-                    {listing.seller?.name || 'UIC Student'}
-                  </p>
-                </div>
-              </motion.div>
+              <Link href={`/listings/${listing.id}`} key={listing.id}>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="h-full"
+                >
+                  <Card className="rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer flex flex-col h-full border-zinc-200">
+                    {/* Image or Placeholder */}
+                    <div className="aspect-square bg-zinc-50 relative flex items-center justify-center overflow-hidden border-b border-zinc-100">
+                      {listing.images && listing.images.length > 0 ? (
+                        <img
+                          src={`http://localhost:3000${listing.images[0].url}`}
+                          alt={listing.title}
+                          className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <>
+                          <Tag className="h-12 w-12 text-zinc-200 z-10" />
+                        </>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <CardContent className="p-4 flex flex-col flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold text-zinc-400 tracking-wider uppercase">
+                          {listing.category}
+                        </span>
+                        <Badge variant="secondary" className="text-[10px] font-bold bg-emerald-50 text-emerald-600 uppercase hover:bg-emerald-100">
+                          {listing.status}
+                        </Badge>
+                      </div>
+                      <h3 className="font-black text-zinc-900 text-lg leading-tight mb-1 line-clamp-1 group-hover:text-[#DC2626] transition-colors">
+                        {listing.title}
+                      </h3>
+                      <p className="text-zinc-500 text-sm line-clamp-2 mb-3">
+                        {listing.description}
+                      </p>
+                      <div className="mt-auto flex items-center justify-between pt-3 border-t border-zinc-100">
+                        <div className="font-black text-lg text-black">
+                          ${listing.price.toFixed(2)}
+                        </div>
+                        <div className="text-xs font-bold text-zinc-400">
+                          {listing.seller?.email ? listing.seller.email.split('@')[0] : 'Seller'}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Link>
             ))}
           </div>
         ) : (
@@ -131,10 +184,12 @@ export default function ListingsGridPage() {
             </div>
             <h3 className="text-xl font-bold text-black mb-2">No listings found</h3>
             <p className="text-zinc-500 font-medium max-w-sm">
-              There are currently no items available in <span className="font-bold text-black">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>. 
+              There are currently no items available in <span className="font-bold text-black">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>.
             </p>
-            <Link href="/add-product" className="mt-8 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-red-500/20 transition-all hover:-translate-y-0.5">
-              Be the first to list one!
+            <Link href="/add-product">
+              <Button size="lg" className="mt-8 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold rounded-full shadow-lg shadow-red-500/20">
+                Be the first to list one!
+              </Button>
             </Link>
           </div>
         )}

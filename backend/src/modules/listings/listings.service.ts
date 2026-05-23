@@ -2,17 +2,23 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateListingDto } from './create-listing.dto';
 import { ListingStatus, InteractionType, ListingCategory } from '@prisma/client';
+import { StorageService } from '../storage/storage.service';
 @Injectable()
 export class ListingsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private storageService: StorageService
+    ) { }
 
-    async create(clerkUserId: string, data: CreateListingDto) {
-        const dbuser = await this.prisma.user.findUnique({ where: { clerkUserId } });
+    async create(clerkUserId: string, email: string, data: CreateListingDto, file?: any) {
+        let dbuser = await this.prisma.user.findUnique({ where: { clerkUserId } });
         if (!dbuser) {
-            throw new NotFoundException('User not found');
+            dbuser = await this.prisma.user.create({
+                data: { clerkUserId, email }
+            });
         }
 
-        return this.prisma.listing.create({
+        const listing = await this.prisma.listing.create({
             data: {
                 title: data.title,
                 description: data.description,
@@ -22,6 +28,18 @@ export class ListingsService {
                 sellerId: dbuser.id,
             },
         });
+
+        if (file) {
+            const imageUrl = await this.storageService.saveFile(file);
+            await this.prisma.listingImage.create({
+                data: {
+                    url: imageUrl,
+                    listingId: listing.id
+                }
+            });
+        }
+
+        return listing;
     }
 
     async findLatestListings(category?: ListingCategory, limit: number = 20) {

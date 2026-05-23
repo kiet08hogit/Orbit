@@ -12,11 +12,12 @@ datasource db {
 // =======================
 
 enum ListingCategory {
-  ITEM
-  SERVICE
-  TICKET
-  GIG
-  RENTAL
+  HOUSING
+  CLOTHES
+  SCHOOL
+  LEISURE
+  ACCESSORIES
+  OTHER
 }
 
 enum ListingStatus {
