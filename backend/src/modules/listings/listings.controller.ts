@@ -1,9 +1,9 @@
-import { Controller,Body,UseGuards, Post, Get, Param, NotFoundException } from '@nestjs/common';
+import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException } from '@nestjs/common';
 import { ListingsService } from './listings.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {CreateListingDto} from './create-listing.dto';
-import { InteractionType } from '@prisma/client';
+import { InteractionType, ListingCategory } from '@prisma/client';
 
 @Controller('listings')
 export class ListingsController {
@@ -19,6 +19,12 @@ export class ListingsController {
     @UseGuards(ClerkAuthGuard)
     async getFeed(@CurrentUser() clerkUser: any) {
         return this.listingsService.getSwipeFeed(clerkUser.clerkUserId);
+    }
+
+    @Get('all')
+    @UseGuards(ClerkAuthGuard)
+    async getAllListings(@Query('category') category?: ListingCategory) {
+        return this.listingsService.findLatestListings(category);
     }
 
     @Post(':id/swipe')

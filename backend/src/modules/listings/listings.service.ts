@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateListingDto } from './create-listing.dto';
-import { ListingStatus, InteractionType } from '@prisma/client';
+import { ListingStatus, InteractionType, ListingCategory } from '@prisma/client';
 @Injectable()
 export class ListingsService {
     constructor(private prisma: PrismaService) { }
@@ -24,9 +24,12 @@ export class ListingsService {
         });
     }
 
-    async findLatestListings(limit: number = 20) {
+    async findLatestListings(category?: ListingCategory, limit: number = 20) {
         return this.prisma.listing.findMany({
-            where: { status: ListingStatus.ACTIVE },
+            where: { 
+                status: ListingStatus.ACTIVE,
+                ...(category ? { category } : {})
+            },
             take: limit,
             orderBy: { createdAt: 'desc' },
             include: {
@@ -91,19 +94,20 @@ export class ListingsService {
 
         // UPSERT: If they already swiped, change their swipe. If not, create a new one!
         return this.prisma.interaction.upsert({
-        where: {
-            userId_listingId: { // This uses the @@unique constraint from our schema!
-            userId: dbUser.id,
-            listingId: listingId,
+            where: {
+                userId_listingId: { // This uses the @@unique constraint from our schema!
+                    userId: dbUser.id,
+                    listingId: listingId,
+                }
+            },
+            update: { type },
+            create: {
+                userId: dbUser.id,
+                listingId: listingId,
+                type: type
             }
-        },
-        update: { type },
-        create: {
-            userId: dbUser.id,
-            listingId: listingId,
-            type: type
-        }
         });
     }
 
 }
+
