@@ -1,8 +1,8 @@
-# FlamesPorium - Architecture Overview
+# Circlo - Architecture Overview
 
 ## Product Summary
 
-FlamesPorium is a verified marketplace and community platform for UIC students.
+Circlo is a verified marketplace and community platform for UIC students.
 
 Core features:
 - Buy and sell items
@@ -17,7 +17,7 @@ Core features:
 
 The first release is designed for approximately:
 
-- 100–200 UIC students
+- 20–50 UIC students
 - Single-region deployment
 - Simple, maintainable architecture
 - Room to scale later if usage grows
@@ -74,7 +74,7 @@ The system contains:
 
 General application flow:
 
-1. User opens FlamesPorium in the browser
+1. User opens Circlo in the browser
 2. Frontend loads from Azure Static Web Apps
 3. Frontend sends REST or WebSocket requests to backend
 4. Backend verifies the user through Clerk JWT validation

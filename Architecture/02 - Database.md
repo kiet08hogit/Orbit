@@ -1,8 +1,8 @@
-# FlamesPorium - Relational Database Design
+# Circlo - Relational Database Design
 
 ## Database Choice
 
-FlamesPorium uses:
+Circlo uses:
 
 - Azure Database for PostgreSQL
 
@@ -166,4 +166,4 @@ Fields:
 ## ERD Diagram
 
 See:
-- `FlamesPorium - Relational Database Design`
+- `Circlo - Relational Database Design`

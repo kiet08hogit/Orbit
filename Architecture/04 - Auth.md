@@ -1,8 +1,8 @@
-# FlamesPorium - Authentication and Authorization
+# Circlo - Authentication and Authorization
 
 ## Authentication Provider
 
-FlamesPorium uses:
+Circlo uses:
 
 - Clerk for sign-in, session management, and JWT creation
 

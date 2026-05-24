@@ -95,7 +95,7 @@ export default function ListingsGridPage() {
           <div className="relative w-full h-[500px] mb-12 rounded-2xl overflow-hidden shadow-sm group">
             <img
               src="/hero1.jpg"
-              alt="FlamesPorium Hero"
+              alt="Circlo Hero"
               className="absolute inset-0 w-full h-[65vh] object-cover z-0"
             />
             {/* The white card overlay */}

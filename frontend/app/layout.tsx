@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: "FlamesPorium | Verified UIC Student Marketplace",
+  title: "Circlo | Verified UIC Student Marketplace",
   description: "Buy, sell, and swap items safely with verified @uic.edu student profiles.",
 };
 
@@ -32,7 +32,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {/* Logo */}
               <div className="flex items-center shrink-0">
                 <Link href="/listings" className="text-xl sm:text-2xl font-black tracking-tighter text-[#3252DF]">
-                  FlamesPorium
+                  Circlo
                 </Link>
               </div>
 
@@ -114,7 +114,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <div className="space-y-2">
                   <h2 className="text-2xl font-extrabold tracking-tight">Access Restricted</h2>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    FlamesPorium is a verified marketplace exclusively for UIC students. Only email addresses ending with <strong className="text-red-600 dark:text-red-400">@uic.edu</strong> are permitted to enter.
+                    Circlo is a verified marketplace exclusively for UIC students. Only email addresses ending with <strong className="text-red-600 dark:text-red-400">@uic.edu</strong> are permitted to enter.
                   </p>
                 </div>
 

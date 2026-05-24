@@ -45,7 +45,7 @@ export class ClerkAuthGuard implements CanActivate {
 
       // 4. Enforce UIC domain
       if (!primaryEmail || !primaryEmail.endsWith('@uic.edu')) {
-        throw new ForbiddenException('Only @uic.edu emails are allowed on FlamesPorium.');
+        throw new ForbiddenException('Only @uic.edu emails are allowed on Circlo.');
       }
 
       // 5. Attach user info to the request so controllers can use it

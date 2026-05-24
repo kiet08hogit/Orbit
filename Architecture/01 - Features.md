@@ -1,4 +1,4 @@
-# FlamesPorium Features
+# Circlo Features
 
 ## Core Features
 

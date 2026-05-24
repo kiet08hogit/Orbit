@@ -104,7 +104,7 @@ export default function Home() {
         <div className="flex flex-col gap-10 lg:pl-12">
           <div>
             <h3 className="text-4xl md:text-5xl font-black text-black tracking-tight leading-none mb-4">
-              The FlamesPorium Impact
+              The Circlo Impact
             </h3>
             <p className="text-xl text-zinc-600 font-medium">
               Join the fastest growing marketplace at UIC. Buy, sell, and trade safely with your peers.
@@ -150,7 +150,7 @@ export default function Home() {
       <div className="w-full flex flex-col items-center pt-24 pb-20 px-4 relative z-10 bg-[#F9F6EE]">
         
         <h2 className="text-4xl md:text-5xl font-bold text-black mb-8 tracking-tight">
-          Welcome to FlamesPorium
+          Welcome to Circlo
         </h2>
       
         
