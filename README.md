@@ -71,6 +71,3 @@ npm install
 npm run dev
 ```
 *The frontend will run on http://localhost:3001 (or another available port).*
-
-## 🤝 Contributing
-Contributions are welcome! If you're a UIC student looking to improve the platform, feel free to fork the repository, make your changes, and submit a pull request.
