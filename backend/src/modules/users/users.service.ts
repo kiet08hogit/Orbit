@@ -30,9 +30,19 @@ export class UsersService {
 
         return user;
     }
-
     async getUserById(id: string) {
-        return this.prisma.user.findUnique({ where: { id } });
+        return this.prisma.user.findUnique({ 
+            where: { id },
+            include: {
+                listings: {
+                    where: { status: 'ACTIVE' },
+                    include: { images: true }
+                },
+                _count: {
+                    select: { listings: true }
+                }
+            }
+        });
     }
 
     async updateUser(clerkUserId: string, updateData: any) {

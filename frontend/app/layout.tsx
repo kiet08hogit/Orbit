@@ -7,6 +7,7 @@ import { ClientNav } from "./ClientNav";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { OnboardingCheck } from "@/components/OnboardingCheck";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -93,6 +94,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {/* Bottom Row: Categories and Links */}
             <Show when="signed-in">
               <ClientNav />
+              <OnboardingCheck />
             </Show>
           </header>
 
