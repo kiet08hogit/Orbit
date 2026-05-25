@@ -5,7 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Loader2, MapPin, MessageSquare, Shield, Tag, Calendar, GraduationCap, Heart, AlertTriangle, BookOpen, Star, MoreVertical } from 'lucide-react';
+import { Loader2, MapPin, MessageSquare, Shield, Tag, Calendar, GraduationCap, Heart, AlertTriangle, BookOpen, Star, MoreVertical, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 export default function ProfilePage() {
   const params = useParams();
   const userId = params.id as string;
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { getToken, isLoaded, isSignedIn, userId: currentUserId } = useAuth();
   
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -260,6 +260,17 @@ export default function ProfilePage() {
                               {listing.category}
                             </span>
                           </div>
+                          
+                          {/* Edit Button Overlay */}
+                          {currentUserId === userProfile.clerkUserId && (
+                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Link href={`/listings/${listing.id}/edit`} onClick={(e) => e.stopPropagation()}>
+                                <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full bg-white text-zinc-900 shadow-sm hover:bg-zinc-100">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
                         </div>
                         
                         {/* Content */}

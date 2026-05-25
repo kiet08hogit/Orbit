@@ -1,4 +1,4 @@
-import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException, UseInterceptors, UploadedFiles, Delete, Put } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ListingsService } from './listings.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
@@ -53,4 +53,15 @@ export class ListingsController {
         }
         return listing;
     }
+    @Delete(':id')
+    @UseGuards(ClerkAuthGuard)
+    async deleteListing(@CurrentUser() clerkUser: any, @Param('id') id: string) {
+        return this.listingsService.deleteListing(clerkUser.clerkUserId, id);
+    }
+    @Put(':id')
+    @UseGuards(ClerkAuthGuard)
+    async updateListing(@CurrentUser() clerkUser: any, @Param('id') id: string, @Body() updateListingDto: CreateListingDto) {
+        return this.listingsService.updateListing(clerkUser.clerkUserId, id, updateListingDto);
+    }
 }
+

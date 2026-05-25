@@ -83,9 +83,8 @@ export default function ChatPage() {
         setInbox(data);
           
         // If no active conversation but inbox has items, maybe select the first one
-          if (!activeConversationId && data.length > 0 && !window.matchMedia('(max-width: 768px)').matches) {
-            setActiveConversationId(data[0].id);
-          }
+        if (!activeConversationId && data.length > 0 && !window.matchMedia('(max-width: 768px)').matches) {
+          setActiveConversationId(data[0].id);
         }
       } catch (err) {
         console.error("Failed to fetch inbox:", err);
@@ -128,12 +127,9 @@ export default function ChatPage() {
     // Connect to WebSocket server
     const newSocket = io("http://localhost:3000", {
       transports: ["websocket"],
+      autoConnect: false, // Prevent immediate connection before we attach the auth token
     });
 
-    // Authenticate socket (custom backend implementation might need token here)
-    // For now we assume WsClerkAuthGuard handles the connection authentication or event auth.
-    // In ChatGateway, handleSendMessage uses WsClerkAuthGuard, we need to pass token.
-    
     // Actually we need to pass the token with socket.io auth
     const setupSocket = async () => {
       const token = await getToken();
@@ -207,7 +203,7 @@ export default function ChatPage() {
   };
 
   const filteredInbox = inbox.filter((conv) => {
-    const otherMember = conv.members.find(m => m.user.clerkUserId !== clerkUser?.id);
+    const otherMember = conv.members?.find(m => m.user.clerkUserId !== clerkUser?.id);
     const otherName = otherMember?.user?.name || otherMember?.user?.username || "Unknown";
     return otherName.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -221,7 +217,7 @@ export default function ChatPage() {
   }
 
   // Get the active conversation's other member to display their name
-  const otherActiveMember = activeConversation?.members.find(m => m.user.clerkUserId !== clerkUser?.id)?.user;
+  const otherActiveMember = activeConversation?.members?.find(m => m.user.clerkUserId !== clerkUser?.id)?.user;
   const otherActiveName = otherActiveMember?.name || otherActiveMember?.username || "UIC Student";
   const otherActiveInitial = otherActiveName[0]?.toUpperCase() || "U";
 
@@ -251,7 +247,7 @@ export default function ChatPage() {
             </div>
           ) : (
             filteredInbox.map((conv) => {
-              const otherMember = conv.members.find(m => m.user.clerkUserId !== clerkUser?.id)?.user;
+              const otherMember = conv.members?.find(m => m.user.clerkUserId !== clerkUser?.id)?.user;
               const name = otherMember?.name || otherMember?.username || "UIC Student";
               const initial = name[0]?.toUpperCase() || "U";
               const latestMessage = conv.messages?.[0]?.content || "Started a conversation";

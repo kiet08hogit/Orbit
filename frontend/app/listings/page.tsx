@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Loader2, Filter, Tag } from 'lucide-react';
+import { motion } from 'framer-motion';
 import axios from 'axios';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';

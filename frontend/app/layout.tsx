@@ -8,6 +8,7 @@ import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { OnboardingCheck } from "@/components/OnboardingCheck";
+import { CustomUserButton } from "@/components/CustomUserButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -55,14 +56,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {/* Right Side Actions */}
               <nav className="flex items-center gap-4 shrink-0">
                 <Show when="signed-out">
-                  <SignUpButton mode="modal">
-                    <Button className="rounded-full bg-[#3252DF] hover:bg-[#2842B3] text-white font-bold">
-                      Sign Up
-                    </Button>
-                  </SignUpButton>
                   <SignInButton mode="modal">
                     <Button className="rounded-full bg-[#3252DF] hover:bg-[#2842B3] text-white font-bold">
-                      Log In
+                      Log In / Sign Up
                     </Button>
                   </SignInButton>
                 </Show>
@@ -85,7 +81,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <Link href="/cart" className="text-zinc-500 hover:text-black transition-colors">
                       <ShoppingCart className="h-5 w-5" />
                     </Link>
-                    <UserButton />
+                    <CustomUserButton />
                   </div>
                 </Show>
               </nav>

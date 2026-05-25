@@ -20,6 +20,7 @@ interface Seller {
   username?: string;
   email?: string;
   avatarUrl?: string;
+  clerkUserId?: string;
 }
 
 interface ListingImage {
@@ -51,7 +52,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { getToken, isLoaded, isSignedIn, userId } = useAuth();
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -151,6 +152,7 @@ export default function ListingDetailPage() {
     listing.seller?.email?.split("@")[0] ||
     "UIC Student";
   const sellerInitial = sellerName[0]?.toUpperCase() || "U";
+  const isOwner = userId === listing.seller?.clerkUserId || userId === listing.seller?.id;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white font-sans">
@@ -348,44 +350,57 @@ export default function ListingDetailPage() {
               transition={{ delay: 0.35 }}
               className="space-y-3"
             >
-              <Button
-                size="lg"
-                className="w-full bg-[#b81d68] hover:bg-[#961754] text-white font-bold h-11 rounded-lg shadow-sm text-sm"
-              >
-                Reserve Your Order
-              </Button>
+              {isOwner ? (
+                <Link href={`/listings/${listing.id}/edit`}>
+                  <Button
+                    size="lg"
+                    className="w-full bg-zinc-900 hover:bg-black text-white font-bold h-11 rounded-lg shadow-sm text-sm"
+                  >
+                    Edit Listing
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    className="w-full bg-[#b81d68] hover:bg-[#961754] text-white font-bold h-11 rounded-lg shadow-sm text-sm"
+                  >
+                    Reserve Your Order
+                  </Button>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`font-bold h-11 rounded-lg border-zinc-200 text-sm transition-all ${isWishlisted
-                      ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700"
-                      : "hover:border-zinc-300"
-                    }`}
-                >
-                  <Heart
-                    className={`mr-1.5 h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""
-                      }`}
-                  />
-                  Wishlist
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleTalkToSeller}
-                  disabled={isStartingChat}
-                  className="font-bold h-11 rounded-lg border-zinc-200 text-sm hover:border-zinc-300"
-                >
-                  {isStartingChat ? (
-                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                  ) : (
-                    <MessageSquare className="mr-1.5 h-4 w-4" />
-                  )}
-                  Talk To Seller
-                </Button>
-              </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => setIsWishlisted(!isWishlisted)}
+                      className={`font-bold h-11 rounded-lg border-zinc-200 text-sm transition-all ${isWishlisted
+                          ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700"
+                          : "hover:border-zinc-300"
+                        }`}
+                    >
+                      <Heart
+                        className={`mr-1.5 h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""
+                          }`}
+                      />
+                      Wishlist
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={handleTalkToSeller}
+                      disabled={isStartingChat}
+                      className="font-bold h-11 rounded-lg border-zinc-200 text-sm hover:border-zinc-300"
+                    >
+                      {isStartingChat ? (
+                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                      ) : (
+                        <MessageSquare className="mr-1.5 h-4 w-4" />
+                      )}
+                      Talk To Seller
+                    </Button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
 

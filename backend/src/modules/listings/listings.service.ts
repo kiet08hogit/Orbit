@@ -128,6 +128,33 @@ export class ListingsService {
             }
         });
     }
+    async deleteListing(clerkUserId: string, listingId: string) {
+        const dbUser = await this.prisma.user.findUnique({ where: { clerkUserId } });
+        if (!dbUser) throw new NotFoundException('User not found');
 
+        const images = await this.prisma.listingImage.findMany({
+            where: { listingId },
+            select: { url: true }
+        });
+        const deletePromises = images.map(img => this.storageService.deleteFile(img.url));
+        await Promise.all(deletePromises);
+        await this.prisma.listingImage.deleteMany({ where: { listingId } });
+
+        return this.prisma.listing.delete({ where: { id: listingId, sellerId: dbUser.id } });
+    }
+    async updateListing(clerkUserId: string, listingId: string, data: Partial<CreateListingDto>) {
+        const dbUser = await this.prisma.user.findUnique({ where: { clerkUserId } });
+        if (!dbUser) throw new NotFoundException('User not found');
+
+        return this.prisma.listing.update({
+            where: { id: listingId, sellerId: dbUser.id },
+            data: {
+                title: data.title,
+                description: data.description,
+                price: data.price,
+                category: data.category,
+            },
+        });
+    }
 }
 

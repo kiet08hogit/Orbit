@@ -31,8 +31,13 @@ export class UsersService {
         return user;
     }
     async getUserById(id: string) {
-        return this.prisma.user.findUnique({ 
-            where: { id },
+        return this.prisma.user.findFirst({ 
+            where: { 
+                OR: [
+                    { id: id },
+                    { clerkUserId: id }
+                ]
+            },
             include: {
                 listings: {
                     where: { status: 'ACTIVE' },

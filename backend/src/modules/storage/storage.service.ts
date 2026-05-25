@@ -31,4 +31,18 @@ export class StorageService {
       throw new InternalServerErrorException('Failed to save file');
     }
   }
+
+  async deleteFile(fileUrl: string): Promise<void> {
+    try {
+      // Extract just the filename from the URL path
+      const filename = path.basename(fileUrl);
+      const filePath = path.join(this.uploadDir, filename);
+
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
+  }
 }

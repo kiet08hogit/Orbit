@@ -2,10 +2,15 @@ import { Controller, Post, Req, Headers, BadRequestException, RawBodyRequest } f
 import { Request } from 'express';
 import { Webhook } from 'svix';
 import { UsersService } from '../users/users.service';
+import { createClerkClient } from '@clerk/backend';
 
 @Controller('webhooks')
 export class WebhooksController {
-    constructor(private readonly usersService: UsersService) {}
+    private clerkClient;
+
+    constructor(private readonly usersService: UsersService) {
+        this.clerkClient = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+    }
 
     @Post('clerk')
     async handleClerkWebhook(@Req() req: RawBodyRequest<Request>, @Headers() headers: any) {
@@ -31,6 +36,26 @@ export class WebhooksController {
         }
 
         const eventType = evt.type;
+
+        // Auto-delete non-UIC signups
+        if (eventType === 'user.created') {
+            const { id, email_addresses, primary_email_address_id } = evt.data;
+            const primaryEmailObj = email_addresses?.find(
+                (email: any) => email.id === primary_email_address_id
+            );
+            const email = primaryEmailObj?.email_address;
+
+            if (!email || !email.endsWith('@uic.edu')) {
+                console.log(`[Webhook] Restricting non-UIC signup: ${email}. Deleting user ${id}...`);
+                try {
+                    await this.clerkClient.users.deleteUser(id);
+                    console.log(`[Webhook] Successfully deleted non-UIC user: ${id}`);
+                } catch (err) {
+                    console.error(`[Webhook] Failed to delete non-UIC user: ${id}`, err);
+                }
+                return { success: true, message: 'Deleted non-UIC user' };
+            }
+        }
 
         // Sync Clerk deletion to Postgres
         if (eventType === 'user.deleted') {
