@@ -30,18 +30,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleDisconnect(client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
   }
+  // A user authenticates and joins their own personal room
+    @UseGuards(WsClerkAuthGuard)
+    @SubscribeMessage('authenticate')
+    handleAuthenticate(@ConnectedSocket() client: any) {
+      const clerkUserId = client.user.clerkUserId;
+      client.join(clerkUserId);
+      console.log(`User ${client.user.email} joined personal room: ${clerkUserId}`);
+    }
 
-  // A user joins a specific conversation "room" to listen for messages
-  @UseGuards(WsClerkAuthGuard)
-  @SubscribeMessage('join_conversation')
-  handleJoinConversation(
-    @ConnectedSocket() client: any,
-    @MessageBody() conversationId: string,
-  ) {
-    client.join(conversationId);
-    console.log(`User ${client.user.email} joined chat ${conversationId}`);
-  }
-
+ 
   // A user sends a new message
   @UseGuards(WsClerkAuthGuard)
   @SubscribeMessage('send_message')
@@ -78,8 +76,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       data: { updatedAt: new Date() },
     });
 
-    // 4. Instantly broadcast the message to everyone in the chat room!
-    this.server.to(conversationId).emit('receive_message', savedMessage);
+    // 4. Fetch the members of this conversation
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: {
+        members: {
+          include: { user: true }
+        }
+      }
+    });
+    // 5. Broadcast the message to every member's personal room!
+    if (conversation) {
+      conversation.members.forEach((member) => {
+        this.server.to(member.user.clerkUserId).emit('receive_message', savedMessage);
+      });
+    }
     
     return savedMessage;
   }

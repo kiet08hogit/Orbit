@@ -13,10 +13,10 @@
             "state": {
               "type": "excalidraw",
               "state": {
-                "file": "Architecture/DB Relation.excalidraw"
+                "file": "Architecture/High Level Architecture.excalidraw"
               },
               "icon": "excalidraw-icon",
-              "title": "DB Relation"
+              "title": "High Level Architecture"
             }
           }
         ]
@@ -76,8 +76,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "right": {
     "id": "8afc61279ea3adb0",
@@ -185,10 +184,10 @@
   },
   "active": "3748210300911d34",
   "lastOpenFiles": [
+    "Architecture/DB Relation.excalidraw",
     "Architecture/Core Req.excalidraw",
     "Architecture/Backend.excalidraw",
     "Architecture/02 - Database.md",
-    "Architecture/DB Relation.excalidraw",
     "Architecture/High Level Architecture.excalidraw",
     "Architecture/00 - Architecture Overview.md",
     "Architecture/03 - API Design.md",

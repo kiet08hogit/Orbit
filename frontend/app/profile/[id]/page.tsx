@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 export default function ProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const userId = params.id as string;
   const { getToken, isLoaded, isSignedIn, userId: currentUserId } = useAuth();
   
@@ -264,11 +265,18 @@ export default function ProfilePage() {
                           {/* Edit Button Overlay */}
                           {currentUserId === userProfile.clerkUserId && (
                             <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Link href={`/listings/${listing.id}/edit`} onClick={(e) => e.stopPropagation()}>
+                              <div 
+                                onClick={(e) => { 
+                                  e.preventDefault(); 
+                                  e.stopPropagation(); 
+                                  router.push(`/listings/${listing.id}/edit`); 
+                                }}
+                                className="cursor-pointer"
+                              >
                                 <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full bg-white text-zinc-900 shadow-sm hover:bg-zinc-100">
                                   <Pencil className="h-4 w-4" />
                                 </Button>
-                              </Link>
+                              </div>
                             </div>
                           )}
                         </div>

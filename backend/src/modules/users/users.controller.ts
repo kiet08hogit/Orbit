@@ -1,4 +1,5 @@
-import { Controller, Get, Patch, UseGuards, Param, Body, NotFoundException, ConflictException } from '@nestjs/common';
+import { Controller, Get, Patch, UseGuards, Param, Body, NotFoundException, ConflictException, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { UsersService } from './users.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
 import { CurrentUser} from '../../common/decorators/current-user.decorator';
@@ -33,6 +34,7 @@ export class UsersController {
 
     @Get(':id')
     @UseGuards(ClerkAuthGuard)
+    @UseInterceptors(CacheInterceptor)
     async getUser(@Param('id') id: string) {
 
         const user = await this.usersService.getUserById(id);

@@ -48,12 +48,12 @@ export default function ChatPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [inbox, setInbox] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(defaultConversationId || null);
-  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoadingInbox, setIsLoadingInbox] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshInbox, setRefreshInbox] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom of messages
@@ -76,14 +76,15 @@ export default function ChatPage() {
     const fetchInbox = async () => {
       try {
         const token = await getToken();
-        const res = await axios.get("http://localhost:3000/chat/inbox", {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+        const res = await axios.get(`${apiUrl}/chat/inbox`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = res.data;
         setInbox(data);
           
-        // If no active conversation but inbox has items, maybe select the first one
-        if (!activeConversationId && data.length > 0 && !window.matchMedia('(max-width: 768px)').matches) {
+        // Only auto-select if we don't have an active one AND it's a fresh load (not a background refresh)
+        if (!activeConversationId && data.length > 0 && refreshInbox === 0 && !window.matchMedia('(max-width: 768px)').matches) {
           setActiveConversationId(data[0].id);
         }
       } catch (err) {
@@ -94,7 +95,7 @@ export default function ChatPage() {
     };
 
     fetchInbox();
-  }, [isLoaded, isSignedIn, getToken, router, activeConversationId]);
+  }, [isLoaded, isSignedIn, getToken, router, refreshInbox]);
 
   // 2. Fetch Messages for Active Conversation
   useEffect(() => {
@@ -104,12 +105,13 @@ export default function ChatPage() {
       setIsLoadingMessages(true);
       try {
         const token = await getToken();
-        const res = await axios.get(`http://localhost:3000/chat/inbox/${activeConversationId}`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+        const res = await axios.get(`${apiUrl}/chat/inbox/${activeConversationId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = res.data;
-        setActiveConversation(data);
-        setMessages(data.messages || []);
+        // The backend returns an array of messages directly
+        setMessages(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch messages:", err);
       } finally {
@@ -125,16 +127,25 @@ export default function ChatPage() {
     if (!isSignedIn) return;
 
     // Connect to WebSocket server
-    const newSocket = io("http://localhost:3000", {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const newSocket = io(apiUrl, {
       transports: ["websocket"],
-      autoConnect: false, // Prevent immediate connection before we attach the auth token
+      autoConnect: false,
     });
 
-    // Actually we need to pass the token with socket.io auth
     const setupSocket = async () => {
       const token = await getToken();
       if(token) {
         newSocket.auth = { token };
+        
+        // Register the connect listener BEFORE calling connect().
+        // This way it fires on the initial connection AND on every auto-reconnect,
+        // guaranteeing we always re-join our personal room.
+        newSocket.on("connect", () => {
+           console.log("Socket connected, authenticating...");
+           newSocket.emit("authenticate");
+        });
+        
         newSocket.connect();
       }
     };
@@ -160,7 +171,12 @@ export default function ChatPage() {
       // Update inbox preview to bump this conversation to top
       setInbox((prevInbox) => {
         const conversationIndex = prevInbox.findIndex(c => c.id === message.conversationId);
-        if (conversationIndex === -1) return prevInbox; // need to fetch new conversation
+        
+        // If the conversation is brand new (we don't have it in inbox yet), we need to fetch it!
+        if (conversationIndex === -1) {
+          setRefreshInbox(prev => prev + 1);
+          return prevInbox;
+        }
 
         const updatedConversation = { ...prevInbox[conversationIndex] };
         updatedConversation.updatedAt = message.createdAt;
@@ -175,11 +191,6 @@ export default function ChatPage() {
     };
 
     socket.on("receive_message", onReceiveMessage);
-
-    // Join room when active conversation changes
-    if (activeConversationId) {
-      socket.emit("join_conversation", activeConversationId);
-    }
 
     return () => {
       socket.off("receive_message", onReceiveMessage);
@@ -216,7 +227,8 @@ export default function ChatPage() {
     );
   }
 
-  // Get the active conversation's other member to display their name
+  // Get the active conversation from the inbox to display their name
+  const activeConversation = inbox.find(c => c.id === activeConversationId);
   const otherActiveMember = activeConversation?.members?.find(m => m.user.clerkUserId !== clerkUser?.id)?.user;
   const otherActiveName = otherActiveMember?.name || otherActiveMember?.username || "UIC Student";
   const otherActiveInitial = otherActiveName[0]?.toUpperCase() || "U";
@@ -329,10 +341,8 @@ export default function ChatPage() {
               ) : (
                 <AnimatePresence initial={false}>
                   {messages.map((msg, idx) => {
-                    const isMe = msg.sender?.clerkUserId === clerkUser?.id || msg.senderId === (messages.find(m => m.sender?.clerkUserId === clerkUser?.id)?.senderId); // fallback logic if msg.sender is not populated right on receive
-                    
-                    // Slightly better logic for isMe when receiving a new socket message
-                    const amISender = isMe || (!msg.sender && clerkUser?.id); 
+                    // sender.clerkUserId is always populated by the backend's Prisma include
+                    const amISender = msg.sender?.clerkUserId === clerkUser?.id;
                     const showAvatar = !amISender && (idx === messages.length - 1 || messages[idx + 1]?.senderId !== msg.senderId);
 
                     return (

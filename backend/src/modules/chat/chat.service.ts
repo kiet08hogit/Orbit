@@ -39,13 +39,14 @@ export class ChatService {
                 },
             });
         if (!conversation) {
+            const membersToCreate = currentUser.id === otherUser.id
+                ? [{ userId: currentUser.id }]
+                : [{ userId: currentUser.id }, { userId: otherUser.id }];
+
             const conversationCreated = await this.prisma.conversation.create({
                 data: {
                     members: {
-                        create: [
-                            { userId: currentUser.id },
-                            { userId: otherUser.id },
-                        ],
+                        create: membersToCreate,
                     },
                 },
             });

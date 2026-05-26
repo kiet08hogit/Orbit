@@ -27,9 +27,10 @@ enum ListingStatus {
 }
 
 enum PostType {
+  DISCUSSION
+  EVENT
+  CHECK_IN
   LOOKING_FOR
-  OFFERING
-  QUESTION
 }
 
 enum InteractionType {
@@ -64,6 +65,8 @@ model User {
   interactions        Interaction[]
   conversationMembers ConversationMember[]
   messages            Message[]
+  postLikes           PostLike[]
+  postComments        PostComment[]
 }
 
 model Listing {
@@ -99,13 +102,38 @@ model ListingImage {
 
 model Post {
   id        String   @id @default(uuid())
-  title     String
   content   String
   postType  PostType
+  imageUrls String[]
   
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  likes     PostLike[]
+  comments  PostComment[]
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model PostComment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

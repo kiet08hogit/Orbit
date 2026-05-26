@@ -1,4 +1,5 @@
 import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException, UseInterceptors, UploadedFiles, Delete, Put } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ListingsService } from './listings.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
@@ -28,6 +29,7 @@ export class ListingsController {
 
     @Get('all')
     @UseGuards(ClerkAuthGuard)
+    @UseInterceptors(CacheInterceptor)
     async getAllListings(@Query('category') category?: ListingCategory) {
         return this.listingsService.findLatestListings(category);
     }
@@ -46,6 +48,7 @@ export class ListingsController {
 
     @Get(':id')
     @UseGuards(ClerkAuthGuard)
+    @UseInterceptors(CacheInterceptor)
     async getListing(@Param('id') id: string) {
         const listing = await this.listingsService.findById(id);
         if (!listing) {

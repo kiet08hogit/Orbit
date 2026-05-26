@@ -35,7 +35,7 @@ export function ClientNav() {
   // But actually, we can show it globally since the layout dictates it.
   
   return (
-    <div className="flex w-full items-center justify-center gap-8 border-t border-zinc-100 bg-white/50 px-4 py-2 backdrop-blur-sm">
+    <div className="flex w-full items-center justify-center gap-8 border-b border-zinc-200 bg-white px-4 py-3 z-40 relative">
       
       {/* Links */}
       <nav className="flex items-center gap-6 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
@@ -45,7 +45,7 @@ export function ClientNav() {
             <Link
               key={cat.id}
               href={cat.id === 'ALL' ? '/home' : `/listings?category=${cat.id}`}
-              className={`whitespace-nowrap font-bold text-xs tracking-widest transition-colors ${
+              className={`whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide transition-colors ${
                 isActive 
                   ? 'text-[#DC2626]' 
                   : 'text-zinc-500 hover:text-black'
@@ -60,14 +60,14 @@ export function ClientNav() {
         
         <Link 
           href="/community" 
-          className="whitespace-nowrap font-bold text-xs tracking-widest text-zinc-500 hover:text-[#3252DF] transition-colors"
+          className="whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide text-zinc-500 hover:text-black transition-colors"
         >
           COMMUNITY
         </Link>
         
         <Link 
           href="/swipe" 
-          className="whitespace-nowrap font-bold text-xs tracking-widest text-zinc-500 hover:text-[#3252DF] transition-colors"
+          className="whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide text-zinc-500 hover:text-black transition-colors"
         >
           MATCH YOUR NEEDS
         </Link>

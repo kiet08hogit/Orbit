@@ -13,22 +13,27 @@ export class WsClerkAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. Get the Socket.io client from the context
     const client = context.switchToWs().getClient();
+
+    // 2. If we already authenticated this socket connection, skip re-verification!
+    //    This prevents token expiration from killing messages mid-session.
+    if (client.user) {
+      return true;
+    }
     
-    // 2. Extract the token from the handshake auth object
+    // 3. Extract the token from the handshake auth object
     const token = client.handshake.auth?.token;
 
     if (!token) {
-      // Notice we throw WsException here instead of UnauthorizedException!
       throw new WsException('Missing auth token in handshake');
     }
 
     try {
-      // 3. Verify the token using Clerk
+      // 4. Verify the token using Clerk
       const verifiedSession = await verifyToken(token, {
         secretKey: process.env.CLERK_SECRET_KEY,
       });
 
-      // 4. Fetch the user details to enforce UIC domain
+      // 5. Fetch the user details to enforce UIC domain
       const clerkUser = await this.clerkClient.users.getUser(verifiedSession.sub);
       
       const primaryEmail = clerkUser.emailAddresses.find(
@@ -39,16 +44,18 @@ export class WsClerkAuthGuard implements CanActivate {
          throw new WsException('Only @uic.edu emails are allowed.');
       }
 
-      // 5. Attach the user info directly to the Socket client object
-      // This allows our ChatGateway to know exactly who is sending messages!
+      // 6. Cache the user info on the socket client for the entire connection lifetime!
+      //    Future events on this socket will hit the early return above.
       client.user = {
         clerkUserId: clerkUser.id,
         email: primaryEmail,
       };
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('WS Auth failed:', error.message || error);
       throw new WsException('Invalid or expired token');
     }
   }
 }
+

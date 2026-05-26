@@ -73,11 +73,11 @@
 			"frameId": null,
 			"roundness": null,
 			"seed": 1621130685,
-			"version": 3,
-			"versionNonce": 1741817271,
+			"version": 5,
+			"versionNonce": 848668039,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065849424,
+			"updated": 1779749235218,
 			"link": null,
 			"locked": false,
 			"text": "Listings\n\n- id (PK)\n- seller_id (FK → Users.id)\n- title\n- description\n- price\n- category\n- status\n- created_at\n- updated_at",
@@ -171,11 +171,11 @@
 			"frameId": null,
 			"roundness": null,
 			"seed": 1304428,
-			"version": 3,
-			"versionNonce": 1074917943,
+			"version": 5,
+			"versionNonce": 1653682119,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065849425,
+			"updated": 1779749235224,
 			"link": null,
 			"locked": false,
 			"text": "Users\n\n- id (PK)\n- clerkuserid (UNIQUE)\n- email (UNIQUE)\n- first_name\n- last_name\n- profileimageurl\n- created_at\n- updated_at",
@@ -257,11 +257,11 @@
 			"frameId": null,
 			"roundness": null,
 			"seed": 1229285666,
-			"version": 3,
-			"versionNonce": 1205907415,
+			"version": 5,
+			"versionNonce": 408889863,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065849432,
+			"updated": 1779749235228,
 			"link": null,
 			"locked": false,
 			"text": "Conversations\n\n- id (PK)\n- created_at\n- updated_at",
@@ -339,11 +339,11 @@
 			"frameId": null,
 			"roundness": null,
 			"seed": 176676664,
-			"version": 3,
-			"versionNonce": 1558383415,
+			"version": 5,
+			"versionNonce": 1982043207,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065849435,
+			"updated": 1779749235229,
 			"link": null,
 			"locked": false,
 			"text": "ListingImages\n\n- id (PK)\n- listing_id (FK → Listings.id)\n- image_url\n- display_order\n- created_at",
@@ -362,8 +362,8 @@
 		{
 			"id": "elem_9",
 			"type": "rectangle",
-			"x": -285,
-			"y": -700,
+			"x": -259.0520415602591,
+			"y": -674.8890724776702,
 			"width": 250,
 			"height": 300,
 			"angle": 0,
@@ -380,8 +380,8 @@
 				"type": 3
 			},
 			"seed": 1590765242,
-			"version": 2,
-			"versionNonce": 1142368377,
+			"version": 64,
+			"versionNonce": 1993372231,
 			"isDeleted": false,
 			"boundElements": [
 				{
@@ -393,7 +393,7 @@
 					"type": "arrow"
 				}
 			],
-			"updated": 1779065849351,
+			"updated": 1779749367386,
 			"link": null,
 			"locked": false,
 			"customData": {
@@ -405,8 +405,8 @@
 		{
 			"id": "elem_10",
 			"type": "text",
-			"x": -244.49191284179688,
-			"y": -610,
+			"x": -218.543954402056,
+			"y": -584.8890724776702,
 			"width": 168.98382568359375,
 			"height": 120,
 			"angle": 0,
@@ -421,11 +421,11 @@
 			"frameId": null,
 			"roundness": null,
 			"seed": 64552108,
-			"version": 3,
-			"versionNonce": 1491766359,
+			"version": 65,
+			"versionNonce": 1824035175,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065849436,
+			"updated": 1779749367386,
 			"link": null,
 			"locked": false,
 			"text": "Posts\n\n- id (PK)\n- author_id (FK → Users.id)\n- content\n- type\n- created_at\n- updated_at",
@@ -444,8 +444,8 @@
 		{
 			"id": "elem_11",
 			"type": "rectangle",
-			"x": 216.95664891399747,
-			"y": -544.5640516216915,
+			"x": 192.68275230907852,
+			"y": -577.2082574007204,
 			"width": 250,
 			"height": 300,
 			"angle": 0,
@@ -462,8 +462,8 @@
 				"type": 3
 			},
 			"seed": 1967480752,
-			"version": 82,
-			"versionNonce": 1154976407,
+			"version": 192,
+			"versionNonce": 977143273,
 			"isDeleted": false,
 			"boundElements": [
 				{
@@ -479,7 +479,7 @@
 					"type": "arrow"
 				}
 			],
-			"updated": 1779065855413,
+			"updated": 1779749346363,
 			"link": null,
 			"locked": false,
 			"customData": {
@@ -491,8 +491,8 @@
 		{
 			"id": "elem_12",
 			"type": "text",
-			"x": 255.19676121868497,
-			"y": -439.56405162169153,
+			"x": 230.92286461376602,
+			"y": -472.2082574007204,
 			"width": 173.519775390625,
 			"height": 90,
 			"angle": 0,
@@ -507,11 +507,11 @@
 			"frameId": null,
 			"roundness": null,
 			"seed": 536240332,
-			"version": 83,
-			"versionNonce": 14163895,
+			"version": 194,
+			"versionNonce": 372728009,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065855413,
+			"updated": 1779749346363,
 			"link": null,
 			"locked": false,
 			"text": "Interactions\n- id (PK)\n- user_id (FK → Users.id)\n- listing_id (FK → Listings.id)\n- interaction_type\n- created_at",
@@ -593,11 +593,11 @@
 			"frameId": null,
 			"roundness": null,
 			"seed": 1925710465,
-			"version": 3,
-			"versionNonce": 263468983,
+			"version": 5,
+			"versionNonce": 2107601671,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065849440,
+			"updated": 1779749235231,
 			"link": null,
 			"locked": false,
 			"text": "Messages\n\n- id (PK)\n- conversation_id (FK →\nConversations.id)\n- sender_id (FK → Users.id)\n- content\n- created_at",
@@ -606,7 +606,7 @@
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "elem_13",
-			"originalText": "Messages\n\n- id (PK)\n- conversation_id (FK → Conversations.id)\n- sender_id (FK → Users.id)\n- content\n- created_at",
+			"originalText": "Messages\n\n- id (PK)\n- conversation_id (FK →\nConversations.id)\n- sender_id (FK → Users.id)\n- content\n- created_at",
 			"autoResize": true,
 			"lineHeight": 1.25,
 			"index": "aD",
@@ -679,11 +679,11 @@
 			"frameId": null,
 			"roundness": null,
 			"seed": 1917076303,
-			"version": 3,
-			"versionNonce": 1642211543,
+			"version": 5,
+			"versionNonce": 480615751,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065849442,
+			"updated": 1779749235231,
 			"link": null,
 			"locked": false,
 			"text": "ConversationMembers\n\n- id (PK)\n- conversation_id (FK →\nConversations.id)\n- UNIQUE user_id (FK → Users.id)\n- joined_at",
@@ -692,7 +692,7 @@
 			"textAlign": "center",
 			"verticalAlign": "middle",
 			"containerId": "elem_15",
-			"originalText": "ConversationMembers\n\n- id (PK)\n- conversation_id (FK → Conversations.id)\n- UNIQUE user_id (FK → Users.id)\n- joined_at",
+			"originalText": "ConversationMembers\n\n- id (PK)\n- conversation_id (FK →\nConversations.id)\n- UNIQUE user_id (FK → Users.id)\n- joined_at",
 			"autoResize": true,
 			"lineHeight": 1.25,
 			"index": "aF",
@@ -739,16 +739,16 @@
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_3",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.8406614932835852,
 					0.8406614932835851
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_1",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.17043975547843185,
 					0.170439755478432
@@ -800,16 +800,16 @@
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_1",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.5001,
 					0.5001
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_7",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.5001,
 					0.5001
@@ -824,10 +824,10 @@
 		{
 			"id": "elem_19",
 			"type": "arrow",
-			"x": -51.51960140347895,
-			"y": -894.4999999999999,
-			"width": 91.39535423012998,
-			"height": 188.9999999999999,
+			"x": -41.57261942791976,
+			"y": -894.5,
+			"width": 85.02460361651401,
+			"height": 214.1109275223298,
 			"angle": 0,
 			"strokeColor": "#868e96",
 			"backgroundColor": "transparent",
@@ -842,11 +842,11 @@
 				"type": 2
 			},
 			"seed": 236795470,
-			"version": 3,
-			"versionNonce": 1671730007,
+			"version": 61,
+			"versionNonce": 714067079,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065849426,
+			"updated": 1779749367386,
 			"link": null,
 			"locked": false,
 			"points": [
@@ -855,22 +855,22 @@
 					0
 				],
 				[
-					-91.39535423012998,
-					188.9999999999999
+					-85.02460361651401,
+					214.1109275223298
 				]
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_3",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.6576978573407031,
 					0.6576978573407029
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_9",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.3529113539636095,
 					0.3529113539636099
@@ -885,10 +885,10 @@
 		{
 			"id": "elem_20",
 			"type": "arrow",
-			"x": -27.921466370746906,
-			"y": -894.5,
-			"width": 360.86500656108984,
-			"height": 344.43594837830835,
+			"x": -26.31803411438631,
+			"y": -894.5000000000001,
+			"width": 333.39659813056556,
+			"height": 311.7917425992797,
 			"angle": 0,
 			"strokeColor": "#868e96",
 			"backgroundColor": "transparent",
@@ -903,11 +903,11 @@
 				"type": 2
 			},
 			"seed": 117500449,
-			"version": 84,
-			"versionNonce": 1447629015,
+			"version": 192,
+			"versionNonce": 604135337,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065855414,
+			"updated": 1779749346366,
 			"link": null,
 			"locked": false,
 			"points": [
@@ -916,22 +916,22 @@
 					0
 				],
 				[
-					360.86500656108984,
-					344.43594837830835
+					333.39659813056556,
+					311.7917425992797
 				]
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_3",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.21485347852626827,
 					0.7851465214737317
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_11",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.7727297522595084,
 					0.22727024774049218
@@ -946,10 +946,10 @@
 		{
 			"id": "elem_21",
 			"type": "arrow",
-			"x": 212.47407082458582,
-			"y": -265.5997051062938,
-			"width": 793.5877818245857,
-			"height": 128.9002948937062,
+			"x": 189.25392407110522,
+			"y": -294.12210477505505,
+			"width": 762.4528646300364,
+			"height": 100.37789522494495,
 			"angle": 0,
 			"strokeColor": "#868e96",
 			"backgroundColor": "transparent",
@@ -964,11 +964,11 @@
 				"type": 2
 			},
 			"seed": 541024768,
-			"version": 83,
-			"versionNonce": 1858002423,
+			"version": 191,
+			"versionNonce": 30048905,
 			"isDeleted": false,
 			"boundElements": [],
-			"updated": 1779065855414,
+			"updated": 1779749346367,
 			"link": null,
 			"locked": false,
 			"points": [
@@ -977,22 +977,22 @@
 					0
 				],
 				[
-					-793.5877818245857,
-					-128.9002948937062
+					-762.4528646300364,
+					-100.37789522494495
 				]
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_11",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.5001,
 					1
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_1",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.5001,
 					1
@@ -1044,16 +1044,16 @@
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_3",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.5809391351020409,
 					0.5809391351020402
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_15",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.40306761790751966,
 					0.40306761790751927
@@ -1105,16 +1105,16 @@
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_15",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.5552106784973553,
 					0.444789321502645
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_5",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.4360931344963401,
 					0.5639068655036599
@@ -1166,16 +1166,16 @@
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_5",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.5001,
 					0.5001
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_13",
+				"mode": "orbit",
 				"fixedPoint": [
 					0.5001,
 					0.5001
@@ -1227,16 +1227,16 @@
 			],
 			"lastCommittedPoint": null,
 			"startBinding": {
-				"mode": "orbit",
 				"elementId": "elem_13",
+				"mode": "orbit",
 				"fixedPoint": [
 					0,
 					0.5001
 				]
 			},
 			"endBinding": {
-				"mode": "orbit",
 				"elementId": "elem_3",
+				"mode": "orbit",
 				"fixedPoint": [
 					1,
 					0.5001
@@ -1266,10 +1266,10 @@
 		"currentItemEndArrowhead": "arrow",
 		"currentItemArrowType": "round",
 		"currentItemFrameRole": null,
-		"scrollX": 1228.5971835006123,
-		"scrollY": 1084.7698099583574,
+		"scrollX": 994.3943644409047,
+		"scrollY": 737.9200943906823,
 		"zoom": {
-			"value": 0.707687
+			"value": 1.194699
 		},
 		"currentItemRoundness": "round",
 		"gridSize": 20,
