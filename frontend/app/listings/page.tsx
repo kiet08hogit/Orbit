@@ -43,6 +43,7 @@ export default function ListingsGridPage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get('category') || 'ALL';
+  const searchQuery = searchParams.get('q') || '';
   const [listings, setListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -52,10 +53,14 @@ export default function ListingsGridPage() {
       setIsLoading(true);
       try {
         const token = await getToken();
-        // If 'ALL' is selected, don't pass the category query parameter
-        const url = activeCategory === 'ALL'
-          ? 'http://localhost:3000/listings/all'
-          : `http://localhost:3000/listings/all?category=${activeCategory}`;
+        const params = new URLSearchParams();
+        if (activeCategory !== 'ALL') {
+          params.append('category', activeCategory);
+        }
+        if (searchQuery) {
+          params.append('q', searchQuery);
+        }
+        const url = `http://localhost:3000/listings/all${params.toString() ? `?${params.toString()}` : ''}`;
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -69,7 +74,7 @@ export default function ListingsGridPage() {
     };
 
     fetchListings();
-  }, [isLoaded, isSignedIn, getToken, activeCategory]);
+  }, [isLoaded, isSignedIn, getToken, activeCategory, searchQuery]);
 
   if (!isLoaded) {
     return (
@@ -111,6 +116,23 @@ export default function ListingsGridPage() {
 
       {/* Main Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 pb-12">
+        {searchQuery && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-zinc-100">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-black flex items-center gap-2">
+                Search Results
+              </h2>
+              <p className="text-zinc-500 font-medium mt-1">
+                Showing {listings.length} {listings.length === 1 ? 'item' : 'items'} matching "<span className="text-[#3252DF] font-bold">{searchQuery}</span>"
+              </p>
+            </div>
+            <Link href="/listings" className="mt-4 sm:mt-0">
+              <Button variant="outline" className="rounded-full border-zinc-200 text-zinc-600 hover:text-black hover:bg-zinc-50 font-bold">
+                Clear Search
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -129,13 +151,25 @@ export default function ListingsGridPage() {
             </div>
             <h3 className="text-xl font-bold text-black mb-2">No listings found</h3>
             <p className="text-zinc-500 font-medium max-w-sm">
-              There are currently no items available in <span className="font-bold text-black">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>.
+              {searchQuery ? (
+                <>No items found matching "<span className="font-bold text-black">{searchQuery}</span>" in <span className="font-bold text-black">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>.</>
+              ) : (
+                <>There are currently no items available in <span className="font-bold text-black">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>.</>
+              )}
             </p>
-            <Link href="/add-product">
-              <Button size="lg" className="mt-8 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold rounded-full shadow-lg shadow-red-500/20">
-                Be the first to list one!
-              </Button>
-            </Link>
+            {searchQuery ? (
+              <Link href="/listings">
+                <Button size="lg" className="mt-8 bg-zinc-900 hover:bg-black text-white font-bold rounded-full shadow-lg">
+                  Clear Search
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/add-product">
+                <Button size="lg" className="mt-8 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold rounded-full shadow-lg shadow-red-500/20">
+                  Be the first to list one!
+                </Button>
+              </Link>
+            )}
           </div>
         )}
       </main>

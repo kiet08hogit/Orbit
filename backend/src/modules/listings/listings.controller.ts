@@ -31,8 +31,11 @@ export class ListingsController {
     @Get('all')
     @UseGuards(ClerkAuthGuard)
     @UseInterceptors(CacheInterceptor)
-    async getAllListings(@Query('category') category?: ListingCategory) {
-        return this.listingsService.findLatestListings(category);
+    async getAllListings(
+        @Query('category') category?: ListingCategory,
+        @Query('q') q?: string
+    ) {
+        return this.listingsService.findLatestListings(category, q);
     }
 
     @Post(':id/swipe')

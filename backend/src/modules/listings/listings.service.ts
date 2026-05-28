@@ -44,11 +44,17 @@ export class ListingsService {
         return listing;
     }
 
-    async findLatestListings(category?: ListingCategory, limit: number = 20) {
+    async findLatestListings(category?: ListingCategory, search?: string, limit: number = 20) {
         return this.prisma.listing.findMany({
             where: { 
                 status: ListingStatus.ACTIVE,
-                ...(category ? { category } : {})
+                ...(category ? { category } : {}),
+                ...(search ? {
+                    OR: [
+                        { title: { contains: search, mode: 'insensitive' } },
+                        { description: { contains: search, mode: 'insensitive' } }
+                    ]
+                } : {})
             },
             take: limit,
             orderBy: { createdAt: 'desc' },

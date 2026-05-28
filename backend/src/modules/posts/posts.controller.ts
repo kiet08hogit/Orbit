@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Req, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Req, UseInterceptors, UploadedFiles, Param } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
@@ -12,8 +12,15 @@ export class PostsController {
   @Get()
   @UseGuards(ClerkAuthGuard)
   @UseInterceptors(CacheInterceptor)
-  getAllPosts() {
-    return this.postsService.getAllPosts();
+  async getAllPosts(@Req() req) {
+    const clerkUserId = req.user.clerkUserId;
+    const posts = await this.postsService.getAllPosts(clerkUserId);
+    const ids = posts.map(p => p.id);
+    const dups = ids.filter((item, index) => ids.indexOf(item) !== index);
+    if (dups.length > 0) {
+      console.error("DUPLICATE POSTS DETECTED IN GETALLPOSTS:", dups);
+    }
+    return posts;
   }
 
   @Post()
@@ -26,5 +33,25 @@ export class PostsController {
   ) {
     const clerkUserId = req.user.clerkUserId;
     return this.postsService.createPost(clerkUserId, createPostDto, files);
+  }
+
+  @Post(':id/like')
+  @UseGuards(ClerkAuthGuard)
+  toggleLike(@Req() req, @Param('id') id: string) {
+    const clerkUserId = req.user.clerkUserId;
+    return this.postsService.toggleLike(clerkUserId, id);
+  }
+
+  @Post(':id/comment')
+  @UseGuards(ClerkAuthGuard)
+  createComment(@Req() req, @Param('id') id: string, @Body('content') content: string) {
+    const clerkUserId = req.user.clerkUserId;
+    return this.postsService.createComment(clerkUserId, id, content);
+  }
+
+  @Get(':id/comments')
+  @UseGuards(ClerkAuthGuard)
+  getComments(@Param('id') id: string) {
+    return this.postsService.getComments(id);
   }
 }

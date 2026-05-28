@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
+import { io, Socket } from "socket.io-client";
 import { 
   MessageCircle, 
   MoreHorizontal,
@@ -35,6 +36,18 @@ interface Post {
     likes: number;
     comments: number;
   };
+  likes?: { userId: string }[];
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: {
+    name: string | null;
+    username: string | null;
+    avatarUrl: string | null;
+  }
 }
 
 // Format date nicely e.g., "May 21" or "2h ago"
@@ -56,8 +69,136 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
   
   const [activeTab, setActiveTab] = useState<"COMMUNITY" | "FOLLOWING">("COMMUNITY");
   const [isCreatingPost, setIsCreatingPost] = useState(false);
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [posts, setPosts] = useState<Post[]>(() => {
+    const seen = new Set<string>();
+    return initialPosts.filter(p => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+  });
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Socket State
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  // Comments State
+  const [activePostForComments, setActivePostForComments] = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newCommentContent, setNewCommentContent] = useState("");
+  const [isCommentsLoading, setIsCommentsLoading] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  // --- Socket Effects ---
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const newSocket = io(apiUrl, { transports: ["websocket"], autoConnect: false });
+
+    const setupSocket = async () => {
+      const token = await getToken();
+      if(token) {
+        newSocket.auth = { token };
+        newSocket.on("connect", () => {
+           newSocket.emit("authenticate");
+        });
+        newSocket.connect();
+      }
+    };
+    setupSocket();
+    setSocket(newSocket);
+
+    return () => { newSocket.disconnect(); };
+  }, [isLoaded, isSignedIn, getToken]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const onLikeUpdate = ({ postId, likeCount }: { postId: string, likeCount: number }) => {
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, _count: { ...p._count, likes: likeCount } } : p));
+    };
+
+    const onCommentAdded = ({ postId, comment, commentCount }: { postId: string, comment: Comment, commentCount: number }) => {
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, _count: { ...p._count, comments: commentCount } } : p));
+      
+      setActivePostForComments(prevActivePost => {
+        if (prevActivePost === postId) {
+          setComments(prevComments => [...prevComments, comment]);
+        }
+        return prevActivePost;
+      });
+    };
+
+    socket.on("post_like_update", onLikeUpdate);
+    socket.on("post_comment_added", onCommentAdded);
+
+    return () => {
+      socket.off("post_like_update", onLikeUpdate);
+      socket.off("post_comment_added", onCommentAdded);
+    };
+  }, [socket]);
+
+  // --- Handlers ---
+
+  const handleToggleLike = async (postId: string) => {
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        const isCurrentlyLiked = p.likes && p.likes.length > 0;
+        return {
+          ...p,
+          likes: isCurrentlyLiked ? [] : [{ userId: 'me' }],
+          _count: {
+            ...p._count,
+            likes: isCurrentlyLiked ? Math.max(0, p._count.likes - 1) : p._count.likes + 1
+          }
+        };
+      }
+      return p;
+    }));
+
+    try {
+      const token = await getToken();
+      await axios.post(`http://localhost:3000/posts/${postId}/like`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error("Failed to toggle like:", err);
+    }
+  };
+
+  const handleOpenComments = async (postId: string) => {
+    setActivePostForComments(postId);
+    setIsCommentsLoading(true);
+    setComments([]);
+    try {
+      const token = await getToken();
+      const res = await axios.get(`http://localhost:3000/posts/${postId}/comments`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setComments(res.data);
+    } catch (err) {
+      console.error("Failed to fetch comments", err);
+    } finally {
+      setIsCommentsLoading(false);
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!activePostForComments || !newCommentContent.trim()) return;
+    setIsSubmittingComment(true);
+    try {
+      const token = await getToken();
+      await axios.post(`http://localhost:3000/posts/${activePostForComments}/comment`, { content: newCommentContent }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNewCommentContent("");
+    } catch (err) {
+      console.error("Failed to post comment", err);
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
   
   // Post Creation State
   const [newPostContent, setNewPostContent] = useState("");
@@ -106,7 +247,10 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
       });
       
       // Add the new post to the top of the feed
-      setPosts([res.data, ...posts]);
+      setPosts(prev => {
+        if (prev.some(p => p.id === res.data.id)) return prev;
+        return [res.data, ...prev];
+      });
       
       // Reset form
       setNewPostContent("");
@@ -236,11 +380,17 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                       
                       {/* Footer Actions */}
                       <div className="flex items-center gap-6 mt-1">
-                        <button className="flex items-center gap-2 text-zinc-500 hover:text-rose-500 transition-colors group">
-                          <Heart className="h-4 w-4 group-hover:fill-rose-100" />
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleToggleLike(post.id); }}
+                          className={`flex items-center gap-2 transition-colors group ${post.likes && post.likes.length > 0 ? 'text-rose-500' : 'text-zinc-500 hover:text-rose-500'}`}
+                        >
+                          <Heart className={`h-4 w-4 ${post.likes && post.likes.length > 0 ? 'fill-rose-500' : 'group-hover:fill-rose-100'}`} />
                           <span className="text-[13px] font-medium">{post._count?.likes || 0}</span>
                         </button>
-                        <button className="flex items-center gap-2 text-zinc-500 hover:text-[#3252DF] transition-colors group">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleOpenComments(post.id); }}
+                          className="flex items-center gap-2 text-zinc-500 hover:text-[#3252DF] transition-colors group"
+                        >
                           <MessageCircle className="h-4 w-4 group-hover:fill-blue-100" />
                           <span className="text-[13px] font-medium">{post._count?.comments || 0}</span>
                         </button>
@@ -346,6 +496,94 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                       className="bg-[#3252DF] hover:bg-[#2841b3] text-white font-bold rounded-full px-6"
                     >
                       {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Post"}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Comments Drawer/Modal */}
+        <AnimatePresence>
+          {activePostForComments && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end justify-center sm:items-center sm:p-4"
+              onClick={() => setActivePostForComments(null)}
+            >
+              <motion.div 
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl shadow-xl flex flex-col max-h-[85vh] sm:max-h-[70vh]"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between p-4 border-b border-zinc-100 shrink-0">
+                  <h2 className="text-lg font-black text-black flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5 text-[#3252DF]" />
+                    Comments
+                  </h2>
+                  <Button variant="ghost" size="icon" onClick={() => setActivePostForComments(null)} className="rounded-full text-zinc-500 hover:bg-zinc-100">
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {isCommentsLoading ? (
+                    <div className="flex justify-center p-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-[#3252DF]" />
+                    </div>
+                  ) : comments.length === 0 ? (
+                    <div className="text-center p-8 text-zinc-500">
+                      <p className="text-sm">No comments yet. Be the first!</p>
+                    </div>
+                  ) : (
+                    comments.map(c => (
+                      <div key={c.id} className="flex gap-3">
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage src={c.author.avatarUrl || undefined} />
+                          <AvatarFallback className="bg-zinc-100 text-[10px] font-bold">
+                            {(c.author.name || c.author.username || 'U')[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 bg-zinc-50 rounded-2xl rounded-tl-sm px-4 py-3">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-bold text-[13px] text-zinc-900">
+                              {c.author.name || c.author.username || "Anonymous"}
+                            </span>
+                            <span className="text-[11px] text-zinc-400">{formatDate(c.createdAt)}</span>
+                          </div>
+                          <p className="text-[14px] text-zinc-700 whitespace-pre-wrap">{c.content}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="p-4 border-t border-zinc-100 bg-white shrink-0 sm:rounded-b-3xl">
+                  <div className="flex gap-2">
+                    <Textarea 
+                      placeholder="Add a comment..."
+                      className="min-h-[44px] max-h-[120px] py-3 text-sm rounded-2xl resize-none focus-visible:ring-1 focus-visible:ring-[#3252DF]"
+                      value={newCommentContent}
+                      onChange={e => setNewCommentContent(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleCommentSubmit();
+                        }
+                      }}
+                    />
+                    <Button 
+                      onClick={handleCommentSubmit}
+                      disabled={!newCommentContent.trim() || isSubmittingComment}
+                      className="rounded-full bg-[#3252DF] hover:bg-[#2841b3] text-white shrink-0 h-11 px-6 font-bold"
+                    >
+                      {isSubmittingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : "Post"}
                     </Button>
                   </div>
                 </div>
