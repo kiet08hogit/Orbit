@@ -210,7 +210,7 @@ export default function OnboardingPage() {
                 </label>
                 <Select 
                   value={formData.classYear} 
-                  onValueChange={(val) => setFormData({ ...formData, classYear: val })}
+                  onValueChange={(val) => setFormData({ ...formData, classYear: val || '' })}
                 >
                   <SelectTrigger className="w-full rounded-xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
                     <SelectValue placeholder="Select year" />
