@@ -2,12 +2,16 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class StorageService {
   private readonly uploadDir = path.join(process.cwd(), 'uploads');
 
-  constructor() {
+  constructor(
+    @InjectQueue('image-optimization') private imageQueue: Queue
+  ) {
     // Ensure the uploads directory exists
     if (!fs.existsSync(this.uploadDir)) {
       fs.mkdirSync(this.uploadDir, { recursive: true });
@@ -23,6 +27,9 @@ export class StorageService {
 
       // Write the file buffer to the uploads directory
       fs.writeFileSync(filePath, file.buffer);
+
+      // Add a job to the background queue for asynchronous processing
+      await this.imageQueue.add('optimize', { filename: uniqueFilename });
 
       // Return the public URL path
       return `/uploads/${uniqueFilename}`;
