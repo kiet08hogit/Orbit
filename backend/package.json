@@ -16,6 +16,7 @@
   "dependencies": {
     "@azure/storage-blob": "^12.31.0",
     "@clerk/backend": "^3.4.11",
+    "@google/generative-ai": "^0.24.1",
     "@keyv/redis": "^5.1.6",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/cache-manager": "^3.1.2",

@@ -3,11 +3,13 @@ import { PrismaService } from '../../database/prisma.service';
 import { CreateListingDto } from './create-listing.dto';
 import { ListingStatus, InteractionType, ListingCategory } from '@prisma/client';
 import { StorageService } from '../storage/storage.service';
+import { AiService } from '../ai/ai.service';
 @Injectable()
 export class ListingsService {
     constructor(
         private prisma: PrismaService,
-        private storageService: StorageService
+        private storageService: StorageService,
+        private aiService: AiService
     ) { }
 
     async create(clerkUserId: string, email: string, data: CreateListingDto, files?: any[]) {
@@ -28,6 +30,16 @@ export class ListingsService {
                 sellerId: dbuser.id,
             },
         });
+
+        // Generate and save AI embedding
+        try {
+            const textToEmbed = `${data.title}. ${data.description}`;
+            const embedding = await this.aiService.generateEmbedding(textToEmbed);
+            const embeddingString = `[${embedding.join(',')}]`;
+            await this.prisma.$executeRaw`UPDATE "Listing" SET embedding = ${embeddingString}::vector WHERE id = ${listing.id}`;
+        } catch (error) {
+            console.error("Failed to save AI embedding for listing", error);
+        }
 
         if (files && files.length > 0) {
             for (const file of files) {
@@ -177,7 +189,7 @@ export class ListingsService {
         const dbUser = await this.prisma.user.findUnique({ where: { clerkUserId } });
         if (!dbUser) throw new NotFoundException('User not found');
 
-        return this.prisma.listing.update({
+        const updated = await this.prisma.listing.update({
             where: { id: listingId, sellerId: dbUser.id },
             data: {
                 title: data.title,
@@ -186,6 +198,62 @@ export class ListingsService {
                 category: data.category,
             },
         });
+
+        if (data.title || data.description) {
+            try {
+                const textToEmbed = `${updated.title}. ${updated.description}`;
+                const embedding = await this.aiService.generateEmbedding(textToEmbed);
+                const embeddingString = `[${embedding.join(',')}]`;
+                await this.prisma.$executeRaw`UPDATE "Listing" SET embedding = ${embeddingString}::vector WHERE id = ${updated.id}`;
+            } catch (error) {
+                console.error("Failed to update AI embedding for listing", error);
+            }
+        }
+
+        return updated;
+    }
+
+    async findSmartListings(search: string, category?: ListingCategory, limit: number = 20) {
+        try {
+            const queryEmbedding = await this.aiService.generateEmbedding(search);
+            const embeddingString = `[${queryEmbedding.join(',')}]`;
+            
+            // Query postgres for the closest vectors using Cosine Similarity (<=>)
+            let results: { id: string }[];
+            
+            if (category) {
+                results = await this.prisma.$queryRaw<{id: string}[]>`
+                    SELECT id FROM "Listing" 
+                    WHERE status = 'ACTIVE' AND category = ${category}::"ListingCategory"
+                    ORDER BY embedding <=> ${embeddingString}::vector 
+                    LIMIT ${limit};
+                `;
+            } else {
+                results = await this.prisma.$queryRaw<{id: string}[]>`
+                    SELECT id FROM "Listing" 
+                    WHERE status = 'ACTIVE'
+                    ORDER BY embedding <=> ${embeddingString}::vector 
+                    LIMIT ${limit};
+                `;
+            }
+
+            const ids = results.map(r => r.id);
+            if (ids.length === 0) return [];
+
+            const listings = await this.prisma.listing.findMany({
+                where: { id: { in: ids } },
+                include: {
+                    images: true,
+                    seller: { select: { id: true, email: true } },
+                },
+            });
+
+            // Re-order the results to match the semantic closeness returned by Postgres
+            return ids.map(id => listings.find(l => l.id === id)).filter(Boolean);
+        } catch (error) {
+            console.error("Smart search failed, falling back to basic keyword search", error);
+            return this.findLatestListings(category, search, limit);
+        }
     }
 }
 

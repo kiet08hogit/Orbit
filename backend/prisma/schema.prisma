@@ -1,10 +1,12 @@
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 // =======================
@@ -87,6 +89,9 @@ model Listing {
   // Relationships
   images       ListingImage[]
   interactions Interaction[]
+
+  // AI Embeddings
+  embedding    Unsupported("vector(768)")?
 }
 
 model ListingImage {
