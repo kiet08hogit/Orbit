@@ -5,13 +5,14 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Send, Loader2, ArrowLeft, MoreVertical, MessageSquare } from "lucide-react";
+import { Search, Send, Loader2, ArrowLeft, MoreVertical, MessageSquare, AlertTriangle } from "lucide-react";
 import axios from "axios";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Interfaces
 interface UserPreview {
@@ -65,6 +66,16 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [contextListing, setContextListing] = useState<any | null>(null);
+
+  // Meetup Verification States
+  const [meetupVerificationCode, setMeetupVerificationCode] = useState("");
+  const [activeMeetupCode, setActiveMeetupCode] = useState<any>(null); // For buyer side
+  const [isVerifyingMeetup, setIsVerifyingMeetup] = useState(false);
+  const [isStartingMeetup, setIsStartingMeetup] = useState(false);
+  const [meetupError, setMeetupError] = useState("");
+  const [meetupSuccess, setMeetupSuccess] = useState("");
+  const [showBuyerMeetupModal, setShowBuyerMeetupModal] = useState(false);
+  const [transactionStatus, setTransactionStatus] = useState<string | null>(null);
 
   // Auto-scroll to bottom of messages
   const scrollToBottom = () => {
@@ -254,14 +265,129 @@ export default function ChatPage() {
       }
     };
 
+    const onMeetupCodeCreated = (payload: any) => {
+      setActiveMeetupCode(payload);
+      setShowBuyerMeetupModal(true);
+      setTransactionStatus("MEETING_STARTED");
+    };
+
+    const onMeetupConfirmed = (payload: any) => {
+      setTransactionStatus("MEETUP_CONFIRMED");
+      setMeetupSuccess("Meetup confirmed successfully!");
+      setMeetupError("");
+      setShowBuyerMeetupModal(false);
+      setActiveMeetupCode(null);
+    };
+
     socket.on("receive_message", onReceiveMessage);
     socket.on("messages_read", onMessagesRead);
+    socket.on("meetup_code_created", onMeetupCodeCreated);
+    socket.on("meetup_confirmed", onMeetupConfirmed);
 
     return () => {
       socket.off("receive_message", onReceiveMessage);
       socket.off("messages_read", onMessagesRead);
+      socket.off("meetup_code_created", onMeetupCodeCreated);
+      socket.off("meetup_confirmed", onMeetupConfirmed);
     };
   }, [socket, activeConversationId]);
+
+  const activeConversation = inbox.find(c => c.id === activeConversationId);
+  const otherActiveMember = activeConversation?.members?.find(m => m.user.clerkUserId !== clerkUser?.id)?.user;
+  const otherActiveName = otherActiveMember?.name || otherActiveMember?.username || "UIC Student";
+  const otherActiveInitial = otherActiveName[0]?.toUpperCase() || "U";
+
+  const latestListingMessage = [...messages].reverse().find(m => m.listingId);
+  const activeListingId = latestListingMessage?.listingId;
+  const [activeListingSellerId, setActiveListingSellerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!activeListingId || !isSignedIn) return;
+    const fetchListing = async () => {
+      try {
+        const token = await getToken();
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
+        const res = await axios.get(`${apiUrl}/listings/${activeListingId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // Make sure to use the clerkUserId to match clerkUser?.id
+        setActiveListingSellerId(res.data.seller?.clerkUserId || res.data.sellerId);
+      } catch (err) {
+        console.error("Failed to fetch active listing for seller check");
+      }
+    };
+    fetchListing();
+  }, [activeListingId, isSignedIn, getToken]);
+
+  // Fetch active meetup code for buyer
+  useEffect(() => {
+    if (!activeConversationId || !otherActiveMember || !activeListingId || !isSignedIn) return;
+
+    const fetchActiveMeetup = async () => {
+      try {
+        const token = await getToken();
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
+        const res = await axios.get(`${apiUrl}/transactions/active-meetup-code?listingId=${activeListingId}&sellerId=${otherActiveMember.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data?.activeCode) {
+          setActiveMeetupCode(res.data.activeCode);
+          setTransactionStatus("MEETING_STARTED");
+          setShowBuyerMeetupModal(true);
+        }
+      } catch (err) {
+        // Ignore errors, might not be a buyer or no active meetup
+      }
+    };
+    fetchActiveMeetup();
+  }, [activeConversationId, otherActiveMember, activeListingId, isSignedIn, getToken]);
+
+  const handleStartMeetup = async () => {
+    if (!activeListingId || !otherActiveMember) return;
+    setIsStartingMeetup(true);
+    setMeetupError("");
+    setMeetupSuccess("");
+    try {
+      const token = await getToken();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
+      const res = await axios.post(`${apiUrl}/transactions/start-meetup`, {
+        listingId: activeListingId,
+        buyerId: otherActiveMember.id
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMeetupSuccess(res.data.message);
+      setTransactionStatus("MEETING_STARTED");
+    } catch (err: any) {
+      setMeetupError(err.response?.data?.message || "Failed to start meetup.");
+    } finally {
+      setIsStartingMeetup(false);
+    }
+  };
+
+  const handleVerifyMeetup = async () => {
+    if (!activeListingId || !otherActiveMember || !meetupVerificationCode) return;
+    setIsVerifyingMeetup(true);
+    setMeetupError("");
+    try {
+      const token = await getToken();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
+      const res = await axios.post(`${apiUrl}/transactions/verify-meetup-code`, {
+        listingId: activeListingId,
+        buyerId: otherActiveMember.id,
+        code: meetupVerificationCode
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMeetupSuccess(res.data.message);
+      setTransactionStatus("MEETUP_CONFIRMED");
+      setMeetupVerificationCode("");
+    } catch (err: any) {
+      setMeetupError(err.response?.data?.message || "Failed to verify code.");
+    } finally {
+      setIsVerifyingMeetup(false);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -308,14 +434,9 @@ export default function ChatPage() {
     );
   }
 
-  // Get the active conversation from the inbox to display their name
-  const activeConversation = inbox.find(c => c.id === activeConversationId);
-  const otherActiveMember = activeConversation?.members?.find(m => m.user.clerkUserId !== clerkUser?.id)?.user;
-  const otherActiveName = otherActiveMember?.name || otherActiveMember?.username || "UIC Student";
-  const otherActiveInitial = otherActiveName[0]?.toUpperCase() || "U";
-
+  // The activeConversation variables are already defined above
   return (
-    <div className="h-[calc(100vh-4rem)] bg-white flex overflow-hidden font-sans">
+    <div className="h-[calc(100vh-146px)] bg-white flex overflow-hidden font-sans">
       
       {/* ─── SIDEBAR (INBOX) ─── */}
       <div className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-zinc-200 bg-zinc-50/50 ${activeConversationId ? 'hidden md:flex' : 'flex'}`}>
@@ -380,7 +501,7 @@ export default function ChatPage() {
       </div>
 
       {/* ─── MAIN CHAT AREA ─── */}
-      <div className={`flex-1 flex flex-col bg-white ${!activeConversationId ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden bg-white ${!activeConversationId ? 'hidden md:flex' : 'flex'}`}>
         {!activeConversationId ? (
           <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
             <MessageSquare className="h-16 w-16 mb-4 text-zinc-200" />
@@ -403,18 +524,85 @@ export default function ChatPage() {
                   {otherActiveMember?.avatarUrl && <AvatarImage src={otherActiveMember.avatarUrl} />}
                   <AvatarFallback className="bg-zinc-100 text-zinc-600 font-bold">{otherActiveInitial}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex items-center gap-2">
                   <h2 className="font-bold text-black leading-tight">{otherActiveName}</h2>
-                  {/* You could add an online status indicator here in the future */}
+                  
+                  {/* Meetup Verification UI (Header) */}
+                  {activeListingSellerId === clerkUser?.id && activeListingId && (
+                    <div className="flex items-center gap-2 ml-2 md:ml-4 md:border-l md:border-zinc-200 md:pl-4">
+                      {transactionStatus !== 'MEETUP_CONFIRMED' && transactionStatus !== 'MEETING_STARTED' && (
+                        <Button 
+                          size="sm" 
+                          onClick={handleStartMeetup} 
+                          disabled={isStartingMeetup}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs px-3 rounded-full"
+                        >
+                          {isStartingMeetup ? <Loader2 className="h-3 w-3 animate-spin" /> : "Verify Meetup"}
+                        </Button>
+                      )}
+                      
+                      {transactionStatus === 'MEETING_STARTED' && (
+                        <div className="flex gap-1 items-center">
+                          <Input 
+                            placeholder="6-digit code" 
+                            value={meetupVerificationCode}
+                            onChange={(e) => setMeetupVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            className="bg-zinc-100 border-transparent focus-visible:ring-indigo-500 h-7 w-24 text-xs text-center rounded-full"
+                            maxLength={6}
+                          />
+                          <Button 
+                            size="sm" 
+                            onClick={handleVerifyMeetup}
+                            disabled={isVerifyingMeetup || meetupVerificationCode.length !== 6}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs px-3 shrink-0 rounded-full"
+                          >
+                            {isVerifyingMeetup ? <Loader2 className="h-3 w-3 animate-spin" /> : "Confirm"}
+                          </Button>
+                        </div>
+                      )}
+
+                      {transactionStatus === 'MEETUP_CONFIRMED' && (
+                        <div className="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
+                          ✓ Confirmed
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Buyer View: Show Code Button */}
+                  {activeListingSellerId !== clerkUser?.id && activeMeetupCode && transactionStatus === 'MEETING_STARTED' && (
+                    <div className="flex items-center gap-2 ml-2 md:ml-4 md:border-l md:border-zinc-200 md:pl-4">
+                      <Button 
+                        size="sm" 
+                        onClick={() => setShowBuyerMeetupModal(true)}
+                        className="bg-zinc-900 hover:bg-black text-white h-7 text-xs px-3 rounded-full shadow-sm"
+                      >
+                        Show Code
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Buyer View: Confirmed Status */}
+                  {activeListingSellerId !== clerkUser?.id && transactionStatus === 'MEETUP_CONFIRMED' && (
+                    <div className="flex items-center gap-2 ml-2 md:ml-4 md:border-l md:border-zinc-200 md:pl-4">
+                      <div className="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
+                        ✓ Meetup Confirmed
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-black">
-                <MoreVertical className="h-5 w-5" />
-              </Button>
+              
+              <div className="flex items-center gap-2 shrink-0">
+                {meetupError && <span className="text-[10px] text-red-500 font-bold hidden md:inline-block max-w-[120px] truncate">{meetupError}</span>}
+                <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-black">
+                  <MoreVertical className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-zinc-50/30">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-zinc-50/30">
               {isLoadingMessages ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
@@ -422,7 +610,7 @@ export default function ChatPage() {
               ) : (
                 <AnimatePresence initial={false}>
                   {messages.map((msg, index) => {
-                    const isMine = msg.senderId === clerkUser?.id;
+                    const isMine = msg.sender?.clerkUserId === clerkUser?.id || msg.senderId === clerkUser?.id;
                     const showAvatar = !isMine && (index === 0 || messages[index - 1].senderId !== msg.senderId);
 
                     return (
@@ -518,7 +706,7 @@ export default function ChatPage() {
             )}
 
             {/* Chat Input */}
-            <div className="p-4 border-t border-zinc-200 bg-white shrink-0">
+            <div className="p-4 border-t border-zinc-200 bg-white shrink-0 pb-safe">
               <form 
                 onSubmit={handleSendMessage}
                 className="flex gap-2 items-center max-w-4xl mx-auto"
@@ -542,6 +730,45 @@ export default function ChatPage() {
         )}
       </div>
       
+      {/* Buyer Meetup Modal */}
+      <Dialog open={showBuyerMeetupModal} onOpenChange={setShowBuyerMeetupModal}>
+        <DialogContent className="sm:max-w-sm rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-white [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-center mb-1">Seller verification requested!</DialogTitle>
+            <DialogDescription className="text-sm text-center text-zinc-500 mb-6">
+              Only share this code when you are physically meeting the seller to receive your item.
+            </DialogDescription>
+          </DialogHeader>
+
+          {activeMeetupCode && (
+            <div className="flex flex-col gap-6">
+              <div className="bg-zinc-100 rounded-2xl p-6 flex items-center justify-center">
+                <span className="text-5xl font-black tracking-widest text-[#3252DF]">
+                  {activeMeetupCode.code}
+                </span>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <span className="font-bold text-amber-800 text-sm">Warning</span>
+                </div>
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  This only confirms that you met the seller. Do not hand over payment until you have received the item.
+                </p>
+              </div>
+
+              <Button 
+                onClick={() => setShowBuyerMeetupModal(false)}
+                className="w-full rounded-full h-12 font-bold bg-[#3252DF] hover:bg-[#2841B3] text-white transition-colors"
+              >
+                Got it
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

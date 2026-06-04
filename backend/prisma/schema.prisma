@@ -69,6 +69,8 @@ model User {
   messages            Message[]
   postLikes           PostLike[]
   postComments        PostComment[]
+  buyerTransactions   Transaction[] @relation("BuyerTransactions")
+  sellerTransactions  Transaction[] @relation("SellerTransactions")
 }
 
 model Listing {
@@ -90,6 +92,7 @@ model Listing {
   images       ListingImage[]
   interactions Interaction[]
   messages     Message[]
+  transactions Transaction[]
 
   // AI Embeddings
   embedding    Unsupported("vector(768)")?
@@ -101,7 +104,7 @@ model ListingImage {
   
   // Foreign Key to Listing. 'onDelete: Cascade' means if the listing is deleted, delete its images too.
   listingId String
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+   listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }
@@ -200,4 +203,41 @@ model Message {
   listing        Listing?     @relation(fields: [listingId], references: [id], onDelete: SetNull)
 
   createdAt      DateTime     @default(now())
+}
+
+// =======================
+// MEETUP & TRANSACTIONS
+// =======================
+
+enum TransactionStatus {
+  PENDING
+  MEETING_STARTED
+  MEETUP_CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Transaction {
+  id             String            @id @default(uuid())
+  
+  listingId      String
+  listing        Listing           @relation(fields: [listingId], references: [id])
+  
+  buyerId        String
+  buyer          User              @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  
+  sellerId       String
+  seller         User              @relation("SellerTransactions", fields: [sellerId], references: [id])
+  
+  status         TransactionStatus @default(PENDING)
+  
+  // Verification fields
+  meetupCode           String?
+  meetupCodeExpiresAt  DateTime?
+  meetupVerifiedAt     DateTime?
+  meetupVerifyAttempts Int       @default(0)
+  meetupLastSentAt     DateTime? // Cooldown tracking
+  
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 }

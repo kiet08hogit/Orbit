@@ -97,4 +97,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       console.error("Failed to process mark_read:", err);
     }
   }
+
+  // Used by TransactionsService to emit meetup codes
+  sendMeetupCode(buyerClerkUserId: string, payload: any) {
+    this.server.to(buyerClerkUserId).emit('meetup_code_created', payload);
+  }
+
+  sendMeetupConfirmed(buyerClerkUserId: string, sellerClerkUserId: string, payload: any) {
+    this.server.to(buyerClerkUserId).emit('meetup_confirmed', payload);
+    this.server.to(sellerClerkUserId).emit('meetup_confirmed', payload);
+  }
 }
