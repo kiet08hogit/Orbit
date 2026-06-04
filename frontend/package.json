@@ -11,11 +11,12 @@
   "dependencies": {
     "@base-ui/react": "^1.5.0",
     "@clerk/nextjs": "^7.4.0",
+    "@radix-ui/react-dialog": "^1.1.15",
     "axios": "^1.16.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
-    "lucide-react": "^1.16.0",
+    "lucide-react": "^1.17.0",
     "mapbox-gl": "^3.24.0",
     "next": "16.2.6",
     "react": "19.2.4",

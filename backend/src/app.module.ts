@@ -10,6 +10,7 @@ import { StorageModule } from './modules/storage/storage.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PostsModule } from './modules/posts/posts.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bullmq';
 import { JobsModule } from './modules/jobs/jobs.module';
@@ -35,6 +36,7 @@ import { APP_GUARD } from '@nestjs/core';
         ChatModule,
         StorageModule,
         PostsModule,
+        TransactionsModule,
         CacheModule.registerAsync({
             isGlobal: true,
             imports: [ConfigModule],
