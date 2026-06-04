@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Seller {
   id: string;
@@ -60,6 +62,11 @@ export default function ListingDetailPage() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
+
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [reportSubmitted, setReportSubmitted] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -149,6 +156,29 @@ export default function ListingDetailPage() {
     } catch (err) {
       console.error("Failed to update wishlist:", err);
       setIsWishlisted(!newValue);
+    }
+  };
+
+  const handleReportListing = async () => {
+    if (!reportReason.trim()) return;
+    setIsSubmittingReport(true);
+    try {
+      const token = await getToken();
+      await axios.post(
+        "http://127.0.0.1:3000/reports",
+        {
+          listingId: listing?.id,
+          reason: reportReason,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setReportSubmitted(true);
+      setTimeout(() => setShowReportDialog(false), 2000);
+    } catch (err) {
+      console.error("Failed to submit report", err);
+      alert("Failed to submit report. Please try again.");
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -467,9 +497,72 @@ export default function ListingDetailPage() {
             <div className="w-full flex-1 min-h-[500px] rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
               <CampusMap onLocationSelect={handleMeetupRequest} />
             </div>
+
+            {/* Report Button */}
+            <div className="mt-8 pt-6 border-t border-zinc-200 flex justify-center">
+              <button 
+                onClick={() => setShowReportDialog(true)}
+                className="text-xs font-semibold text-zinc-400 hover:text-red-500 transition-colors underline underline-offset-4"
+              >
+                Report this listing
+              </button>
+            </div>
           </motion.div>
         </div>
       </main>
+
+      {/* Report Dialog */}
+      <Dialog open={showReportDialog} onOpenChange={(open) => {
+        setShowReportDialog(open);
+        if (!open) {
+          setReportReason("");
+          setReportSubmitted(false);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-6 border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black">Report Listing</DialogTitle>
+            <DialogDescription className="text-zinc-500">
+              Please let us know why you are reporting this listing. This information will be reviewed by our moderation team.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {reportSubmitted ? (
+            <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
+              <div className="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+              </div>
+              <p className="font-bold text-zinc-900">Report Submitted</p>
+              <p className="text-sm text-zinc-500">Thank you for helping keep the community safe.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-4 pt-4">
+              <Textarea 
+                placeholder="Describe the issue (e.g. offensive content, scam, incorrect category...)"
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="min-h-[120px] bg-zinc-50 border-zinc-200 resize-none focus-visible:ring-[#3252DF]"
+              />
+              <div className="flex justify-end gap-3 pt-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowReportDialog(false)}
+                  className="rounded-full text-zinc-500"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleReportListing}
+                  disabled={!reportReason.trim() || isSubmittingReport}
+                  className="rounded-full bg-red-600 hover:bg-red-700 text-white font-bold px-6"
+                >
+                  {isSubmittingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Report"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

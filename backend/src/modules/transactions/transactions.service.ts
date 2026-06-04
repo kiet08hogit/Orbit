@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service'
-import { ChatGateway } from '../chat/chat.gateway'
-import * as crypto from 'crypto'
+import { PrismaService } from '../../database/prisma.service';
+import { ChatGateway } from '../chat/chat.gateway';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class TransactionsService {

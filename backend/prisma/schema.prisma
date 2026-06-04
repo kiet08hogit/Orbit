@@ -71,6 +71,8 @@ model User {
   postComments        PostComment[]
   buyerTransactions   Transaction[] @relation("BuyerTransactions")
   sellerTransactions  Transaction[] @relation("SellerTransactions")
+  reportsMade         Report[]      @relation("ReportsMade")
+  reportsReceived     Report[]      @relation("ReportsReceived")
 }
 
 model Listing {
@@ -93,6 +95,7 @@ model Listing {
   interactions Interaction[]
   messages     Message[]
   transactions Transaction[]
+  reports      Report[]
 
   // AI Embeddings
   embedding    Unsupported("vector(768)")?
@@ -240,4 +243,18 @@ model Transaction {
   
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
+}
+
+model Report {
+  id             String   @id @default(uuid())
+  reporterId     String
+  reportedUserId String?  
+  listingId      String?  
+  reason         String
+  status         String   @default("PENDING") // PENDING, REVIEWED, RESOLVED
+  createdAt      DateTime @default(now())
+
+  reporter       User     @relation("ReportsMade", fields: [reporterId], references: [id])
+  reportedUser   User?    @relation("ReportsReceived", fields: [reportedUserId], references: [id])
+  listing        Listing? @relation(fields: [listingId], references: [id])
 }
