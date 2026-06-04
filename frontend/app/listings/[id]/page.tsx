@@ -72,7 +72,7 @@ export default function ListingDetailPage() {
     const fetchListing = async () => {
       try {
         const token = await getToken();
-        const res = await axios.get(`http://localhost:3000/listings/${params.id}`, {
+        const res = await axios.get(`http://127.0.0.1:3000/listings/${params.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -89,18 +89,21 @@ export default function ListingDetailPage() {
   }, [params.id, isLoaded, isSignedIn, getToken, router]);
 
   const handleTalkToSeller = async () => {
-    if (!listing?.seller?.id || isStartingChat) return;
+    if (!isSignedIn) {
+      router.push("/sign-in");
+      return;
+    }
     
     setIsStartingChat(true);
     try {
       const token = await getToken();
-      const res = await axios.post(`http://localhost:3000/chat/conversation/${listing.seller.clerkUserId || listing.seller.id}`, {}, {
+      const res = await axios.post(`http://127.0.0.1:3000/chat/conversation/${listing?.seller.clerkUserId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       if (res.status === 200 || res.status === 201) {
         const conversation = res.data;
-        router.push(`/chat?id=${conversation.id}`);
+        router.push(`/chat?id=${conversation.id}&listingId=${listing?.id}`);
       } else {
         console.error("Failed to start conversation");
         setIsStartingChat(false);
@@ -108,6 +111,26 @@ export default function ListingDetailPage() {
     } catch (err) {
       console.error("Error starting chat:", err);
       setIsStartingChat(false);
+    }
+  };
+
+  const handleMeetupRequest = async (building: any) => {
+    if (!isSignedIn) {
+      router.push("/sign-in");
+      return;
+    }
+    try {
+      const token = await getToken();
+      const res = await axios.post(`http://127.0.0.1:3000/chat/conversation/${listing?.seller.clerkUserId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.status === 200 || res.status === 201) {
+        const conversation = res.data;
+        const meetupLocation = encodeURIComponent(building.name);
+        router.push(`/chat?id=${conversation.id}&listingId=${listing?.id}&meetupLocation=${meetupLocation}`);
+      }
+    } catch (err) {
+      console.error("Error starting chat:", err);
     }
   };
 
@@ -119,7 +142,7 @@ export default function ListingDetailPage() {
 
     try {
       const token = await getToken();
-      await axios.post(`http://localhost:3000/listings/${listing.id}/swipe`, 
+      await axios.post(`http://127.0.0.1:3000/listings/${listing.id}/swipe`, 
         { type: newValue ? "LIKE" : "SKIP" }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -217,7 +240,7 @@ export default function ListingDetailPage() {
                       }`}
                   >
                     <img
-                      src={`http://localhost:3000${img.url}`}
+                      src={`http://127.0.0.1:3000${img.url}`}
                       alt={`Thumbnail ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -239,7 +262,7 @@ export default function ListingDetailPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3 }}
-                    src={`http://localhost:3000${listing.images[activeImageIndex].url}`}
+                    src={`http://127.0.0.1:3000${listing.images[activeImageIndex].url}`}
                     alt={listing.title}
                     className="w-full h-full object-contain"
                   />
@@ -264,7 +287,7 @@ export default function ListingDetailPage() {
                         }`}
                     >
                       <img
-                        src={`http://localhost:3000${img.url}`}
+                        src={`http://127.0.0.1:3000${img.url}`}
                         alt={`Thumb ${idx + 1}`}
                         className="w-full h-full object-cover"
                       />
@@ -442,7 +465,7 @@ export default function ListingDetailPage() {
 
             {/* Map container — fills remaining height, min 500px */}
             <div className="w-full flex-1 min-h-[500px] rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
-              <CampusMap />
+              <CampusMap onLocationSelect={handleMeetupRequest} />
             </div>
           </motion.div>
         </div>

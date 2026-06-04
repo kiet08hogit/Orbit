@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function OnboardingPage() {
   const { getToken } = useAuth();
+  const { user } = useUser();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,19 +54,16 @@ export default function OnboardingPage() {
     try {
       const token = await getToken();
       
-      let avatarUrl = null;
+      let avatarUrl = undefined;
       
-      // If user uploaded an avatar, we would ideally upload it via a dedicated route
-      // or we can handle it in the patch request if the backend supports file uploads for users.
-      // For now, let's assume the backend has an upload endpoint, or we just pass the form data.
-      // Let's create a multipart/form-data request to update the user if needed, or upload image first.
-      
-      // Currently, users.controller.ts updateProfile expects JSON. Let's send JSON.
-      // If avatar upload is needed, we should add an endpoint for it in backend or upload here.
-      // Since storage.service exists, we can use it later. For now we will update text fields.
+      if (avatarFile && user) {
+        const updatedUser = await user.setProfileImage({ file: avatarFile });
+        avatarUrl = updatedUser.imageUrl;
+      }
 
-      const response = await axios.patch('http://localhost:3000/users/me', {
+      await axios.patch('http://127.0.0.1:3000/users/me', {
         ...formData,
+        ...(avatarUrl && { avatarUrl }),
         onboardingComplete: true
       }, {
         headers: {
@@ -122,8 +120,7 @@ export default function OnboardingPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             
-            {/* Avatar Upload (UI only for now, can be wired to backend later) */}
-            {/* 
+            {/* Avatar Upload */}
             <div className="flex flex-col items-center justify-center space-y-4 mb-8">
               <div 
                 className="relative h-24 w-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-zinc-100 group cursor-pointer"
@@ -151,7 +148,6 @@ export default function OnboardingPage() {
                 Upload Profile Picture
               </p>
             </div>
-            */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name */}

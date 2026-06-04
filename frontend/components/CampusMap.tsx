@@ -5,7 +5,11 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { uicBuildings, UICBuilding } from "../data/uicBuildings";
 
-export default function CampusMap() {
+interface CampusMapProps {
+  onLocationSelect?: (building: UICBuilding) => void;
+}
+
+export default function CampusMap({ onLocationSelect }: CampusMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<{ id: string; el: HTMLDivElement }[]>([]);
@@ -173,12 +177,22 @@ export default function CampusMap() {
             <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Selected meetup location</span>
             <span className="font-black text-emerald-900 text-lg">{selectedBuilding.name}</span>
           </div>
-          <button
-            onClick={() => setSelectedBuilding(null)}
-            className="text-emerald-600 hover:text-emerald-800 text-sm font-bold underline"
-          >
-            Clear
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSelectedBuilding(null)}
+              className="text-emerald-600 hover:text-emerald-800 text-sm font-bold underline"
+            >
+              Clear
+            </button>
+            {onLocationSelect && (
+              <button 
+                onClick={() => onLocationSelect(selectedBuilding)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-sm transition-colors"
+              >
+                Send Request
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

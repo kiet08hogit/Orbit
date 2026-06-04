@@ -88,7 +88,7 @@ export default function AddProductPage() {
         submitData.append('images', img.file);
       });
 
-      await axios.post('http://localhost:3000/listings', submitData, {
+      await axios.post('http://127.0.0.1:3000/listings', submitData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

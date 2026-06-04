@@ -38,6 +38,17 @@ export class ListingsController {
         return this.listingsService.findLatestListings(category, q);
     }
 
+    // @Get('recommendations')
+    // @UseGuards(ClerkAuthGuard)
+    // @UseInterceptors(CacheInterceptor)
+    // async getRecommendations(
+    //     @Query('q') q: string,
+    //     @Query('category') category?: ListingCategory,
+    // ) {
+    //     if (!q) return [];
+    //     return this.listingsService.findSmartListings(q, category);
+    // }
+
     @Post(':id/swipe')
     @UseGuards(ClerkAuthGuard)
     async swipe(@CurrentUser() clerkUser: AuthUser, @Param('id') id: string, @Body() body: { type: InteractionType }) {
@@ -54,6 +65,12 @@ export class ListingsController {
     @UseGuards(ClerkAuthGuard)
     async getWishlist(@CurrentUser() clerkUser: AuthUser) {
         return this.listingsService.getWishlist(clerkUser.clerkUserId);
+    }
+
+    @Get('wishlist-count')
+    @UseGuards(ClerkAuthGuard)
+    async getWishlistCount(@CurrentUser() clerkUser: AuthUser) {
+        return this.listingsService.getWishlistCount(clerkUser.clerkUserId);
     }
 
     @Get(':id')

@@ -45,15 +45,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('send_message')
   async handleSendMessage(
     @ConnectedSocket() client: any,
-    @MessageBody() payload: { conversationId: string; content: string },
+    @MessageBody() payload: { conversationId: string; content: string; listingId?: string },
   ) {
-    const { conversationId, content } = payload;
+    const { conversationId, content, listingId } = payload;
     
     try {
       const { savedMessage, conversation } = await this.chatService.createMessage(
         client.user.clerkUserId,
         conversationId,
-        content
+        content,
+        listingId
       );
 
       // Broadcast the message to every member's personal room!

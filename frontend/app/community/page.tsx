@@ -8,10 +8,11 @@ export default async function CommunityPage() {
   
   let initialPosts = [];
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
     const res = await axios.get(`${apiUrl}/posts`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    console.log("CommunityPage API Response:", res.data);
     initialPosts = res.data;
   } catch (error) {
     console.error("Failed to fetch initial posts:", error);
