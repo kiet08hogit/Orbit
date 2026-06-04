@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
-import { Loader2, Tag } from 'lucide-react';
+import { Loader2, Tag, Flame, Eye, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import Link from 'next/link';
 
@@ -98,9 +98,26 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-16">
-            <ProductSection title={<>For you <span className="text-red-600">!</span></>} listings={listings} />
-            <ProductSection title="Hot at UIC" listings={listings.slice().reverse()} />
-            <ProductSection title="You've viewed" listings={listings} />
+            <ProductSection
+              title={<span className="flex items-center gap-2">For you <span className="text-red-600 font-black">!</span></span>}
+              listings={listings}
+              viewMoreHref="/listings?sort=recommended"
+            />
+            <ProductSection
+              title={<span className="flex items-center gap-2">Hot @ UIC <Flame className="h-6 w-6 text-orange-500 fill-orange-500" /> </span>}
+              listings={listings.slice().reverse()}
+              viewMoreHref="/listings?sort=hot"
+            />
+            <ProductSection
+              title={<span className="flex items-center gap-2">You've viewed <Eye className="h-6 w-6 text-blue-500" /></span>}
+              listings={listings}
+              viewMoreHref="/listings?sort=recent"
+            />
+            <ProductSection
+              title={<span className="flex items-center gap-2">New Listings </span>}
+              listings={listings.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())}
+              viewMoreHref="/listings?sort=newest"
+            />
           </div>
         )}
       </main>
@@ -108,11 +125,19 @@ export default function Home() {
   );
 }
 
-function ProductSection({ title, listings }: { title: React.ReactNode, listings: Listing[] }) {
+function ProductSection({ title, listings, viewMoreHref }: { title: React.ReactNode, listings: Listing[], viewMoreHref?: string }) {
   if (listings.length === 0) return null;
   return (
     <section>
-      <h2 className="text-2xl font-bold text-black mb-6">{title}</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-black">{title}</h2>
+        {viewMoreHref && (
+          <Link href={viewMoreHref} className="hidden sm:flex items-center text-sm font-bold text-[#3252DF] hover:text-[#2841B3] transition-colors group">
+            View More
+            <ChevronRight className="h-4 w-4 ml-0.5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        )}
+      </div>
       <div className="flex overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 gap-4 md:gap-6 snap-x snap-mandatory hide-scrollbar">
         {listings.map((listing) => (
           <div key={listing.id} className="min-w-[160px] md:min-w-[240px] w-[160px] md:w-[240px] flex-none snap-start">
@@ -120,6 +145,13 @@ function ProductSection({ title, listings }: { title: React.ReactNode, listings:
           </div>
         ))}
       </div>
+      {viewMoreHref && (
+        <div className="mt-6 sm:hidden">
+          <Link href={viewMoreHref} className="flex items-center justify-center w-full py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded-lg text-sm font-bold transition-colors">
+            View More
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
@@ -127,7 +159,7 @@ function ProductSection({ title, listings }: { title: React.ReactNode, listings:
 function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Link href={`/listings/${listing.id}`} className="block h-full group">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col h-full"

@@ -6,8 +6,10 @@
 
 - **Exclusive Access:** Powered by Clerk Authentication, restricting access solely to users with valid university email addresses.
 - **Categorized Listings:** Browse through dedicated categories like Dorm, Clothes, School, Leisure, and Accessories.
+- **Wishlist & Likes:** Save your favorite items to your wishlist for later.
 - **Real-Time Chat:** Integrated messaging powered by WebSockets to negotiate and chat with sellers instantly.
-- **Match Your Needs:** A fun, interactive swipe feature to discover items you might be interested in.
+- **Secure Meetups:** In-person meetup verification system via WebSockets and temporary codes.
+- **Trust & Safety:** Built-in listing reporting and moderation system.
 - **Interactive Maps:** Built-in Mapbox integration to view meetup locations on or around campus.
 - **Cloud Storage:** Fast, scalable image uploads utilizing Amazon S3.
 
@@ -36,7 +38,7 @@
 - Node.js (v18+ recommended)
 - PostgreSQL database
 - Clerk API Keys
-- Azure Blob Storage credentials
+- AWS S3 Credentials
 - Mapbox API Key
 
 ### 1. Clone the repository
@@ -51,7 +53,7 @@ cd backend
 npm install
 
 # Set up your environment variables
-# Create a .env file with your Prisma database URL, Clerk secret keys, and Azure storage credentials.
+# Create a .env file with your Prisma database URL, Clerk keys, Redis config, and AWS S3 credentials.
 
 # Run database migrations
 npx prisma db push

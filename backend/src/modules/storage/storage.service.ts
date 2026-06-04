@@ -1,21 +1,25 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import * as fs from 'fs';
+import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class StorageService {
-  private readonly uploadDir = path.join(process.cwd(), 'uploads');
+  constructor(private configService: ConfigService) {}
 
-  constructor(
-    @InjectQueue('image-optimization') private imageQueue: Queue
-  ) {
-    // Ensure the uploads directory exists
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
-    }
+  private getS3Client(): S3Client {
+    return new S3Client({
+      region: this.configService.get<string>('AWS_REGION')?.replace(/['"\s]/g, '') || 'us-east-1',
+      credentials: {
+        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID')?.replace(/['"\s]/g, '') || '',
+        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY')?.replace(/['"\s]/g, '') || '',
+      },
+    });
+  }
+
+  private getBucketName(): string {
+    return this.configService.get<string>('AWS_S3_BUCKET_NAME')?.replace(/['"\s]/g, '') || '';
   }
 
   async saveFile(file: any): Promise<string> {
@@ -23,33 +27,47 @@ export class StorageService {
       // Generate a unique filename using uuid and the original extension
       const fileExt = path.extname(file.originalname);
       const uniqueFilename = `${uuidv4()}${fileExt}`;
-      const filePath = path.join(this.uploadDir, uniqueFilename);
+      // Upload to S3
+      const bucketName = this.getBucketName();
+      const s3Client = this.getS3Client();
 
-      // Write the file buffer to the uploads directory
-      fs.writeFileSync(filePath, file.buffer);
+      const command = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: uniqueFilename,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      });
 
-      // Add a job to the background queue for asynchronous processing
-      await this.imageQueue.add('optimize', { filename: uniqueFilename });
+      await s3Client.send(command);
 
-      // Return the public URL path
-      return `/uploads/${uniqueFilename}`;
+      // Return the public S3 URL
+      const region = this.configService.get<string>('AWS_REGION')?.replace(/['"\s]/g, '') || 'us-east-1';
+      return `https://${bucketName}.s3.${region}.amazonaws.com/${uniqueFilename}`;
     } catch (error) {
-      console.error('Error saving file:', error);
-      throw new InternalServerErrorException('Failed to save file');
+      console.error('Error uploading to S3:', error);
+      throw new InternalServerErrorException('Failed to upload file to S3');
     }
   }
 
   async deleteFile(fileUrl: string): Promise<void> {
     try {
-      // Extract just the filename from the URL path
-      const filename = path.basename(fileUrl);
-      const filePath = path.join(this.uploadDir, filename);
+      if (!fileUrl.includes('s3.amazonaws.com')) return;
 
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      // Extract just the filename from the S3 URL
+      const urlParts = fileUrl.split('/');
+      const filename = urlParts[urlParts.length - 1];
+
+      const bucketName = this.getBucketName();
+      const s3Client = this.getS3Client();
+
+      const command = new DeleteObjectCommand({
+        Bucket: bucketName,
+        Key: filename,
+      });
+
+      await s3Client.send(command);
     } catch (error) {
-      console.error('Error deleting file:', error);
+      console.error('Error deleting file from S3:', error);
     }
   }
 }

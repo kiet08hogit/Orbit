@@ -18,6 +18,7 @@ import { redisStore } from 'cache-manager-redis-yet';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { APP_GUARD } from '@nestjs/core';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
     imports: [
@@ -37,6 +38,7 @@ import { APP_GUARD } from '@nestjs/core';
         StorageModule,
         PostsModule,
         TransactionsModule,
+        ReportsModule,
         CacheModule.registerAsync({
             isGlobal: true,
             imports: [ConfigModule],

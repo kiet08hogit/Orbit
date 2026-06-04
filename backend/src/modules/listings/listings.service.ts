@@ -35,14 +35,14 @@ export class ListingsService {
         });
 
         // Generate and save AI embedding
-        try {
-            const textToEmbed = `${data.title}. ${data.description}`;
-            const embedding = await this.aiService.generateEmbedding(textToEmbed);
-            const embeddingString = `[${embedding.join(',')}]`;
-            await this.prisma.$executeRaw`UPDATE "Listing" SET embedding = ${embeddingString}::vector WHERE id = ${listing.id}`;
-        } catch (error) {
-            console.error("Failed to save AI embedding for listing", error);
-        }
+        // try {
+        //     const textToEmbed = `${data.title}. ${data.description}`;
+        //     const embedding = await this.aiService.generateEmbedding(textToEmbed);
+        //     const embeddingString = `[${embedding.join(',')}]`;
+        //     await this.prisma.$executeRaw`UPDATE "Listing" SET embedding = ${embeddingString}::vector WHERE id = ${listing.id}`;
+        // } catch (error) {
+        //     console.error("Failed to save AI embedding for listing", error);
+        // }
 
         if (files && files.length > 0) {
             for (const file of files) {
