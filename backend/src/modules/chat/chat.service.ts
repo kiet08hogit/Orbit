@@ -90,9 +90,17 @@ export class ChatService {
             include: {
                 sender: {
                     select: { id: true, name: true, avatarUrl: true, clerkUserId: true }
+                },
+                listing: {
+                    select: {
+                        id: true,
+                        title: true,
+                        price: true,
+                        images: { take: 1 }
+                    }
                 }
-      }
-    });
+            }
+        });
     }
 
     async getUnreadCount(clerkUserId: string) {
@@ -110,7 +118,7 @@ export class ChatService {
         });
     }
 
-    async createMessage(clerkUserId: string, conversationId: string, content: string) {
+    async createMessage(clerkUserId: string, conversationId: string, content: string, listingId?: string) {
         const dbUser = await this.prisma.user.findUnique({
             where: { clerkUserId },
         });
@@ -121,10 +129,19 @@ export class ChatService {
                 content,
                 conversationId,
                 senderId: dbUser.id,
+                ...(listingId && { listingId }),
             },
             include: {
                 sender: {
                     select: { id: true, name: true, avatarUrl: true, clerkUserId: true }
+                },
+                listing: {
+                    select: {
+                        id: true,
+                        title: true,
+                        price: true,
+                        images: { take: 1 }
+                    }
                 }
             }
         });
@@ -165,3 +182,4 @@ export class ChatService {
         return { dbUser, conversation };
     }
 }
+

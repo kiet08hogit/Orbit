@@ -30,6 +30,13 @@ interface Message {
   createdAt: string;
   sender?: UserPreview;
   isRead?: boolean;
+  listingId?: string | null;
+  listing?: {
+    id: string;
+    title: string;
+    price: number;
+    images?: { url: string }[];
+  } | null;
 }
 
 interface Conversation {
@@ -57,6 +64,8 @@ export default function ChatPage() {
   const [refreshInbox, setRefreshInbox] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [contextListing, setContextListing] = useState<any | null>(null);
+
   // Auto-scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -65,6 +74,44 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Fetch listing context and pre-fill meetup
+  useEffect(() => {
+    const listingId = searchParams?.get("listingId");
+    const meetupLocation = searchParams?.get("meetupLocation");
+
+    // Pre-fill text for meetup location ONCE if we have it and haven't fetched it yet
+    if (meetupLocation && !newMessage && !contextListing) {
+      setNewMessage(`I want to meetup here: ${decodeURIComponent(meetupLocation)}`);
+    }
+
+    if (listingId && activeConversationId && !isLoadingMessages && messages.length >= 0) {
+      // Check if we already have a message with this listing
+      // If it's a meetup request, we bypass this check so the listing is always attached for context
+      const hasListing = meetupLocation ? false : messages.some((m) => m.listingId === listingId);
+      if (!hasListing) {
+        // Fetch the listing if we don't have it yet
+        if (!contextListing || contextListing.id !== listingId) {
+          const fetchListing = async () => {
+            try {
+              const token = await getToken();
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
+              const res = await axios.get(`${apiUrl}/listings/${listingId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              setContextListing(res.data);
+            } catch (err) {
+              console.error("Failed to fetch context listing:", err);
+            }
+          };
+          fetchListing();
+        }
+      } else {
+        // If we already sent it, clear context listing
+        setContextListing(null);
+      }
+    }
+  }, [messages, searchParams, activeConversationId, isLoadingMessages, getToken, contextListing, newMessage]);
 
   // 1. Fetch Inbox
   useEffect(() => {
@@ -77,7 +124,7 @@ export default function ChatPage() {
     const fetchInbox = async () => {
       try {
         const token = await getToken();
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
         const res = await axios.get(`${apiUrl}/chat/inbox`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -106,7 +153,7 @@ export default function ChatPage() {
       setIsLoadingMessages(true);
       try {
         const token = await getToken();
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
         const res = await axios.get(`${apiUrl}/chat/inbox/${activeConversationId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -129,7 +176,7 @@ export default function ChatPage() {
     if (!isSignedIn) return;
 
     // Connect to WebSocket server
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
     const newSocket = io(apiUrl, {
       transports: ["websocket"],
       autoConnect: false,
@@ -220,16 +267,31 @@ export default function ChatPage() {
     e.preventDefault();
     if (!newMessage.trim() || !activeConversationId || !socket) return;
 
-    const token = await getToken();
+    const listingId = searchParams?.get("listingId");
+    const meetupLocation = searchParams?.get("meetupLocation");
+    let attachListingId = undefined;
 
-    // The backend uses @UseGuards(WsClerkAuthGuard) for send_message. We must ensure the socket has token or we pass it in payload if the guard looks for it.
-    // To be safe, socket.io-client might have authenticated the connection.
+    // Only attach if it hasn't been sent yet in this conversation (unless it's a meetup request)
+    if (listingId && contextListing) {
+      const hasListing = meetupLocation ? false : messages.some((m) => m.listingId === listingId);
+      if (!hasListing) {
+        attachListingId = listingId;
+      }
+    }
+
     socket.emit("send_message", {
       conversationId: activeConversationId,
       content: newMessage,
+      listingId: attachListingId
     });
 
     setNewMessage("");
+
+    // If we attached it, clear from URL and state
+    if (attachListingId) {
+      setContextListing(null);
+      router.replace(`/chat?id=${activeConversationId}`);
+    }
   };
 
   const filteredInbox = inbox.filter((conv) => {
@@ -359,56 +421,101 @@ export default function ChatPage() {
                 </div>
               ) : (
                 <AnimatePresence initial={false}>
-                  {messages.map((msg, idx) => {
-                    // sender.clerkUserId is always populated by the backend's Prisma include
-                    const amISender = msg.sender?.clerkUserId === clerkUser?.id;
-                    const showAvatar = !amISender && (idx === messages.length - 1 || messages[idx + 1]?.senderId !== msg.senderId);
+                  {messages.map((msg, index) => {
+                    const isMine = msg.senderId === clerkUser?.id;
+                    const showAvatar = !isMine && (index === 0 || messages[index - 1].senderId !== msg.senderId);
 
                     return (
-                      <motion.div
-                        key={msg.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex gap-2 max-w-[85%] ${amISender ? 'ml-auto flex-row-reverse' : ''}`}
-                      >
-                        {!amISender && (
-                          <div className="w-8 shrink-0 flex items-end">
+                      <div key={msg.id} className={`flex gap-3 max-w-[85%] ${isMine ? "ml-auto flex-row-reverse" : ""}`}>
+                        {/* Avatar */}
+                        {!isMine && (
+                          <div className="w-8 shrink-0 flex flex-col justify-end">
                             {showAvatar && (
                               <Avatar className="h-8 w-8 border border-zinc-200">
-                                {msg.sender?.avatarUrl && <AvatarImage src={msg.sender.avatarUrl} />}
-                                <AvatarFallback className="text-[10px] bg-white">{otherActiveInitial}</AvatarFallback>
+                                <AvatarImage src={msg.sender?.avatarUrl || ""} />
+                                <AvatarFallback className="bg-zinc-100 text-zinc-500 text-xs font-bold">
+                                  {msg.sender?.name?.[0]?.toUpperCase() || "U"}
+                                </AvatarFallback>
                               </Avatar>
                             )}
                           </div>
                         )}
-                        <div className={`flex flex-col ${amISender ? 'items-end' : 'items-start'}`}>
-                          <div 
-                            className={`px-4 py-2.5 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
-                              amISender 
-                                ? "bg-[#3252DF] text-white rounded-br-sm" 
-                                : "bg-white border border-zinc-200 text-zinc-900 rounded-bl-sm"
+
+                        <div className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
+                          <div
+                            className={`rounded-2xl px-4 py-2.5 shadow-sm text-[15px] leading-relaxed ${
+                              isMine 
+                                ? "bg-[#3252DF] text-white rounded-br-none" 
+                                : "bg-white border border-zinc-100 text-zinc-800 rounded-bl-none"
                             }`}
                           >
+                            {/* Embedded Listing Snippet */}
+                            {msg.listing && (
+                              <div className={`mb-2 p-2 rounded-xl flex items-center gap-3 border ${isMine ? 'bg-white/10 border-white/20' : 'bg-zinc-50 border-zinc-200'}`} onClick={() => router.push(`/listings/${msg.listing?.id}`)} style={{ cursor: 'pointer' }}>
+                                <div className="h-12 w-12 rounded-lg bg-zinc-200 overflow-hidden shrink-0">
+                                  {msg.listing.images && msg.listing.images.length > 0 ? (
+                                    <img src={`http://127.0.0.1:3000${msg.listing.images[0].url}`} alt="listing" className="h-full w-full object-cover" />
+                                  ) : (
+                                    <div className="h-full w-full bg-zinc-300" />
+                                  )}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className={`text-xs font-bold line-clamp-1 ${isMine ? 'text-white' : 'text-zinc-900'}`}>{msg.listing.title}</span>
+                                  <span className={`text-sm font-black ${isMine ? 'text-white/90' : 'text-[#3252DF]'}`}>${msg.listing.price}</span>
+                                </div>
+                              </div>
+                            )}
+                            
                             {msg.content}
                           </div>
-                          <div className="flex items-center gap-1.5 mt-1 px-1">
-                            <span className="text-[10px] text-zinc-400">
-                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-                            </span>
-                            {amISender && msg.isRead && (
-                              <span className="text-[10px] font-bold text-emerald-500 tracking-wide">
+                          
+                          <span className="text-[10px] text-zinc-400 font-medium mt-1 px-1">
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                            {isMine && msg.isRead && (
+                              <span className="ml-1 font-bold text-emerald-500 tracking-wide">
                                 • Seen
                               </span>
                             )}
-                          </div>
+                          </span>
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </AnimatePresence>
               )}
               <div ref={messagesEndRef} />
             </div>
+
+            {/* Context Bar */}
+            {contextListing && (
+              <div className="px-4 py-3 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between shadow-inner shrink-0">
+                <div className="flex items-center gap-3 w-full">
+                  <div className="h-10 w-10 rounded-md bg-zinc-200 overflow-hidden shrink-0 border border-zinc-300">
+                    {contextListing.images && contextListing.images.length > 0 ? (
+                      <img src={`http://127.0.0.1:3000${contextListing.images[0].url}`} alt="listing" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full bg-zinc-300" />
+                    )}
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-xs font-bold text-zinc-900 line-clamp-1">{contextListing.title}</span>
+                    <span className="text-[10px] text-zinc-500 font-medium truncate">This listing will be attached to your first message.</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0 shrink-0 text-zinc-400 hover:text-zinc-600 rounded-full"
+                    onClick={() => {
+                      setContextListing(null);
+                      router.replace(`/chat?id=${activeConversationId}`);
+                    }}
+                  >
+                    <span className="sr-only">Dismiss</span>
+                    &times;
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Chat Input */}
             <div className="p-4 border-t border-zinc-200 bg-white shrink-0">

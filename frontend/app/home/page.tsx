@@ -38,7 +38,7 @@ export default function Home() {
       setIsLoading(true);
       try {
         const token = await getToken();
-        const url = 'http://localhost:3000/listings/all';
+        const url = 'http://127.0.0.1:3000/listings/all';
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -135,7 +135,7 @@ function ListingCard({ listing }: { listing: Listing }) {
         <div className="aspect-square relative flex items-center justify-center overflow-hidden mb-3 bg-zinc-100">
           {listing.images && listing.images.length > 0 ? (
             <img
-              src={`http://localhost:3000${listing.images[0].url}`}
+              src={`http://127.0.0.1:3000${listing.images[0].url}`}
               alt={listing.title}
               className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500"
             />

@@ -29,6 +29,7 @@ export default function EditListingPage() {
     description: '',
     price: '',
     category: 'SCHOOL',
+    status: 'ACTIVE',
   });
 
   const categories = ['SCHOOL', 'CLOTHES', 'HOUSING', 'LEISURE', 'ACCESSORIES', 'OTHER'];
@@ -43,7 +44,7 @@ export default function EditListingPage() {
     const fetchListing = async () => {
       try {
         const token = await getToken();
-        const res = await axios.get(`http://localhost:3000/listings/${listingId}`, {
+        const res = await axios.get(`http://127.0.0.1:3000/listings/${listingId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -54,12 +55,13 @@ export default function EditListingPage() {
           description: listing.description || '',
           price: listing.price?.toString() || '',
           category: listing.category || 'SCHOOL',
+          status: listing.status || 'ACTIVE',
         });
 
         if (listing.images) {
           setImages(listing.images.map((img: any) => ({
             id: img.id,
-            url: `http://localhost:3000${img.url}`
+            url: `http://127.0.0.1:3000${img.url}`
           })));
         }
       } catch (err: any) {
@@ -86,11 +88,12 @@ export default function EditListingPage() {
       const token = await getToken();
       
       // The updateListing endpoint expects a JSON body (CreateListingDto)
-      await axios.put(`http://localhost:3000/listings/${listingId}`, {
+      await axios.put(`http://127.0.0.1:3000/listings/${listingId}`, {
         title: formData.title,
         description: formData.description,
         price: Number(formData.price),
-        category: formData.category
+        category: formData.category,
+        status: formData.status
       }, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -274,6 +277,27 @@ export default function EditListingPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* ── Status ── */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-black flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-zinc-400" />
+                Status
+              </label>
+              <Select
+                value={formData.status}
+                onValueChange={(val) => setFormData({ ...formData, status: val })}
+              >
+                <SelectTrigger className="w-full rounded-xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active (Visible to everyone)</SelectItem>
+                  <SelectItem value="RESERVED">Reserved (Pending sale)</SelectItem>
+                  <SelectItem value="SOLD">Sold (Not visible)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* ── Submit ── */}

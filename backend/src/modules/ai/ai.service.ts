@@ -28,7 +28,7 @@ export class AiService {
             const result = await model.embedContent(text);
             return result.embedding.values;
         } catch (error) {
-            this.logger.error(`Failed to generate embedding: ${error.message}`);
+            this.logger.error(`Failed to generate embedding: ${error}`);
             throw error;
         }
     }

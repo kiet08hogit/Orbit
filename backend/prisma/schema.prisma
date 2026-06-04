@@ -89,6 +89,7 @@ model Listing {
   // Relationships
   images       ListingImage[]
   interactions Interaction[]
+  messages     Message[]
 
   // AI Embeddings
   embedding    Unsupported("vector(768)")?
@@ -194,6 +195,9 @@ model Message {
   sender         User         @relation(fields: [senderId], references: [id])
 
   isRead         Boolean      @default(false)
+
+  listingId      String?
+  listing        Listing?     @relation(fields: [listingId], references: [id], onDelete: SetNull)
 
   createdAt      DateTime     @default(now())
 }

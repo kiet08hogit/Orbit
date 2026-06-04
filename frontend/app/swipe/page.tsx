@@ -36,7 +36,7 @@ export default function SwipePage() {
     const fetchFeed = async () => {
       try {
         const token = await getToken();
-        const res = await axios.get("http://localhost:3000/listings", {
+        const res = await axios.get("http://127.0.0.1:3000/listings", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setListings(res.data);
@@ -71,7 +71,7 @@ export default function SwipePage() {
     
     try {
       const token = await getToken();
-      await axios.post(`http://localhost:3000/listings/${listingId}/swipe`, 
+      await axios.post(`http://127.0.0.1:3000/listings/${listingId}/swipe`, 
         { type: interactionType }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -126,7 +126,7 @@ export default function SwipePage() {
                 >
                   <div className="relative flex-1 bg-zinc-100">
                     <img 
-                      src={nextListing.images && nextListing.images.length > 0 ? `http://localhost:3000${nextListing.images[0].url}` : "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=800&q=80"} 
+                      src={nextListing.images && nextListing.images.length > 0 ? `http://127.0.0.1:3000${nextListing.images[0].url}` : "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=800&q=80"} 
                       alt="" 
                       className="absolute inset-0 h-full w-full object-cover"
                     />
@@ -181,7 +181,7 @@ export default function SwipePage() {
                 <div className="relative flex-1 bg-zinc-100 overflow-hidden">
                   {activeListing.images && activeListing.images.length > 0 ? (
                     <img 
-                      src={`http://localhost:3000${activeListing.images[0].url}`} 
+                      src={`http://127.0.0.1:3000${activeListing.images[0].url}`} 
                       alt={activeListing.title}
                       className="absolute inset-0 h-full w-full object-cover pointer-events-none"
                     />

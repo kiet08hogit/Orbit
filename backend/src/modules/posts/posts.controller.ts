@@ -11,7 +11,6 @@ export class PostsController {
 
   @Get()
   @UseGuards(ClerkAuthGuard)
-  @UseInterceptors(CacheInterceptor)
   async getAllPosts(@Req() req) {
     const clerkUserId = req.user.clerkUserId;
     const posts = await this.postsService.getAllPosts(clerkUserId);

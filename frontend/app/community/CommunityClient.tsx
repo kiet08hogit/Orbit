@@ -93,7 +93,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
     const newSocket = io(apiUrl, { transports: ["websocket"], autoConnect: false });
 
     const setupSocket = async () => {
@@ -159,7 +159,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
 
     try {
       const token = await getToken();
-      await axios.post(`http://localhost:3000/posts/${postId}/like`, {}, {
+      await axios.post(`http://127.0.0.1:3000/posts/${postId}/like`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (err) {
@@ -173,7 +173,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
     setComments([]);
     try {
       const token = await getToken();
-      const res = await axios.get(`http://localhost:3000/posts/${postId}/comments`, {
+      const res = await axios.get(`http://127.0.0.1:3000/posts/${postId}/comments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setComments(res.data);
@@ -189,7 +189,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
     setIsSubmittingComment(true);
     try {
       const token = await getToken();
-      await axios.post(`http://localhost:3000/posts/${activePostForComments}/comment`, { content: newCommentContent }, {
+      await axios.post(`http://127.0.0.1:3000/posts/${activePostForComments}/comment`, { content: newCommentContent }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNewCommentContent("");
@@ -239,7 +239,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
         formData.append("images", file);
       });
 
-      const res = await axios.post("http://localhost:3000/posts", formData, {
+      const res = await axios.post("http://127.0.0.1:3000/posts", formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data" 
@@ -369,7 +369,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                           {post.imageUrls.map((url, index) => (
                             <div key={index} className="rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-100 max-h-[400px]">
                               <img 
-                                src={url.startsWith('http') ? url : `http://localhost:3000${url}`} 
+                                src={url.startsWith('http') ? url : `http://127.0.0.1:3000${url}`} 
                                 alt={`Post attachment ${index + 1}`} 
                                 className="w-full h-full object-cover"
                               />
