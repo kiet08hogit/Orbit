@@ -29,6 +29,12 @@ interface Listing {
   images?: { url: string }[];
 }
 
+const getImageUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `http://127.0.0.1:3000${url}`;
+};
+
 const CATEGORIES = [
   { id: 'HOUSING', label: 'DORM' },
   { id: 'CLOTHES', label: 'CLOTHES' },
@@ -60,7 +66,12 @@ export default function ListingsGridPage() {
         if (searchQuery) {
           params.append('q', searchQuery);
         }
-        const url = `http://127.0.0.1:3000/listings/all${params.toString() ? `?${params.toString()}` : ''}`;
+        let baseUrl = 'http://127.0.0.1:3000/listings/all';
+        if (searchQuery) {
+          baseUrl = 'http://127.0.0.1:3000/listings/recommendations';
+        }
+
+        const url = `${baseUrl}${params.toString() ? `?${params.toString()}` : ''}`;
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -86,36 +97,8 @@ export default function ListingsGridPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white flex flex-col font-sans">
-
-      {/* Hero Banner */}
-      <div className="relative w-full h-[500px] mb-12 overflow-hidden">
-        <img
-          src="/dj.jpg"
-          alt="Circlo Hero"
-          className="absolute inset-0 w-full h-full object-cover object-[50%_18%] z-0"
-        />
-        
-        {/* The white card overlay */}
-        <div className="absolute left-8 md:left-[10%] top-1/2 -translate-y-1/2 bg-white rounded-xl p-8 shadow-xl max-w-sm z-10 border border-zinc-100">
-          <h2 className="text-2xl font-black text-black mb-6 leading-tight">
-            Trying to pass down your items?
-          </h2>
-          <Link
-            href="/add-product"
-            className="block w-full text-center bg-[#b81d68] hover:bg-[#961754] text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4"
-          >
-            Sell now
-          </Link>
-          <div className="text-center">
-            <a href="#" className="text-sm font-medium text-zinc-600 underline hover:text-black">
-              How it works
-            </a>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 pb-12">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
         {searchQuery && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-zinc-100">
             <div>
@@ -190,7 +173,7 @@ function ListingCard({ listing }: { listing: Listing }) {
         <div className="aspect-square relative flex items-center justify-center overflow-hidden mb-3 bg-zinc-100">
           {listing.images && listing.images.length > 0 ? (
             <img
-              src={`http://127.0.0.1:3000${listing.images[0].url}`}
+              src={getImageUrl(listing.images[0].url)}
               alt={listing.title}
               className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500"
             />

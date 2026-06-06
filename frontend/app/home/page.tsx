@@ -27,9 +27,18 @@ interface Listing {
   images?: { url: string }[];
 }
 
+const getImageUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `http://127.0.0.1:3000${url}`;
+};
+
 export default function Home() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [recommendedListings, setRecommendedListings] = useState<Listing[]>([]);
+  const [hotListings, setHotListings] = useState<Listing[]>([]);
+  const [viewedListings, setViewedListings] = useState<Listing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +52,25 @@ export default function Home() {
           headers: { Authorization: `Bearer ${token}` }
         });
 
+        const recUrl = 'http://127.0.0.1:3000/listings/recommended';
+        const recRes = await axios.get(recUrl, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const hotUrl = 'http://127.0.0.1:3000/listings/hot';
+        const hotRes = await axios.get(hotUrl, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const viewedUrl = 'http://127.0.0.1:3000/listings/viewed';
+        const viewedRes = await axios.get(viewedUrl, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
         setListings(res.data);
+        setRecommendedListings(recRes.data);
+        setHotListings(hotRes.data);
+        setViewedListings(viewedRes.data);
       } catch (err) {
         console.error('Failed to fetch listings', err);
       } finally {
@@ -100,17 +127,17 @@ export default function Home() {
           <div className="space-y-16">
             <ProductSection
               title={<span className="flex items-center gap-2">For you <span className="text-red-600 font-black">!</span></span>}
-              listings={listings}
+              listings={recommendedListings.length > 0 ? recommendedListings : listings}
               viewMoreHref="/listings?sort=recommended"
             />
             <ProductSection
               title={<span className="flex items-center gap-2">Hot @ UIC <Flame className="h-6 w-6 text-orange-500 fill-orange-500" /> </span>}
-              listings={listings.slice().reverse()}
+              listings={hotListings}
               viewMoreHref="/listings?sort=hot"
             />
             <ProductSection
               title={<span className="flex items-center gap-2">You've viewed <Eye className="h-6 w-6 text-blue-500" /></span>}
-              listings={listings}
+              listings={viewedListings}
               viewMoreHref="/listings?sort=recent"
             />
             <ProductSection
@@ -167,7 +194,7 @@ function ListingCard({ listing }: { listing: Listing }) {
         <div className="aspect-square relative flex items-center justify-center overflow-hidden mb-3 bg-zinc-100">
           {listing.images && listing.images.length > 0 ? (
             <img
-              src={`http://127.0.0.1:3000${listing.images[0].url}`}
+              src={getImageUrl(listing.images[0].url)}
               alt={listing.title}
               className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500"
             />

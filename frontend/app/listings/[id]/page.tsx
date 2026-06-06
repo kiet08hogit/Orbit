@@ -42,6 +42,12 @@ interface Listing {
   images: ListingImage[];
 }
 
+const getImageUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `http://127.0.0.1:3000${url}`;
+};
+
 const CATEGORY_LABELS: Record<string, string> = {
   HOUSING: "Dorm",
   CLOTHES: "Clothes",
@@ -76,7 +82,7 @@ export default function ListingDetailPage() {
       return;
     }
 
-    const fetchListing = async () => {
+    const fetchListingAndView = async () => {
       try {
         const token = await getToken();
         const res = await axios.get(`http://127.0.0.1:3000/listings/${params.id}`, {
@@ -85,6 +91,19 @@ export default function ListingDetailPage() {
 
         const data = res.data;
         setListing(data);
+
+        // Record View
+        axios.post(`http://127.0.0.1:3000/listings/${params.id}/view`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(e => console.error("Failed to record view", e));
+
+        // Check if wishlisted
+        const wishlistRes = await axios.get(`http://127.0.0.1:3000/listings/wishlist`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const isLiked = wishlistRes.data.some((item: any) => item.id === params.id);
+        setIsWishlisted(isLiked);
+
       } catch (err: any) {
         setError(err.message || "Failed to fetch listing");
       } finally {
@@ -92,7 +111,7 @@ export default function ListingDetailPage() {
       }
     };
 
-    fetchListing();
+    fetchListingAndView();
   }, [params.id, isLoaded, isSignedIn, getToken, router]);
 
   const handleTalkToSeller = async () => {
@@ -270,7 +289,7 @@ export default function ListingDetailPage() {
                       }`}
                   >
                     <img
-                      src={`http://127.0.0.1:3000${img.url}`}
+                      src={getImageUrl(img.url)}
                       alt={`Thumbnail ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -292,7 +311,7 @@ export default function ListingDetailPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3 }}
-                    src={`http://127.0.0.1:3000${listing.images[activeImageIndex].url}`}
+                    src={getImageUrl(listing.images[activeImageIndex].url)}
                     alt={listing.title}
                     className="w-full h-full object-contain"
                   />

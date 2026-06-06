@@ -38,16 +38,46 @@ export class ListingsController {
         return this.listingsService.findLatestListings(category, q);
     }
 
-    // @Get('recommendations')
-    // @UseGuards(ClerkAuthGuard)
-    // @UseInterceptors(CacheInterceptor)
-    // async getRecommendations(
-    //     @Query('q') q: string,
-    //     @Query('category') category?: ListingCategory,
-    // ) {
-    //     if (!q) return [];
-    //     return this.listingsService.findSmartListings(q, category);
-    // }
+    @Get('recommendations')
+    @UseGuards(ClerkAuthGuard)
+    @UseInterceptors(CacheInterceptor)
+    async getRecommendations(
+        @Query('q') q: string,
+        @Query('category') category?: ListingCategory,
+    ) {
+        if (!q) return [];
+        return this.listingsService.findSmartListings(q, category);
+    }
+
+    @Get('hot')
+    @UseGuards(ClerkAuthGuard)
+    @UseInterceptors(CacheInterceptor)
+    async getHotFeed() {
+        return this.listingsService.getHotListings(10);
+    }
+
+    @Get('viewed')
+    @UseGuards(ClerkAuthGuard)
+    async getViewedFeed(@CurrentUser() clerkUser: AuthUser) {
+        return this.listingsService.getViewedListings(clerkUser.clerkUserId, 10);
+    }
+
+    @Get('recommended')
+    @UseGuards(ClerkAuthGuard)
+    async getRecommendedFeed(@CurrentUser() clerkUser: AuthUser) {
+        return this.listingsService.getRecommendedListings(clerkUser.clerkUserId);
+    }
+
+    @Post('backfill')
+    async backfill() {
+        return this.listingsService.backfillEmbeddings();
+    }
+
+    @Post(':id/view')
+    @UseGuards(ClerkAuthGuard)
+    async recordView(@CurrentUser() clerkUser: AuthUser, @Param('id') id: string) {
+        return this.listingsService.recordView(clerkUser.clerkUserId, id);
+    }
 
     @Post(':id/swipe')
     @UseGuards(ClerkAuthGuard)
