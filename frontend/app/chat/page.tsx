@@ -14,6 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+const getImageUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `http://127.0.0.1:3000${url}`;
+};
+
 // Interfaces
 interface UserPreview {
   id: string;
@@ -642,7 +648,7 @@ export default function ChatPage() {
                               <div className={`mb-2 p-2 rounded-xl flex items-center gap-3 border ${isMine ? 'bg-white/10 border-white/20' : 'bg-zinc-50 border-zinc-200'}`} onClick={() => router.push(`/listings/${msg.listing?.id}`)} style={{ cursor: 'pointer' }}>
                                 <div className="h-12 w-12 rounded-lg bg-zinc-200 overflow-hidden shrink-0">
                                   {msg.listing.images && msg.listing.images.length > 0 ? (
-                                    <img src={`http://127.0.0.1:3000${msg.listing.images[0].url}`} alt="listing" className="h-full w-full object-cover" />
+                                    <img src={getImageUrl(msg.listing.images[0].url)} alt="listing" className="h-full w-full object-cover" />
                                   ) : (
                                     <div className="h-full w-full bg-zinc-300" />
                                   )}
@@ -680,7 +686,7 @@ export default function ChatPage() {
                 <div className="flex items-center gap-3 w-full">
                   <div className="h-10 w-10 rounded-md bg-zinc-200 overflow-hidden shrink-0 border border-zinc-300">
                     {contextListing.images && contextListing.images.length > 0 ? (
-                      <img src={`http://127.0.0.1:3000${contextListing.images[0].url}`} alt="listing" className="h-full w-full object-cover" />
+                      <img src={getImageUrl(contextListing.images[0].url)} alt="listing" className="h-full w-full object-cover" />
                     ) : (
                       <div className="h-full w-full bg-zinc-300" />
                     )}

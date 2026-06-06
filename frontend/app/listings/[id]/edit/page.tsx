@@ -13,6 +13,12 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+const getImageUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `http://127.0.0.1:3000${url}`;
+};
+
 export default function EditListingPage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
@@ -61,7 +67,7 @@ export default function EditListingPage() {
         if (listing.images) {
           setImages(listing.images.map((img: any) => ({
             id: img.id,
-            url: `http://127.0.0.1:3000${img.url}`
+            url: getImageUrl(img.url)
           })));
         }
       } catch (err: any) {

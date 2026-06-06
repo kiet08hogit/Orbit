@@ -26,6 +26,12 @@ interface Listing {
   images?: { url: string }[];
 }
 
+const getImageUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `http://127.0.0.1:3000${url}`;
+};
+
 export default function SwipePage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const [listings, setListings] = useState<Listing[]>([]);
@@ -126,8 +132,8 @@ export default function SwipePage() {
                 >
                   <div className="relative flex-1 bg-zinc-100">
                     <img 
-                      src={nextListing.images && nextListing.images.length > 0 ? `http://127.0.0.1:3000${nextListing.images[0].url}` : "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=800&q=80"} 
-                      alt="" 
+                      src={nextListing.images && nextListing.images.length > 0 ? getImageUrl(nextListing.images[0].url) : "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=800&q=80"} 
+                      alt={nextListing.title} 
                       className="absolute inset-0 h-full w-full object-cover"
                     />
                   </div>
@@ -181,7 +187,7 @@ export default function SwipePage() {
                 <div className="relative flex-1 bg-zinc-100 overflow-hidden">
                   {activeListing.images && activeListing.images.length > 0 ? (
                     <img 
-                      src={`http://127.0.0.1:3000${activeListing.images[0].url}`} 
+                      src={getImageUrl(activeListing.images[0].url)} 
                       alt={activeListing.title}
                       className="absolute inset-0 h-full w-full object-cover pointer-events-none"
                     />

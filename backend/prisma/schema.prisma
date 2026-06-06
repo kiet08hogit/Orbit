@@ -73,6 +73,7 @@ model User {
   sellerTransactions  Transaction[] @relation("SellerTransactions")
   reportsMade         Report[]      @relation("ReportsMade")
   reportsReceived     Report[]      @relation("ReportsReceived")
+  listingViews        ListingView[]
 }
 
 model Listing {
@@ -96,6 +97,7 @@ model Listing {
   messages     Message[]
   transactions Transaction[]
   reports      Report[]
+  views        ListingView[]
 
   // AI Embeddings
   embedding    Unsupported("vector(768)")?
@@ -257,4 +259,15 @@ model Report {
   reporter       User     @relation("ReportsMade", fields: [reporterId], references: [id])
   reportedUser   User?    @relation("ReportsReceived", fields: [reportedUserId], references: [id])
   listing        Listing? @relation(fields: [listingId], references: [id])
+}
+
+model ListingView {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now()) @updatedAt
+
+  @@unique([userId, listingId])
 }

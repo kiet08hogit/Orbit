@@ -7,6 +7,12 @@ import axios from 'axios';
 import { Loader2, Heart, Tag, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
+const getImageUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `http://127.0.0.1:3000${url}`;
+};
+
 export default function WishlistPage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   
@@ -82,7 +88,7 @@ export default function WishlistPage() {
                     <div className="aspect-square bg-zinc-100 relative overflow-hidden">
                       {listing.images && listing.images.length > 0 ? (
                         <img 
-                          src={`http://127.0.0.1:3000${listing.images[0].url}`} 
+                          src={getImageUrl(listing.images[0].url)} 
                           alt={listing.title} 
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                         />

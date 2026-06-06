@@ -13,6 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+const getImageUrl = (url?: string) => {
+  if (!url) return "";
+  if (url.startsWith("http")) return url;
+  return `http://127.0.0.1:3000${url}`;
+};
+
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -377,7 +383,7 @@ export default function ProfilePage() {
                         <div className="aspect-square bg-zinc-100 relative overflow-hidden">
                           {listing.images && listing.images.length > 0 ? (
                             <img 
-                              src={`http://127.0.0.1:3000${listing.images[0].url}`} 
+                              src={getImageUrl(listing.images[0].url)} 
                               alt={listing.title} 
                               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                             />
