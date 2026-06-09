@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import axios from "axios";
-import { Loader2, ArrowLeft, Heart, MessageSquare, Tag, MapPin, CheckCircle2, Shield, ChevronRight } from "lucide-react";
+import { Loader2, ArrowLeft, Heart, MessageSquare, Tag, MapPin, CheckCircle2, Shield, ChevronRight, DollarSign } from "lucide-react";
 import Link from "next/link";
 import CampusMap from "@/components/CampusMap";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,8 @@ interface Listing {
   seller: Seller;
   createdAt: string;
   images: ListingImage[];
+  acceptsDirectPayment: boolean;
+  acceptsProtectedPayment: boolean;
 }
 
 const getImageUrl = (url?: string) => {
@@ -73,6 +75,9 @@ export default function ListingDetailPage() {
   const [reportReason, setReportReason] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isReserving, setIsReserving] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -158,6 +163,35 @@ export default function ListingDetailPage() {
     } catch (err) {
       console.error("Error starting chat:", err);
     }
+  };
+
+  const handleDirectReservation = async () => {
+    if (!isSignedIn) return router.push("/sign-in");
+    setIsReserving(true);
+    try {
+      const token = await getToken();
+      await axios.post(`http://127.0.0.1:3000/transactions/direct-reservation`, { listingId: listing?.id }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Start conversation
+      const res = await axios.post(`http://127.0.0.1:3000/chat/conversation/${listing?.seller.clerkUserId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data) {
+        router.push(`/chat?id=${res.data.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to reserve listing.");
+    } finally {
+      setIsReserving(false);
+      setShowPaymentModal(false);
+    }
+  };
+
+  const handleProtectedReservation = () => {
+    if (!isSignedIn) return router.push("/sign-in");
+    router.push(`/checkout/${listing?.id}`);
   };
 
   const handleWishlistToggle = async () => {
@@ -453,9 +487,15 @@ export default function ListingDetailPage() {
                 <>
                   <Button
                     size="lg"
+                    onClick={() => {
+                        if (!isSignedIn) { router.push("/sign-in"); return; }
+                        setShowPaymentModal(true);
+                    }}
+                    disabled={isReserving}
                     className="w-full bg-[#b81d68] hover:bg-[#961754] text-white font-bold h-11 rounded-lg shadow-sm text-sm"
                   >
-                    Reserve Your Order
+                    {isReserving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {isReserving ? "Reserving..." : "Reserve Your Order"}
                   </Button>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -538,48 +578,79 @@ export default function ListingDetailPage() {
           setReportSubmitted(false);
         }
       }}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 border-0 shadow-2xl">
+        <DialogContent className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-white">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black">Report Listing</DialogTitle>
-            <DialogDescription className="text-zinc-500">
-              Please let us know why you are reporting this listing. This information will be reviewed by our moderation team.
+            <DialogTitle className="text-xl font-black text-center mb-1">Report Listing</DialogTitle>
+            <DialogDescription className="text-sm text-center text-zinc-500 mb-6">
+              Why are you reporting this listing?
             </DialogDescription>
           </DialogHeader>
-          
+
           {reportSubmitted ? (
-            <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
-              <div className="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-              </div>
-              <p className="font-bold text-zinc-900">Report Submitted</p>
-              <p className="text-sm text-zinc-500">Thank you for helping keep the community safe.</p>
+            <div className="py-8 flex flex-col items-center justify-center text-emerald-600">
+              <CheckCircle2 className="h-12 w-12 mb-3" />
+              <p className="font-bold">Report Submitted</p>
+              <p className="text-sm text-emerald-600/80 mt-1 text-center">Thank you for keeping our community safe.</p>
             </div>
           ) : (
-            <div className="flex flex-col space-y-4 pt-4">
+            <div className="flex flex-col gap-4">
               <Textarea 
-                placeholder="Describe the issue (e.g. offensive content, scam, incorrect category...)"
+                placeholder="Please describe the issue..." 
+                rows={4} 
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
-                className="min-h-[120px] bg-zinc-50 border-zinc-200 resize-none focus-visible:ring-[#3252DF]"
+                className="bg-zinc-50 border-zinc-200 resize-none rounded-xl"
               />
-              <div className="flex justify-end gap-3 pt-2">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setShowReportDialog(false)}
-                  className="rounded-full text-zinc-500"
-                >
+              <div className="flex items-center gap-3 mt-2">
+                <Button variant="ghost" onClick={() => setShowReportDialog(false)} className="flex-1 rounded-full font-bold h-11">
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handleReportListing}
-                  disabled={!reportReason.trim() || isSubmittingReport}
-                  className="rounded-full bg-red-600 hover:bg-red-700 text-white font-bold px-6"
-                >
+                <Button onClick={handleReportListing} disabled={isSubmittingReport || !reportReason.trim()} className="flex-1 rounded-full font-bold h-11 bg-red-600 hover:bg-red-700 text-white border-0 shadow-none">
                   {isSubmittingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Report"}
                 </Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Method Modal */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black">Choose Payment Method</DialogTitle>
+            <DialogDescription className="text-zinc-500">
+              How would you like to pay for {listing.title}?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 mt-4">
+            {listing.acceptsProtectedPayment && (
+              <div 
+                className="border-2 border-emerald-500 bg-emerald-50 rounded-xl p-4 cursor-pointer hover:bg-emerald-100 transition-colors"
+                onClick={handleProtectedReservation}
+              >
+                <div className="flex items-center gap-3 mb-1">
+                  <Shield className="h-5 w-5 text-emerald-600" />
+                  <span className="font-bold text-black">Protected Payment</span>
+                </div>
+                <p className="text-sm text-zinc-600 ml-8">Pay securely with card. Funds are held until you confirm the meetup.</p>
+              </div>
+            )}
+
+            {listing.acceptsDirectPayment && (
+              <div 
+                className="border-2 border-zinc-200 hover:border-[#3252DF] hover:bg-[#3252DF]/5 rounded-xl p-4 cursor-pointer transition-colors"
+                onClick={handleDirectReservation}
+              >
+                <div className="flex items-center gap-3 mb-1">
+                  <DollarSign className="h-5 w-5 text-zinc-600" />
+                  <span className="font-bold text-black">Direct Payment</span>
+                </div>
+                <p className="text-sm text-zinc-600 ml-8">Pay with Cash, Zelle, or Venmo when you meet the seller.</p>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

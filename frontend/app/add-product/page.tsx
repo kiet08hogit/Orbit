@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Tag, AlignLeft, DollarSign, ListPlus, Loader2, ImagePlus, AlertCircle, X, GripVertical } from 'lucide-react';
+import { ArrowLeft, Tag, AlignLeft, DollarSign, ListPlus, Loader2, ImagePlus, AlertCircle, X, GripVertical, ShieldCheck, Banknote } from 'lucide-react';
 import Link from 'next/link';
 import axios from 'axios';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ interface ImagePreview {
 }
 
 export default function AddProductPage() {
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,7 +35,32 @@ export default function AddProductPage() {
     description: '',
     price: '',
     category: 'SCHOOL',
+    acceptsDirectPayment: true,
+    acceptsProtectedPayment: false,
   });
+
+  const [isStripeLinked, setIsStripeLinked] = useState(false);
+  const [isLoadingStripeStatus, setIsLoadingStripeStatus] = useState(true);
+
+  // Fetch Stripe status on mount
+  useEffect(() => {
+    const fetchStripeStatus = async () => {
+      try {
+        const token = await getToken();
+        if (token) {
+          const res = await axios.get(`http://127.0.0.1:3000/payments/connect/status`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setIsStripeLinked(res.data.linked);
+        }
+      } catch (err) {
+        console.error("Failed to fetch Stripe status", err);
+      } finally {
+        setIsLoadingStripeStatus(false);
+      }
+    };
+    fetchStripeStatus();
+  }, [getToken]);
 
   const categories = ['SCHOOL', 'CLOTHES', 'HOUSING', 'LEISURE', 'ACCESSORIES', 'OTHER'];
 
@@ -83,6 +108,8 @@ export default function AddProductPage() {
       submitData.append('description', formData.description);
       submitData.append('price', formData.price.toString());
       submitData.append('category', formData.category);
+      submitData.append('acceptsDirectPayment', formData.acceptsDirectPayment.toString());
+      submitData.append('acceptsProtectedPayment', formData.acceptsProtectedPayment.toString());
 
       images.forEach((img) => {
         submitData.append('images', img.file);
@@ -298,6 +325,68 @@ export default function AddProductPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* ── Payment Settings ── */}
+            <div className="space-y-4 pt-2">
+              <label className="text-sm font-bold text-black flex items-center gap-2">
+                <Banknote className="h-4 w-4 text-zinc-400" />
+                Payment Options
+              </label>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Direct Payment */}
+                <div 
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${formData.acceptsDirectPayment ? 'border-[#3252DF] bg-[#3252DF]/5' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}
+                  onClick={() => setFormData(prev => ({ ...prev, acceptsDirectPayment: !prev.acceptsDirectPayment }))}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-black text-sm">Direct Payment</span>
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors ${formData.acceptsDirectPayment ? 'border-[#3252DF] bg-[#3252DF]' : 'border-zinc-300'}`}>
+                      {formData.acceptsDirectPayment && <div className="h-2 w-2 bg-white rounded-full" />}
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-500 font-medium">Cash, Zelle, Venmo at meetup.</p>
+                </div>
+
+                {/* Protected Payment */}
+                <div 
+                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden ${formData.acceptsProtectedPayment ? 'border-emerald-500 bg-emerald-50' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}
+                  onClick={() => {
+                    if (!isStripeLinked) {
+                      setError("You must connect your bank account in your Profile before enabling protected payments.");
+                      return;
+                    }
+                    setError("");
+                    setFormData(prev => ({ ...prev, acceptsProtectedPayment: !prev.acceptsProtectedPayment }))
+                  }}
+                >
+                  {isLoadingStripeStatus && (
+                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-black text-sm flex items-center gap-1.5">
+                      <ShieldCheck className={`h-4 w-4 ${formData.acceptsProtectedPayment ? 'text-emerald-600' : 'text-emerald-500'}`} />
+                      Protected
+                    </span>
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors ${formData.acceptsProtectedPayment ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-300'}`}>
+                      {formData.acceptsProtectedPayment && <div className="h-2 w-2 bg-white rounded-full" />}
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-500 font-medium">Card payments via Circlo Escrow.</p>
+                  
+                  {!isStripeLinked && !isLoadingStripeStatus && (
+                    <div className="mt-2 text-[10px] font-bold text-[#3252DF] hover:underline" onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/profile/${userId}`);
+                    }}>
+                      Connect bank account first →
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

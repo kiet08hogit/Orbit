@@ -1,5 +1,5 @@
-import { IsString, IsNumber, IsEnum, IsNotEmpty } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsNumber, IsEnum, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { ListingCategory } from '@prisma/client';
 
 export class CreateListingDto {
@@ -17,4 +17,14 @@ export class CreateListingDto {
 
   @IsEnum(ListingCategory)
   category: ListingCategory;
+
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  @IsOptional()
+  acceptsDirectPayment?: boolean;
+
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  @IsOptional()
+  acceptsProtectedPayment?: boolean;
 }
