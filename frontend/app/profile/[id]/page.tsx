@@ -5,7 +5,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Loader2, MapPin, MessageSquare, Shield, Tag, Calendar, GraduationCap, Heart, AlertTriangle, BookOpen, Star, Pencil, Camera, Trash2 } from 'lucide-react';
+import { Loader2, MapPin, MessageSquare, Shield, Tag, Calendar, GraduationCap, Heart, AlertTriangle, BookOpen, Star, Pencil, Camera, Trash2, DollarSign, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -42,6 +42,9 @@ export default function ProfilePage() {
     classYear: '',
   });
 
+  const [isStripeLinked, setIsStripeLinked] = useState(false);
+  const [isLoadingStripe, setIsLoadingStripe] = useState(false);
+
   const years = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', 'Faculty/Staff'];
 
   useEffect(() => {
@@ -61,6 +64,18 @@ export default function ProfilePage() {
           major: res.data.major || '',
           classYear: res.data.classYear || '',
         });
+
+        // Fetch Stripe status if own profile
+        if (currentUserId === res.data.clerkUserId) {
+          try {
+            const stripeRes = await axios.get(`http://127.0.0.1:3000/payments/connect/status`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            setIsStripeLinked(stripeRes.data.linked);
+          } catch (e) {
+            console.error("Failed to fetch Stripe status", e);
+          }
+        }
       } catch (err) {
         console.error('Failed to fetch profile', err);
       } finally {
@@ -69,7 +84,23 @@ export default function ProfilePage() {
     };
     
     fetchProfile();
-  }, [userId, isLoaded, isSignedIn, getToken]);
+  }, [userId, isLoaded, isSignedIn, getToken, currentUserId]);
+
+  const handleConnectStripe = async () => {
+    setIsLoadingStripe(true);
+    try {
+      const token = await getToken();
+      const res = await axios.post(`http://127.0.0.1:3000/payments/connect`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      console.error(err);
+      setIsLoadingStripe(false);
+    }
+  };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -300,6 +331,34 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               </div>
+
+              {/* Stripe Connection Section */}
+              {currentUserId === userProfile.clerkUserId && (
+                <div className="w-full mt-6 pt-6 border-t border-zinc-100 flex flex-col items-center">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="h-5 w-5 text-[#3252DF]" />
+                    <h4 className="font-bold text-sm text-black">Seller Payouts</h4>
+                  </div>
+                  <p className="text-xs text-zinc-500 text-center mb-4 leading-relaxed">
+                    Connect your bank account to receive protected payments from buyers through Circlo.
+                  </p>
+                  
+                  {isStripeLinked ? (
+                    <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl text-sm font-bold w-full justify-center border border-emerald-100">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Bank Account Connected
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={handleConnectStripe} 
+                      disabled={isLoadingStripe}
+                      className="w-full rounded-xl h-11 font-bold text-sm bg-[#3252DF]/10 hover:bg-[#3252DF]/20 text-[#3252DF] shadow-none flex items-center gap-2 transition-colors"
+                    >
+                      {isLoadingStripe ? <Loader2 className="h-4 w-4 animate-spin" /> : "Connect with Stripe"}
+                    </Button>
+                  )}
+                </div>
+              )}
             </motion.div>
 
             {/* Trust & Reputation Card */}

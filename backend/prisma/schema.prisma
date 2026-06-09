@@ -24,6 +24,8 @@ enum ListingCategory {
 
 enum ListingStatus {
   ACTIVE
+  PENDING_PAYMENT
+  RESERVED
   SOLD
   REMOVED
 }
@@ -38,6 +40,31 @@ enum PostType {
 enum InteractionType {
   LIKE
   SKIP
+}
+
+enum PaymentMethod {
+  DIRECT
+  STRIPE
+}
+
+enum PaymentStatus {
+  UNPAID
+  UNPAID_EXTERNAL
+  PAID_HELD
+  RELEASED_TO_SELLER
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PENDING_MEETUP
+  PAID_PENDING_MEETUP
+  MEETING_STARTED
+  MEETUP_CONFIRMED
+  COMPLETED_BY_SELLER
+  COMPLETED
+  CANCELLED
+  REFUNDED
+  DISPUTED
 }
 
 // =======================
@@ -57,6 +84,9 @@ model User {
   major       String?
   classYear   String?
   onboardingComplete Boolean @default(false)
+  
+  stripeAccountId    String? @unique
+  stripeAccountLinked Boolean @default(false)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -83,6 +113,9 @@ model Listing {
   price       Float           // Storing price as a Float or Decimal
   category    ListingCategory
   status      ListingStatus   @default(ACTIVE)
+
+  acceptsDirectPayment    Boolean @default(true)
+  acceptsProtectedPayment Boolean @default(false)
   
   // Foreign Key linking to the User who created it
   sellerId    String
@@ -214,14 +247,6 @@ model Message {
 // MEETUP & TRANSACTIONS
 // =======================
 
-enum TransactionStatus {
-  PENDING
-  MEETING_STARTED
-  MEETUP_CONFIRMED
-  COMPLETED
-  CANCELLED
-}
-
 model Transaction {
   id             String            @id @default(uuid())
   
@@ -234,7 +259,12 @@ model Transaction {
   sellerId       String
   seller         User              @relation("SellerTransactions", fields: [sellerId], references: [id])
   
-  status         TransactionStatus @default(PENDING)
+  paymentMethod  PaymentMethod     @default(DIRECT)
+  paymentStatus  PaymentStatus     @default(UNPAID)
+  orderStatus    OrderStatus       @default(PENDING_MEETUP)
+  
+  stripePaymentIntentId String?    @unique
+  amount                Int        @default(0)
   
   // Verification fields
   meetupCode           String?

@@ -7,7 +7,7 @@ export class AiService {
     private readonly logger = new Logger(AiService.name);
     private genAI: GoogleGenerativeAI;
     // We use the latest embedding model which generates 768-dimensional vectors
-    private embeddingModelName = 'text-embedding-004'; 
+    private embeddingModelName = 'embedding-001';
 
     constructor(private configService: ConfigService) {
         const apiKey = this.configService.get<string>('GEMINI_API_KEY');

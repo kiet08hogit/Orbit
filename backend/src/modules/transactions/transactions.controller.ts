@@ -9,6 +9,22 @@ import { AuthUser } from '../../common/types/auth-user.type';
 export class TransactionsController {
     constructor(private readonly transactionsService: TransactionsService) {}
 
+    @Post('direct-reservation')
+    async createDirectReservation(
+        @CurrentUser() clerkUser: AuthUser,
+        @Body() body: { listingId: string }
+    ) {
+        return this.transactionsService.createDirectReservation(clerkUser.clerkUserId, body.listingId);
+    }
+
+    @Post(':id/mark-as-sold')
+    async markAsSold(
+        @CurrentUser() clerkUser: AuthUser,
+        @Param('id') transactionId: string
+    ) {
+        return this.transactionsService.markAsSold(clerkUser.clerkUserId, transactionId);
+    }
+
     @Post('start-meetup')
     async startMeetup(
         @CurrentUser() clerkUser: AuthUser,
@@ -24,6 +40,15 @@ export class TransactionsController {
         @Query('sellerId') sellerId: string
     ) {
         return this.transactionsService.getActiveMeetupCode(clerkUser.clerkUserId, listingId, sellerId);
+    }
+
+    @Get('active')
+    async getActiveTransaction(
+        @CurrentUser() clerkUser: AuthUser,
+        @Query('listingId') listingId: string,
+        @Query('otherUserId') otherUserId: string
+    ) {
+        return this.transactionsService.getActiveTransaction(clerkUser.clerkUserId, listingId, otherUserId);
     }
 
     @Post('verify-meetup-code')

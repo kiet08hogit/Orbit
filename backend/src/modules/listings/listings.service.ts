@@ -30,6 +30,8 @@ export class ListingsService {
                 description: data.description,
                 price: data.price,
                 category: data.category,
+                acceptsDirectPayment: data.acceptsDirectPayment ?? true,
+                acceptsProtectedPayment: data.acceptsProtectedPayment ?? false,
                 status: ListingStatus.ACTIVE,
                 sellerId: dbuser.id,
             },

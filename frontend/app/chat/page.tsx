@@ -76,8 +76,9 @@ export default function ChatPage() {
   // Meetup Verification States
   const [meetupVerificationCode, setMeetupVerificationCode] = useState("");
   const [activeMeetupCode, setActiveMeetupCode] = useState<any>(null); // For buyer side
-  const [isVerifyingMeetup, setIsVerifyingMeetup] = useState(false);
   const [isStartingMeetup, setIsStartingMeetup] = useState(false);
+  const [isVerifyingMeetup, setIsVerifyingMeetup] = useState(false);
+  const [isMarkingAsSold, setIsMarkingAsSold] = useState(false);
   const [meetupError, setMeetupError] = useState("");
   const [meetupSuccess, setMeetupSuccess] = useState("");
   const [showBuyerMeetupModal, setShowBuyerMeetupModal] = useState(false);
@@ -278,7 +279,7 @@ export default function ChatPage() {
     };
 
     const onMeetupConfirmed = (payload: any) => {
-      setTransactionStatus("MEETUP_CONFIRMED");
+      setTransactionStatus(payload.status || "MEETUP_CONFIRMED");
       setMeetupSuccess("Meetup confirmed successfully!");
       setMeetupError("");
       setShowBuyerMeetupModal(false);
@@ -306,24 +307,39 @@ export default function ChatPage() {
   const latestListingMessage = [...messages].reverse().find(m => m.listingId);
   const activeListingId = latestListingMessage?.listingId;
   const [activeListingSellerId, setActiveListingSellerId] = useState<string | null>(null);
+  const [activeTransaction, setActiveTransaction] = useState<any>(null);
 
   useEffect(() => {
-    if (!activeListingId || !isSignedIn) return;
-    const fetchListing = async () => {
+    if (!activeListingId || !isSignedIn || !otherActiveMember) return;
+    const fetchListingAndTransaction = async () => {
       try {
         const token = await getToken();
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
+        
         const res = await axios.get(`${apiUrl}/listings/${activeListingId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        // Make sure to use the clerkUserId to match clerkUser?.id
         setActiveListingSellerId(res.data.seller?.clerkUserId || res.data.sellerId);
+
+        const txRes = await axios.get(`${apiUrl}/transactions/active?listingId=${activeListingId}&otherUserId=${otherActiveMember.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (txRes.data) {
+          setActiveTransaction(txRes.data);
+          // If the status isn't meeting started yet, sync it
+          if (txRes.data.orderStatus === 'PENDING_MEETUP' || txRes.data.orderStatus === 'PAID_PENDING_MEETUP') {
+             setTransactionStatus(txRes.data.orderStatus);
+          }
+        } else {
+          setActiveTransaction(null);
+        }
       } catch (err) {
-        console.error("Failed to fetch active listing for seller check");
+        console.error("Failed to fetch active listing and transaction");
       }
     };
-    fetchListing();
-  }, [activeListingId, isSignedIn, getToken]);
+    fetchListingAndTransaction();
+  }, [activeListingId, isSignedIn, getToken, otherActiveMember]);
 
   // Fetch active meetup code for buyer
   useEffect(() => {
@@ -392,6 +408,26 @@ export default function ChatPage() {
       setMeetupError(err.response?.data?.message || "Failed to verify code.");
     } finally {
       setIsVerifyingMeetup(false);
+    }
+  };
+
+  const handleMarkAsSold = async () => {
+    if (!activeTransaction) return;
+    setIsMarkingAsSold(true);
+    setMeetupError("");
+    setMeetupSuccess("");
+    try {
+      const token = await getToken();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3000";
+      await axios.post(`${apiUrl}/transactions/${activeTransaction.id}/mark-as-sold`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTransactionStatus("COMPLETED_BY_SELLER");
+      setMeetupSuccess("Marked as sold successfully!");
+    } catch (err: any) {
+      setMeetupError(err.response?.data?.message || "Failed to mark as sold.");
+    } finally {
+      setIsMarkingAsSold(false);
     }
   };
 
@@ -534,43 +570,65 @@ export default function ChatPage() {
                   <h2 className="font-bold text-black leading-tight">{otherActiveName}</h2>
                   
                   {/* Meetup Verification UI (Header) */}
-                  {activeListingSellerId === clerkUser?.id && activeListingId && (
+                  {activeListingSellerId === clerkUser?.id && activeListingId && activeTransaction && (
                     <div className="flex items-center gap-2 ml-2 md:ml-4 md:border-l md:border-zinc-200 md:pl-4">
-                      {transactionStatus !== 'MEETUP_CONFIRMED' && transactionStatus !== 'MEETING_STARTED' && (
-                        <Button 
-                          size="sm" 
-                          onClick={handleStartMeetup} 
-                          disabled={isStartingMeetup}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs px-3 rounded-full"
-                        >
-                          {isStartingMeetup ? <Loader2 className="h-3 w-3 animate-spin" /> : "Verify Meetup"}
-                        </Button>
-                      )}
-                      
-                      {transactionStatus === 'MEETING_STARTED' && (
-                        <div className="flex gap-1 items-center">
-                          <Input 
-                            placeholder="6-digit code" 
-                            value={meetupVerificationCode}
-                            onChange={(e) => setMeetupVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            className="bg-zinc-100 border-transparent focus-visible:ring-indigo-500 h-7 w-24 text-xs text-center rounded-full"
-                            maxLength={6}
-                          />
-                          <Button 
-                            size="sm" 
-                            onClick={handleVerifyMeetup}
-                            disabled={isVerifyingMeetup || meetupVerificationCode.length !== 6}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs px-3 shrink-0 rounded-full"
-                          >
-                            {isVerifyingMeetup ? <Loader2 className="h-3 w-3 animate-spin" /> : "Confirm"}
-                          </Button>
-                        </div>
-                      )}
+                      {activeTransaction.paymentMethod === 'STRIPE' ? (
+                        <>
+                          {transactionStatus !== 'MEETUP_CONFIRMED' && transactionStatus !== 'COMPLETED_BY_SELLER' && transactionStatus !== 'MEETING_STARTED' && (
+                            <Button 
+                              size="sm" 
+                              onClick={handleStartMeetup} 
+                              disabled={isStartingMeetup}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs px-3 rounded-full"
+                            >
+                              {isStartingMeetup ? <Loader2 className="h-3 w-3 animate-spin" /> : "Verify Meetup"}
+                            </Button>
+                          )}
+                          
+                          {transactionStatus === 'MEETING_STARTED' && (
+                            <div className="flex gap-1 items-center">
+                              <Input 
+                                placeholder="6-digit code" 
+                                value={meetupVerificationCode}
+                                onChange={(e) => setMeetupVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                className="bg-zinc-100 border-transparent focus-visible:ring-indigo-500 h-7 w-24 text-xs text-center rounded-full"
+                                maxLength={6}
+                              />
+                              <Button 
+                                size="sm" 
+                                onClick={handleVerifyMeetup}
+                                disabled={isVerifyingMeetup || meetupVerificationCode.length !== 6}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white h-7 text-xs px-3 shrink-0 rounded-full"
+                              >
+                                {isVerifyingMeetup ? <Loader2 className="h-3 w-3 animate-spin" /> : "Confirm"}
+                              </Button>
+                            </div>
+                          )}
 
-                      {transactionStatus === 'MEETUP_CONFIRMED' && (
-                        <div className="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
-                          ✓ Confirmed
-                        </div>
+                          {(transactionStatus === 'MEETUP_CONFIRMED' || transactionStatus === 'COMPLETED_BY_SELLER') && (
+                            <div className="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
+                              ✓ Confirmed
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {transactionStatus !== 'COMPLETED_BY_SELLER' && (
+                            <Button 
+                              size="sm" 
+                              onClick={handleMarkAsSold} 
+                              disabled={isMarkingAsSold}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs px-3 rounded-full"
+                            >
+                              {isMarkingAsSold ? <Loader2 className="h-3 w-3 animate-spin" /> : "Mark as Sold"}
+                            </Button>
+                          )}
+                          {transactionStatus === 'COMPLETED_BY_SELLER' && (
+                            <div className="text-xs font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
+                              ✓ Sold
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -609,6 +667,36 @@ export default function ChatPage() {
 
             {/* Chat Messages */}
             <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-zinc-50/30">
+              {/* Seller Warning Banner for Direct Payment */}
+              {activeListingSellerId === clerkUser?.id && transactionStatus === 'PENDING_MEETUP' && activeTransaction?.paymentMethod === 'DIRECT' && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 shadow-sm mx-auto max-w-4xl">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex flex-col gap-1">
+                      <span className="font-bold text-amber-800 text-sm">Direct Payment Meetup</span>
+                      <p className="text-xs text-amber-800 leading-relaxed">
+                        Collect payment (Cash, Zelle, etc.) directly from the buyer when you meet. After they have paid and received the item, click "Mark as Sold" at the top.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Seller Warning Banner for Stripe Payment */}
+              {activeListingSellerId === clerkUser?.id && transactionStatus === 'MEETING_STARTED' && (!activeTransaction || activeTransaction.paymentMethod === 'STRIPE') && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 shadow-sm mx-auto max-w-4xl">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="flex flex-col gap-1">
+                      <span className="font-bold text-amber-800 text-sm">Important: Finalizing the transaction</span>
+                      <p className="text-xs text-amber-800 leading-relaxed">
+                        Ask the buyer for the confirmation code only after they have inspected and accepted the item. Entering the code completes the transaction and releases the payout.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {isLoadingMessages ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
@@ -740,9 +828,9 @@ export default function ChatPage() {
       <Dialog open={showBuyerMeetupModal} onOpenChange={setShowBuyerMeetupModal}>
         <DialogContent className="sm:max-w-sm rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-white [&>button]:hidden">
           <DialogHeader>
-            <DialogTitle className="text-xl font-black text-center mb-1">Seller verification requested!</DialogTitle>
-            <DialogDescription className="text-sm text-center text-zinc-500 mb-6">
-              Only share this code when you are physically meeting the seller to receive your item.
+            <DialogTitle className="text-xl font-black text-center mb-1">Meetup Code</DialogTitle>
+            <DialogDescription className="text-sm text-center text-zinc-500 mb-6 px-4">
+              Only share this code after you inspect the item and agree to complete the purchase.
             </DialogDescription>
           </DialogHeader>
 
@@ -760,7 +848,7 @@ export default function ChatPage() {
                   <span className="font-bold text-amber-800 text-sm">Warning</span>
                 </div>
                 <p className="text-xs text-amber-800 leading-relaxed">
-                  This only confirms that you met the seller. Do not hand over payment until you have received the item.
+                  After the seller enters this code, the transaction is final in Circlo.
                 </p>
               </div>
 
