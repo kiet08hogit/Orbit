@@ -602,6 +602,15 @@ export default function ChatPage() {
                               >
                                 {isVerifyingMeetup ? <Loader2 className="h-3 w-3 animate-spin" /> : "Confirm"}
                               </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={handleStartMeetup}
+                                disabled={isStartingMeetup}
+                                className="h-7 text-xs px-3 shrink-0 rounded-full ml-1"
+                              >
+                                {isStartingMeetup ? <Loader2 className="h-3 w-3 animate-spin" /> : "Resend Code"}
+                              </Button>
                             </div>
                           )}
 

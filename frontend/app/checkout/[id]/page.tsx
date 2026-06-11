@@ -89,7 +89,7 @@ export default function CheckoutPage() {
         setListing(listingRes.data);
 
         // Create Payment Intent
-        const intentRes = await axios.post(`http://127.0.0.1:3000/payments/create-intent`, 
+        const intentRes = await axios.post(`http://127.0.0.1:3000/payments/intent`, 
           { listingId: params.id },
           { headers: { Authorization: `Bearer ${token}` } }
         );

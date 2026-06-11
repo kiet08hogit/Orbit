@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Search, MessageSquare, ShoppingCart, Shield } from "lucide-react";
 import { ClientNav } from "./ClientNav";
 import "./globals.css";
-import { Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { OnboardingCheck } from "@/components/OnboardingCheck";
 import { CustomUserButton } from "@/components/CustomUserButton";
@@ -15,7 +15,7 @@ import { NavActions } from "@/components/NavActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: "Circlo | Verified UIC Student Marketplace",
@@ -28,8 +28,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const isUic = email ? email.endsWith("@uic.edu") : true;
 
   return (
-    <html lang="en" className={cn("h-full", "font-sans", geist.variable)}>
-      <body className="h-full bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 antialiased">
+    <html lang="en" className={cn("h-full", "font-sans", inter.variable)}>
+      <body className="h-full bg-zinc-50 text-[17px] text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50 antialiased">
         <ClerkProvider
           appearance={{
             layout: {
@@ -41,12 +41,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }}
         >
           {/* Aesthetic Header */}
-          <header className="sticky top-0 z-50 w-full bg-[#000000] border-b-2 border-black shadow-sm">
-            <div className="flex h-16 w-full items-center justify-between px-4 sm:px-8 lg:px-10 gap-4">
+          <header className="sticky top-0 z-50 w-full bg-[#2a2a2c] backdrop-blur-md border-b border-white/10 transition-colors duration-300">
+            <div className="flex h-12 md:h-14 w-full items-center justify-between px-4 sm:px-8 lg:px-10 gap-4">
               {/* Logo */}
               <div className="flex items-center shrink-0">
                 <Link href="/" className="flex items-center -space-x-1 text-xl sm:text-2xl font-black tracking-tighter text-white">
-                  <Image src="/Circlo Logo White-02.png" alt="Circlo Logo" width={70} height={70}  className="object-contain" />
+                  <Image src="/Circlo Logo White-02.png" alt="Circlo Logo" width={70} height={70} className="object-contain" />
                   <span>Circlo</span>
                 </Link>
               </div>
@@ -67,16 +67,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Show>
 
               {/* Right Side Actions */}
-              <nav className="flex items-center gap-4 shrink-0">
+              <nav className="flex items-center gap-2 md:gap-4 shrink-0">
                 <Show when="signed-out">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 md:gap-3">
                     <Link href="/about">
-                      <Button variant="outline" className="rounded-full bg-transparent border-2 border-white text-white hover:bg-white hover:text-black font-bold">
-                        What is Circlo?
+                      <Button className="rounded-full  text-white hover:text-white hover:bg-transparent text-[12px] md:text-[14px] font-normal transition-colors px-2 md:px-4">
+                        About Circlo
                       </Button>
                     </Link>
                     <SignInButton mode="modal">
-                      <Button className="rounded-full bg-[#e52b2e] hover:bg-[#ff3c3c] text-white font-bold border-2 border-transparent">
+                      <Button className="rounded-full bg-white hover:bg-zinc-200 text-black text-[12px] md:text-[14px] font-normal border-none transition-all px-4">
                         Log In / Sign Up
                       </Button>
                     </SignInButton>
@@ -96,7 +96,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       </Button>
                     </Link>
                     <NavActions />
-              
+
                     <CustomUserButton />
                   </div>
                 </Show>
