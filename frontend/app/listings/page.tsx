@@ -162,32 +162,50 @@ export default function ListingsGridPage() {
 
 
 
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+
 function ListingCard({ listing }: { listing: Listing }) {
   return (
-    <Link href={`/listings/${listing.id}`} className="block h-full group">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col h-full"
-      >
-        <div className="aspect-square relative flex items-center justify-center overflow-hidden mb-3 bg-zinc-100">
+    <Card className="hover:shadow-lg transition-shadow overflow-hidden group flex flex-col h-full">
+      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-lg font-bold">
+          ${listing.price.toFixed(2)}
+        </CardTitle>
+        <span className="text-xs font-semibold px-2 py-1 bg-zinc-100 rounded-full text-zinc-600">
+          {CATEGORIES.find(c => c.id === listing.category)?.label || listing.category}
+        </span>
+      </CardHeader>
+      
+      <CardContent className="p-4 pt-0 flex-grow flex flex-col">
+        <div className="relative w-full aspect-square mb-4 rounded-md overflow-hidden bg-zinc-100">
           {listing.images && listing.images.length > 0 ? (
             <img
               src={getImageUrl(listing.images[0].url)}
               alt={listing.title}
-              className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <Tag className="h-10 w-10 text-zinc-300 z-10" />
+            <div className="flex items-center justify-center w-full h-full">
+              <Tag className="h-10 w-10 text-zinc-300" />
+            </div>
           )}
         </div>
-        <div className="font-bold text-black text-base md:text-lg leading-none mb-1">
-          ${listing.price.toFixed(2)}
+        
+        <div className="space-y-1">
+          <h3 className="font-semibold text-base line-clamp-1">{listing.title}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {listing.description}
+          </p>
         </div>
-        <h3 className="text-zinc-500 text-sm leading-tight line-clamp-2">
-          {listing.title}
-        </h3>
-      </motion.div>
-    </Link>
+      </CardContent>
+      
+      <CardFooter className="p-4 pt-0 mt-auto">
+        <Link href={`/listings/${listing.id}`} className="w-full">
+          <Button className="w-full bg-zinc-900 hover:bg-black text-white">
+            View Details
+          </Button>
+        </Link>
+      </CardFooter>
+    </Card>
   );
 }
