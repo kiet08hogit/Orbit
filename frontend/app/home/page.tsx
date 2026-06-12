@@ -90,9 +90,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white flex flex-col font-sans">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f5f5f7] flex flex-col font-sans">
       {/* Hero Banner */}
-      <div className="relative w-full h-[500px] mb-12 overflow-hidden">
+      <div className="relative w-full h-[350px] md:h-[450px] mb-8 overflow-hidden">
         <img
           src="/dj.jpg"
           alt="Circlo Hero"
@@ -157,24 +157,24 @@ function ProductSection({ title, listings, viewMoreHref }: { title: React.ReactN
   return (
     <section>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-black">{title}</h2>
+        <h2 className="text-[24px] md:text-[28px] font-semibold text-[#1d1d1f] tracking-tight">{title}</h2>
         {viewMoreHref && (
-          <Link href={viewMoreHref} className="hidden sm:flex items-center text-sm font-bold text-[#3252DF] hover:text-[#2841B3] transition-colors group">
+          <Link href={viewMoreHref} className="hidden sm:flex items-center text-[17px] font-normal text-[#0066cc] hover:underline transition-colors group">
             View More
             <ChevronRight className="h-4 w-4 ml-0.5 group-hover:translate-x-1 transition-transform" />
           </Link>
         )}
       </div>
-      <div className="flex overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 gap-4 md:gap-6 snap-x snap-mandatory hide-scrollbar">
+      <div className="flex overflow-x-auto pb-6 -mx-4 px-4 md:mx-0 md:px-0 gap-4 md:gap-6 snap-x snap-mandatory hide-scrollbar">
         {listings.map((listing) => (
-          <div key={listing.id} className="min-w-[160px] md:min-w-[240px] w-[160px] md:w-[240px] flex-none snap-start">
+          <div key={listing.id} className="min-w-[160px] md:min-w-[220px] w-[160px] md:w-[220px] flex-none snap-start">
             <ListingCard listing={listing} />
           </div>
         ))}
       </div>
       {viewMoreHref && (
         <div className="mt-6 sm:hidden">
-          <Link href={viewMoreHref} className="flex items-center justify-center w-full py-3 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded-lg text-sm font-bold transition-colors">
+          <Link href={viewMoreHref} className="flex items-center justify-center w-full py-3 bg-white border border-[#e0e0e0] text-[#1d1d1f] rounded-[14px] text-[17px] font-normal transition-colors hover:bg-zinc-50">
             View More
           </Link>
         </div>
@@ -189,9 +189,9 @@ function ListingCard({ listing }: { listing: Listing }) {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col h-full"
+        className="flex flex-col h-full bg-white rounded-[18px] border border-[#e0e0e0] shadow-sm overflow-hidden hover:-translate-y-1 transition-transform duration-300"
       >
-        <div className="aspect-square relative flex items-center justify-center overflow-hidden mb-3 bg-zinc-100">
+        <div className="aspect-square relative flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
           {listing.images && listing.images.length > 0 ? (
             <img
               src={getImageUrl(listing.images[0].url)}
@@ -199,15 +199,17 @@ function ListingCard({ listing }: { listing: Listing }) {
               className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <Tag className="h-10 w-10 text-zinc-300 z-10" />
+            <Tag className="h-10 w-10 text-[#d2d2d7] z-10" />
           )}
         </div>
-        <div className="font-bold text-black text-base md:text-lg leading-none mb-1">
-          ${listing.price.toFixed(2)}
+        <div className="p-3 flex flex-col gap-1 bg-white">
+          <div className="font-semibold text-[#1d1d1f] text-[15px] leading-tight">
+            ${listing.price.toFixed(2)}
+          </div>
+          <h3 className="text-[#7a7a7a] text-[13px] font-normal leading-tight line-clamp-2">
+            {listing.title}
+          </h3>
         </div>
-        <h3 className="text-zinc-500 text-sm leading-tight line-clamp-2">
-          {listing.title}
-        </h3>
       </motion.div>
     </Link>
   );
