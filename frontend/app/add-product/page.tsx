@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Tag, AlignLeft, DollarSign, ListPlus, Loader2, ImagePlus, AlertCircle, X, GripVertical, ShieldCheck, Banknote } from 'lucide-react';
+import { ArrowLeft, Tag, AlignLeft, DollarSign, ListPlus, Loader2, ImagePlus, AlertCircle, X, GripVertical, ShieldCheck, Banknote, UploadCloud } from 'lucide-react';
 import Link from 'next/link';
 import axios from 'axios';
 import { Input } from '@/components/ui/input';
@@ -137,36 +137,33 @@ export default function AddProductPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-zinc-50 py-10 px-4 sm:px-6 font-sans">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f5f5f7] py-10 px-4 sm:px-6 font-sans">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-3xl mx-auto"
+        className="max-w-2xl mx-auto"
       >
         {/* Back Button */}
         <Link
           href="/listings"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-black transition-colors mb-6 text-sm font-bold"
+          className="inline-flex items-center gap-2 text-zinc-500 hover:text-[#1d1d1f] transition-colors mb-6 text-[14px] font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Marketplace
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-black tracking-tight text-black">
+        <div className="mb-6">
+          <h1 className="text-[28px] font-bold tracking-tight text-[#1d1d1f]">
             Create a Listing
           </h1>
-          <p className="text-zinc-500 text-sm font-medium mt-1">
-            Share what you're offering with the UIC community.
-          </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 shadow-sm">
+        <div className="bg-white border border-zinc-200 rounded-[20px] p-6 md:p-8 shadow-sm">
           {error && (
-            <Alert variant="destructive" className="mb-6 rounded-xl">
+            <Alert variant="destructive" className="mb-6 rounded-[14px]">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
@@ -176,183 +173,146 @@ export default function AddProductPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* ── Image Upload ── */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <ImagePlus className="h-4 w-4 text-zinc-400" />
-                Photos
-                <span className="text-zinc-400 font-medium ml-1">
-                  ({images.length}/{MAX_IMAGES})
-                </span>
-              </label>
-
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                {/* Existing previews */}
-                <AnimatePresence mode="popLayout">
-                  {images.map((img, idx) => (
-                    <motion.div
-                      key={img.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.2 }}
-                      className="relative aspect-square rounded-xl overflow-hidden border-2 border-zinc-200 group bg-zinc-100"
-                    >
-                      <img
-                        src={img.url}
-                        alt={`Upload ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-
-                      {/* Cover badge on first image */}
-                      {idx === 0 && (
-                        <div className="absolute top-1.5 left-1.5 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
-                          Cover
-                        </div>
-                      )}
-
-                      {/* Remove button */}
-                      <button
-                        type="button"
-                        onClick={() => removeImage(img.id)}
-                        className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-
-                {/* Add more button */}
-                {images.length < MAX_IMAGES && (
-                  <motion.div
-                    layout
-                    className="aspect-square rounded-xl border-2 border-dashed border-zinc-300 hover:border-[#3252DF] bg-zinc-50 hover:bg-[#3252DF]/5 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 group relative"
-                  >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageAdd}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    />
-                    <ImagePlus className="h-6 w-6 text-zinc-400 group-hover:text-[#3252DF] transition-colors mb-1" />
-                    <span className="text-[10px] font-bold text-zinc-400 group-hover:text-[#3252DF] transition-colors">
-                      Add
-                    </span>
-                  </motion.div>
-                )}
+              <label className="text-[13px] font-semibold text-[#1d1d1f]">Upload Image</label>
+              
+              <div className="relative w-full border-2 border-dashed border-zinc-300 rounded-[14px] p-8 flex flex-col items-center justify-center hover:bg-zinc-50 hover:border-[#0066cc] transition-colors group cursor-pointer">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageAdd}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <UploadCloud className="h-8 w-8 text-zinc-400 group-hover:text-[#0066cc] transition-colors mb-3" />
+                <p className="text-[14px] text-zinc-600 mb-1 text-center">Drag and drop your image here, or click to select a file</p>
+                <p className="text-[12px] text-zinc-400 text-center">(Only *.jpeg, *.jpg, *.png images will be accepted)</p>
               </div>
 
+              {/* Previews */}
+              {images.length > 0 && (
+                <div className="flex gap-3 mt-4 overflow-x-auto pb-2 hide-scrollbar">
+                  <AnimatePresence mode="popLayout">
+                    {images.map((img, idx) => (
+                      <motion.div
+                        key={img.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                        className="relative h-20 w-20 flex-shrink-0 rounded-xl overflow-hidden border border-zinc-200 group bg-zinc-100"
+                      >
+                        <img src={img.url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                        {idx === 0 && (
+                          <div className="absolute top-1 left-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                            Cover
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeImage(img.id)}
+                          className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
               <p className="text-[11px] text-zinc-400 font-medium">
-                First image will be the cover. You can upload up to {MAX_IMAGES} photos.
+                ({images.length}/{MAX_IMAGES}) uploaded. First image will be the cover.
               </p>
+            </div>
+
+            {/* ── Category ── */}
+            <div className="space-y-2">
+              <label className="text-[13px] font-semibold text-[#1d1d1f]">Category</label>
+              <Select
+                value={formData.category}
+                onValueChange={(val) => setFormData({ ...formData, category: val || 'SCHOOL' })}
+              >
+                <SelectTrigger className="w-full h-12 rounded-[14px] bg-zinc-50 border-zinc-200 text-[14px] focus:ring-[#0066cc] focus:ring-1">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent className="rounded-[14px]">
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat} className="rounded-lg">
+                      {cat.charAt(0) + cat.slice(1).toLowerCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* ── Title ── */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <Tag className="h-4 w-4 text-zinc-400" />
-                Title
-              </label>
+              <label className="text-[13px] font-semibold text-[#1d1d1f]">Title</label>
               <Input
                 required
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="e.g. TI-84 Plus CE Calculator"
-                className="w-full rounded-xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                className="w-full h-12 rounded-[14px] px-4 text-[14px] bg-zinc-50 border-zinc-200 focus-visible:ring-[#0066cc] focus-visible:ring-1"
               />
+            </div>
+
+            {/* ── Price ── */}
+            <div className="space-y-2">
+              <label className="text-[13px] font-semibold text-[#1d1d1f]">Price</label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-semibold text-[14px]">$</span>
+                <Input
+                  required
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  placeholder="0.00"
+                  className="w-full h-12 rounded-[14px] pl-8 pr-4 text-[14px] bg-zinc-50 border-zinc-200 focus-visible:ring-[#0066cc] focus-visible:ring-1"
+                />
+              </div>
             </div>
 
             {/* ── Description ── */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <AlignLeft className="h-4 w-4 text-zinc-400" />
-                Description
-              </label>
+              <label className="text-[13px] font-semibold text-[#1d1d1f]">Description</label>
               <Textarea
                 required
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows={4}
-                placeholder="Describe the condition, location to meet up, etc."
-                className="w-full rounded-xl p-4 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50 resize-none"
+                placeholder="Provide any additional details about the item..."
+                className="w-full min-h-[120px] rounded-[14px] p-4 text-[14px] bg-zinc-50 border-zinc-200 focus-visible:ring-[#0066cc] focus-visible:ring-1 resize-none"
               />
             </div>
 
-            {/* ── Price + Category ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-black flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-zinc-400" />
-                  Price
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-bold text-sm">$</span>
-                  <Input
-                    required
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    placeholder="0.00"
-                    className="w-full rounded-xl pl-8 py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-black flex items-center gap-2">
-                  <ListPlus className="h-4 w-4 text-zinc-400" />
-                  Category
-                </label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(val) => setFormData({ ...formData, category: val || 'SCHOOL' })}
-                >
-                  <SelectTrigger className="w-full rounded-xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat.charAt(0) + cat.slice(1).toLowerCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             {/* ── Payment Settings ── */}
-            <div className="space-y-4 pt-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <Banknote className="h-4 w-4 text-zinc-400" />
-                Payment Options
-              </label>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3 pt-2">
+              <label className="text-[13px] font-semibold text-[#1d1d1f]">Payment Options</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Direct Payment */}
                 <div 
-                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${formData.acceptsDirectPayment ? 'border-[#3252DF] bg-[#3252DF]/5' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}
+                  className={`border-[1.5px] rounded-[14px] p-4 cursor-pointer transition-all ${formData.acceptsDirectPayment ? 'border-[#0066cc] bg-[#0066cc]/5' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}
                   onClick={() => setFormData(prev => ({ ...prev, acceptsDirectPayment: !prev.acceptsDirectPayment }))}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-black text-sm">Direct Payment</span>
-                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors ${formData.acceptsDirectPayment ? 'border-[#3252DF] bg-[#3252DF]' : 'border-zinc-300'}`}>
+                    <span className="font-semibold text-[#1d1d1f] text-[14px]">Direct Payment</span>
+                    <div className={`h-[18px] w-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${formData.acceptsDirectPayment ? 'border-[#0066cc] bg-[#0066cc]' : 'border-zinc-300'}`}>
                       {formData.acceptsDirectPayment && <div className="h-2 w-2 bg-white rounded-full" />}
                     </div>
                   </div>
-                  <p className="text-xs text-zinc-500 font-medium">Cash, Zelle, Venmo at meetup.</p>
+                  <p className="text-[12px] text-zinc-500">Cash, Zelle, Venmo at meetup.</p>
                 </div>
 
                 {/* Protected Payment */}
                 <div 
-                  className={`border-2 rounded-xl p-4 cursor-pointer transition-all relative overflow-hidden ${formData.acceptsProtectedPayment ? 'border-emerald-500 bg-emerald-50' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}
+                  className={`border-[1.5px] rounded-[14px] p-4 cursor-pointer transition-all relative overflow-hidden ${formData.acceptsProtectedPayment ? 'border-emerald-500 bg-emerald-50' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}
                   onClick={() => {
                     if (!isStripeLinked) {
                       setError("You must connect your bank account in your Profile before enabling protected payments.");
@@ -368,18 +328,17 @@ export default function AddProductPage() {
                     </div>
                   )}
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-black text-sm flex items-center gap-1.5">
-                      <ShieldCheck className={`h-4 w-4 ${formData.acceptsProtectedPayment ? 'text-emerald-600' : 'text-emerald-500'}`} />
-                      Protected
+                    <span className="font-semibold text-[#1d1d1f] text-[14px] flex items-center gap-1.5">
+                      Protected Payment
                     </span>
-                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors ${formData.acceptsProtectedPayment ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-300'}`}>
+                    <div className={`h-[18px] w-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${formData.acceptsProtectedPayment ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-300'}`}>
                       {formData.acceptsProtectedPayment && <div className="h-2 w-2 bg-white rounded-full" />}
                     </div>
                   </div>
-                  <p className="text-xs text-zinc-500 font-medium">Card payments via Circlo Escrow.</p>
+                  <p className="text-[12px] text-zinc-500">Card payments via Circlo Escrow.</p>
                   
                   {!isStripeLinked && !isLoadingStripeStatus && (
-                    <div className="mt-2 text-[10px] font-bold text-[#3252DF] hover:underline" onClick={(e) => {
+                    <div className="mt-2 text-[11px] font-semibold text-[#0066cc] hover:underline" onClick={(e) => {
                       e.stopPropagation();
                       router.push(`/profile/${userId}`);
                     }}>
@@ -391,16 +350,16 @@ export default function AddProductPage() {
             </div>
 
             {/* ── Submit ── */}
-            <div className="pt-2">
+            <div className="pt-4">
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 text-sm font-bold bg-[#272343] hover:bg-black text-white rounded-xl shadow-sm"
+                className="w-full h-12 rounded-[14px] bg-[#1d1d1f] hover:bg-black text-white text-[15px] font-semibold transition-colors"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Listing...
+                    Publishing...
                   </>
                 ) : (
                   'Publish Listing'

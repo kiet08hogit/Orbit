@@ -45,6 +45,24 @@ const CATEGORIES = [
   { id: 'ALL', label: 'ALL PRODUCTS' },
 ];
 
+const getCategoryHeroInfo = (categoryId: string) => {
+  switch (categoryId) {
+    case 'HOUSING':
+      return { image: '/dorm.avif', objectPosition: 'object-[50%_18%]' };
+    case 'CLOTHES':
+      return { image: '/clothes.webp', objectPosition: 'object-center' };
+    case 'SCHOOL':
+      return { image: '/book.avif', objectPosition: 'object-[50%_35%]' };
+    case 'LEISURE':
+      return { image: '/kayak.jpg', objectPosition: 'object-center' };
+    case 'ACCESSORIES':
+    case 'OTHER':
+    case 'ALL':
+    default:
+      return { image: '/dj.jpg', objectPosition: 'object-[50%_18%]' };
+  }
+};
+
 export default function ListingsGridPage() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const searchParams = useSearchParams();
@@ -96,7 +114,35 @@ export default function ListingsGridPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white flex flex-col font-sans">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f5f5f7] flex flex-col font-sans">
+      {/* Dynamic Hero Banner */}
+      {!searchQuery && (
+        <div className="relative w-full h-[350px] md:h-[450px] mb-8 overflow-hidden">
+          <img
+            src={getCategoryHeroInfo(activeCategory).image}
+            alt="Category Hero"
+            className={`absolute inset-0 w-full h-full object-cover ${getCategoryHeroInfo(activeCategory).objectPosition} z-0`}
+          />
+          {/* The white card overlay */}
+          <div className="absolute left-8 md:left-[10%] top-1/2 -translate-y-1/2 bg-white rounded-xl p-8 shadow-xl max-w-sm z-10 border border-zinc-100">
+            <h2 className="text-2xl font-black text-black mb-6 leading-tight">
+              Trying to pass down your items?
+            </h2>
+            <Link
+              href="/add-product"
+              className="block w-full text-center bg-[#b81d68] hover:bg-[#961754] text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4"
+            >
+              Sell now
+            </Link>
+            <div className="text-center">
+              <a href="#" className="text-sm font-medium text-zinc-600 underline hover:text-black">
+                How it works
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
         {searchQuery && (
@@ -162,50 +208,34 @@ export default function ListingsGridPage() {
 
 
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-
 function ListingCard({ listing }: { listing: Listing }) {
   return (
-    <Card className="hover:shadow-lg transition-shadow overflow-hidden group flex flex-col h-full">
-      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-lg font-bold">
-          ${listing.price.toFixed(2)}
-        </CardTitle>
-        <span className="text-xs font-semibold px-2 py-1 bg-zinc-100 rounded-full text-zinc-600">
-          {CATEGORIES.find(c => c.id === listing.category)?.label || listing.category}
-        </span>
-      </CardHeader>
-      
-      <CardContent className="p-4 pt-0 flex-grow flex flex-col">
-        <div className="relative w-full aspect-square mb-4 rounded-md overflow-hidden bg-zinc-100">
+    <Link href={`/listings/${listing.id}`} className="block h-full group">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col h-full bg-white rounded-[18px] border border-[#e0e0e0] shadow-sm overflow-hidden hover:-translate-y-1 transition-transform duration-300"
+      >
+        <div className="aspect-square relative flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
           {listing.images && listing.images.length > 0 ? (
             <img
               src={getImageUrl(listing.images[0].url)}
               alt={listing.title}
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <div className="flex items-center justify-center w-full h-full">
-              <Tag className="h-10 w-10 text-zinc-300" />
-            </div>
+            <Tag className="h-10 w-10 text-[#d2d2d7] z-10" />
           )}
         </div>
-        
-        <div className="space-y-1">
-          <h3 className="font-semibold text-base line-clamp-1">{listing.title}</h3>
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {listing.description}
-          </p>
+        <div className="p-3 md:p-4 flex flex-col gap-1 bg-white">
+          <div className="font-semibold text-[#1d1d1f] text-[15px] md:text-[17px] leading-tight">
+            ${listing.price.toFixed(2)}
+          </div>
+          <h3 className="text-[#7a7a7a] text-[13px] md:text-[14px] font-normal leading-tight line-clamp-2">
+            {listing.title}
+          </h3>
         </div>
-      </CardContent>
-      
-      <CardFooter className="p-4 pt-0 mt-auto">
-        <Link href={`/listings/${listing.id}`} className="w-full">
-          <Button className="w-full bg-zinc-900 hover:bg-black text-white">
-            View Details
-          </Button>
-        </Link>
-      </CardFooter>
-    </Card>
+      </motion.div>
+    </Link>
   );
 }
