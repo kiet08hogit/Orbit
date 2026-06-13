@@ -27,7 +27,7 @@ export function DeleteAccountButton() {
     <Button 
       onClick={handleDelete}
       disabled={isDeleting}
-      className="w-full rounded-full h-12 font-bold bg-[#272343] hover:bg-black text-white shadow-lg shadow-black/10 transition-all active:scale-95 flex items-center justify-center gap-2"
+      className="w-full rounded-full h-12 font-bold bg-[#272343] hover:bg-black text-white shadow-sm shadow-black/10 transition-all active:scale-95 flex items-center justify-center gap-2"
     >
       {isDeleting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Delete & Try Again"}
     </Button>

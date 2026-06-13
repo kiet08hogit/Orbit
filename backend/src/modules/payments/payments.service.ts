@@ -250,7 +250,7 @@ export class PaymentsService {
 
                 await this.prisma.message.create({
                     data: {
-                        content: 'I have reserved this item with a Protected Payment via Circlo Escrow!',
+                        content: 'I have reserved this item with a Protected Payment via Orbit Escrow!',
                         senderId: transaction.buyerId,
                         conversationId: conversation.id,
                         listingId: transaction.listingId

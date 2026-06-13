@@ -99,8 +99,8 @@ export default function OnboardingPage() {
           <div className="inline-flex items-center justify-center p-3 bg-[#3252DF]/10 rounded-2xl mb-4">
             <Sparkles className="h-8 w-8 text-[#3252DF]" />
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-black">
-            Welcome to Circlo!
+          <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900">
+            Welcome to Orbit!
           </h1>
           <p className="text-zinc-500 text-lg font-medium">
             Let's set up your student profile before you enter the marketplace.
@@ -108,10 +108,10 @@ export default function OnboardingPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-xl shadow-zinc-200/50">
+        <div className="bg-white border border-zinc-200 rounded-2xl p-8 shadow-xl shadow-zinc-200/50">
           
           {error && (
-            <Alert variant="destructive" className="mb-6 rounded-xl">
+            <Alert variant="destructive" className="mb-6 rounded-2xl">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
@@ -123,13 +123,13 @@ export default function OnboardingPage() {
             {/* Avatar Upload */}
             <div className="flex flex-col items-center justify-center space-y-4 mb-8">
               <div 
-                className="relative h-24 w-24 rounded-full border-4 border-white shadow-lg overflow-hidden bg-zinc-100 group cursor-pointer"
+                className="relative h-24 w-24 rounded-full border-4 border-white shadow-sm overflow-hidden bg-zinc-50 group cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center text-zinc-400 bg-zinc-50">
+                  <div className="h-full w-full flex items-center justify-center text-zinc-500 bg-zinc-50">
                     <User className="h-10 w-10" />
                   </div>
                 )}
@@ -152,8 +152,8 @@ export default function OnboardingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-black flex items-center gap-2">
-                  <User className="h-4 w-4 text-zinc-400" />
+                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <User className="h-4 w-4 text-zinc-500" />
                   Full Name
                 </label>
                 <Input
@@ -162,14 +162,14 @@ export default function OnboardingPage() {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="e.g. Jane Doe"
-                  className="w-full rounded-xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                  className="w-full rounded-2xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
                 />
               </div>
 
               {/* Username */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-black flex items-center gap-2">
-                  <User className="h-4 w-4 text-zinc-400" />
+                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <User className="h-4 w-4 text-zinc-500" />
                   Username
                 </label>
                 <Input
@@ -178,14 +178,14 @@ export default function OnboardingPage() {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="e.g. janedoe"
-                  className="w-full rounded-xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                  className="w-full rounded-2xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
                 />
               </div>
 
               {/* Major */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-black flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-zinc-400" />
+                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-zinc-500" />
                   Major
                 </label>
                 <Input
@@ -194,21 +194,21 @@ export default function OnboardingPage() {
                   value={formData.major}
                   onChange={handleChange}
                   placeholder="e.g. Computer Science"
-                  className="w-full rounded-xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                  className="w-full rounded-2xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
                 />
               </div>
 
               {/* Class Year */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-black flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-zinc-400" />
+                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-zinc-500" />
                   Class Year
                 </label>
                 <Select 
                   value={formData.classYear} 
                   onValueChange={(val) => setFormData({ ...formData, classYear: val || '' })}
                 >
-                  <SelectTrigger className="w-full rounded-xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
+                  <SelectTrigger className="w-full rounded-2xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -224,8 +224,8 @@ export default function OnboardingPage() {
 
             {/* Bio */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <AlignLeft className="h-4 w-4 text-zinc-400" />
+              <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <AlignLeft className="h-4 w-4 text-zinc-500" />
                 Short Bio
               </label>
               <Textarea
@@ -234,7 +234,7 @@ export default function OnboardingPage() {
                 onChange={handleChange}
                 rows={3}
                 placeholder="Tell the community a bit about yourself..."
-                className="w-full rounded-xl p-4 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50 resize-none"
+                className="w-full rounded-2xl p-4 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50 resize-none"
               />
             </div>
 
@@ -243,7 +243,7 @@ export default function OnboardingPage() {
               <Button
                 type="submit"
                 disabled={isLoading || !formData.classYear}
-                className="w-full h-14 text-lg font-bold bg-[#3252DF] hover:bg-[#2842B3] text-white rounded-xl shadow-lg shadow-[#3252DF]/20"
+                className="w-full h-14 text-lg font-bold bg-[#3252DF] hover:bg-[#2842B3] text-white rounded-2xl shadow-sm shadow-[#3252DF]/20"
               >
                 {isLoading ? (
                   <>

@@ -1,8 +1,8 @@
-# Circlo - Authentication and Authorization
+# Orbit - Authentication and Authorization
 
 ## Authentication Provider
 
-Circlo uses:
+Orbit uses:
 
 - Clerk for sign-in, session management, and JWT creation
 

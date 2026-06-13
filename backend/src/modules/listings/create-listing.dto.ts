@@ -27,4 +27,24 @@ export class CreateListingDto {
   @IsBoolean()
   @IsOptional()
   acceptsProtectedPayment?: boolean;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsString()
+  @IsOptional()
+  brand?: string;
+
+  @IsString()
+  @IsOptional()
+  colors?: string;
+
+  @IsString()
+  @IsOptional()
+  size?: string;
+
+  @IsString()
+  @IsOptional()
+  material?: string;
 }

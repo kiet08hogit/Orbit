@@ -161,7 +161,7 @@ export default function ProfilePage() {
 
   if (!isLoaded || isLoading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-zinc-50">
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-white">
         <Loader2 className="h-10 w-10 animate-spin text-[#3252DF]" />
       </div>
     );
@@ -169,11 +169,11 @@ export default function ProfilePage() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-zinc-50 gap-4">
-        <AlertTriangle className="h-12 w-12 text-zinc-400" />
-        <h2 className="text-2xl font-bold text-black">Profile not found</h2>
+      <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-white gap-4 p-4">
+        <AlertTriangle className="h-12 w-12 text-zinc-500" />
+        <h2 className="text-xl font-bold text-zinc-900">Profile not found</h2>
         <Link href="/listings">
-          <Button className="rounded-xl font-bold bg-[#272343] hover:bg-black text-white">
+          <Button className="rounded-2xl font-bold bg-[#3252DF] hover:bg-black text-white">
             Back to Marketplace
           </Button>
         </Link>
@@ -185,18 +185,14 @@ export default function ProfilePage() {
   const listingsCount = userProfile._count?.listings || 0;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-zinc-50 py-10 px-4 sm:px-6 font-sans relative overflow-hidden">
+    <div className="min-h-[calc(100vh-4rem)] bg-white py-10 px-4 sm:px-6 font-sans relative overflow-hidden">
       
-      {/* Background Orbs to match the vibe */}
-      <div className="absolute top-0 right-0 -z-10 h-96 w-96 rounded-full bg-[#3252DF]/10 blur-[100px]" />
-      <div className="absolute bottom-0 left-0 -z-10 h-96 w-96 rounded-full bg-[#DC2626]/10 blur-[100px]" />
-
       <div className="max-w-6xl mx-auto z-10">
         
         {/* Back Link */}
         <Link
           href="/listings"
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-black transition-colors mb-8 text-sm font-bold"
+          className="inline-flex items-center gap-2 text-zinc-500 hover:text-zinc-900 transition-colors mb-8 text-sm font-bold"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m15 18-6-6 6-6"/></svg>
           Back to Marketplace
@@ -211,11 +207,11 @@ export default function ProfilePage() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-zinc-200 flex flex-col items-center text-center"
+              className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-zinc-200 flex flex-col items-center text-center relative"
             >
               {/* Avatar */}
               <div 
-                className={`h-32 w-32 rounded-full border-4 border-zinc-50 shadow-md overflow-hidden bg-zinc-100 mb-5 relative ${isEditing ? 'cursor-pointer group' : ''}`}
+                className={`h-32 w-32 rounded-full border-4 border-zinc-50 shadow-sm overflow-hidden bg-zinc-50 mb-5 relative ${isEditing ? 'cursor-pointer group' : ''}`}
                 onClick={() => isEditing && fileInputRef.current?.click()}
               >
                 {(avatarPreview || userProfile.avatarUrl) ? (
@@ -238,34 +234,34 @@ export default function ProfilePage() {
                 <div className="w-full space-y-4 mb-8 text-left">
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-zinc-500 uppercase">Name</label>
-                    <Input name="name" value={formData.name} onChange={handleChange} className="rounded-xl font-medium" />
+                    <Input name="name" value={formData.name} onChange={handleChange} className="rounded-2xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-zinc-500 uppercase">Username</label>
-                    <Input name="username" value={formData.username} onChange={handleChange} className="rounded-xl font-medium" />
+                    <Input name="username" value={formData.username} onChange={handleChange} className="rounded-2xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-zinc-500 uppercase">Major</label>
-                    <Input name="major" value={formData.major} onChange={handleChange} className="rounded-xl font-medium" />
+                    <Input name="major" value={formData.major} onChange={handleChange} className="rounded-2xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-zinc-500 uppercase">Class Year</label>
                     <Select value={formData.classYear} onValueChange={(val) => setFormData({ ...formData, classYear: val })}>
-                      <SelectTrigger className="rounded-xl font-medium"><SelectValue placeholder="Select Year" /></SelectTrigger>
+                      <SelectTrigger className="rounded-2xl font-medium bg-zinc-50 border-zinc-200 focus:ring-black focus:ring-1"><SelectValue placeholder="Select Year" /></SelectTrigger>
                       <SelectContent>
-                        {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                        {years.map(y => <SelectItem key={y} value={y} className="rounded-lg">{y}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-zinc-500 uppercase">Bio</label>
-                    <Textarea name="bio" value={formData.bio} onChange={handleChange} className="rounded-xl font-medium resize-none" rows={3} />
+                    <Textarea name="bio" value={formData.bio} onChange={handleChange} className="rounded-2xl font-medium resize-none bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1" rows={3} />
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center justify-center gap-2 mb-1">
-                    <h1 className="text-2xl font-black tracking-tight text-black">{userProfile.name || 'Anonymous User'}</h1>
+                    <h1 className="text-2xl font-black tracking-tight text-zinc-900">{userProfile.name || 'Anonymous User'}</h1>
                     <div className="flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500 text-white shadow-sm" title="Verified UIC Student">
                       <Shield className="h-3 w-3" />
                     </div>
@@ -275,24 +271,24 @@ export default function ProfilePage() {
 
                   <div className="flex flex-col w-full gap-2 mb-6">
                     {userProfile.major && (
-                      <div className="flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-100 text-zinc-700 px-3 py-2 font-bold text-sm rounded-xl">
-                        <BookOpen className="h-4 w-4 text-zinc-400" />
+                      <div className="flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-200 text-zinc-500 px-3 py-2 font-bold text-sm rounded-2xl">
+                        <BookOpen className="h-4 w-4 text-zinc-500" />
                         {userProfile.major}
                       </div>
                     )}
                     {userProfile.classYear && (
-                      <div className="flex items-center justify-center gap-2 bg-[#3252DF]/5 border border-[#3252DF]/10 text-[#3252DF] px-3 py-2 font-bold text-sm rounded-xl">
-                        <GraduationCap className="h-4 w-4" />
+                      <div className="flex items-center justify-center gap-2 bg-[#3252DF]/5 border border-[#3252DF]/10 text-[#3252DF] px-3 py-1.5 font-bold text-xs rounded-2xl">
+                        <GraduationCap className="h-3.5 w-3.5" />
                         {userProfile.classYear}
                       </div>
                     )}
                   </div>
 
-                  <div className="w-full text-sm font-medium text-zinc-600 text-center mb-8">
+                  <div className="w-full text-sm font-medium text-zinc-500 text-center mb-8">
                     {userProfile.bio ? (
                       <p className="leading-relaxed">{userProfile.bio}</p>
                     ) : (
-                      <p className="italic text-zinc-400">This student hasn't written a bio yet.</p>
+                      <p className="italic text-zinc-500">This student hasn't written a bio yet.</p>
                     )}
                   </div>
                 </>
@@ -303,7 +299,7 @@ export default function ProfilePage() {
                 {currentUserId === userProfile.clerkUserId ? (
                   isEditing ? (
                     <Button 
-                      className="w-full rounded-xl h-12 font-bold text-sm bg-[#3252DF] hover:bg-[#2842B3] text-white shadow-sm flex items-center gap-2"
+                      className="w-full rounded-2xl h-12 font-bold text-sm bg-black hover:bg-zinc-50 text-white shadow-sm flex items-center gap-2 transition-all"
                       onClick={handleSaveProfile}
                       disabled={isSaving}
                     >
@@ -311,7 +307,7 @@ export default function ProfilePage() {
                     </Button>
                   ) : (
                     <Button 
-                      className="w-full rounded-xl h-12 font-bold text-sm bg-zinc-100 hover:bg-zinc-200 text-zinc-900 shadow-sm flex items-center gap-2"
+                      className="w-full rounded-2xl h-12 font-bold text-sm bg-zinc-50 hover:bg-zinc-50 text-zinc-900 shadow-sm flex items-center gap-2 transition-all"
                       onClick={() => setIsEditing(true)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -319,13 +315,13 @@ export default function ProfilePage() {
                     </Button>
                   )
                 ) : (
-                  <Button className="w-full rounded-xl h-12 font-bold text-sm bg-[#272343] hover:bg-black text-white shadow-sm flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
+                  <Button className="w-full rounded-2xl h-12 font-bold text-sm bg-black hover:bg-zinc-50 text-white shadow-sm flex items-center gap-2 transition-all">
+                    <MessageSquare className="h-5 w-5" />
                     Message Seller
                   </Button>
                 )}
                 <div className="grid grid-cols-2 gap-3">
-                  <Button variant="ghost" className="w-full rounded-xl h-11 font-bold text-sm text-zinc-400 hover:text-red-600 hover:bg-red-50 flex items-center gap-2">
+                  <Button variant="ghost" className="w-full rounded-2xl h-11 font-bold text-sm text-zinc-500 hover:text-red-600 hover:bg-red-50 flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
                     Report
                   </Button>
@@ -334,17 +330,17 @@ export default function ProfilePage() {
 
               {/* Stripe Connection Section */}
               {currentUserId === userProfile.clerkUserId && (
-                <div className="w-full mt-6 pt-6 border-t border-zinc-100 flex flex-col items-center">
+                <div className="w-full mt-6 pt-6 border-t border-zinc-200 flex flex-col items-center">
                   <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="h-5 w-5 text-[#3252DF]" />
-                    <h4 className="font-bold text-sm text-black">Seller Payouts</h4>
+                    <DollarSign className="h-5 w-5 text-[#0066cc]" />
+                    <h4 className="font-bold text-sm text-zinc-900">Seller Payouts</h4>
                   </div>
                   <p className="text-xs text-zinc-500 text-center mb-4 leading-relaxed">
-                    Connect your bank account to receive protected payments from buyers through Circlo.
+                    Connect your bank account to receive protected payments from buyers through Orbit.
                   </p>
                   
                   {isStripeLinked ? (
-                    <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl text-sm font-bold w-full justify-center border border-emerald-100">
+                    <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-2xl text-sm font-bold w-full justify-center border border-emerald-100">
                       <CheckCircle2 className="h-4 w-4" />
                       Bank Account Connected
                     </div>
@@ -352,7 +348,7 @@ export default function ProfilePage() {
                     <Button 
                       onClick={handleConnectStripe} 
                       disabled={isLoadingStripe}
-                      className="w-full rounded-xl h-11 font-bold text-sm bg-[#3252DF]/10 hover:bg-[#3252DF]/20 text-[#3252DF] shadow-none flex items-center gap-2 transition-colors"
+                      className="w-full rounded-2xl h-11 font-bold text-sm bg-[#0066cc]/10 hover:bg-[#0066cc]/20 text-[#0066cc] shadow-sm flex items-center gap-2 transition-colors"
                     >
                       {isLoadingStripe ? <Loader2 className="h-4 w-4 animate-spin" /> : "Connect with Stripe"}
                     </Button>
@@ -366,65 +362,63 @@ export default function ProfilePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-200"
+              className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm overflow-hidden"
             >
-              <h3 className="font-bold text-black text-sm mb-5 flex items-center gap-2 uppercase tracking-wider">
+              <h3 className="font-bold text-zinc-900 text-sm mb-5 flex items-center gap-2 tracking-wide uppercase">
                 <Shield className="h-4 w-4 text-[#3252DF]" />
                 Trust & Reputation
               </h3>
               
               <div className="space-y-4">
-                
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-zinc-500 flex items-center gap-2">
-                    <Star className="h-4 w-4 text-amber-400 fill-amber-400" /> Rating
+                    <Star className="h-4 w-4 text-[#3252DF] fill-[#3252DF]/20" /> Rating
                   </span>
-                  <span className="font-black text-black">New</span>
+                  <span className="font-black text-zinc-900">New</span>
                 </div>
                 
-                <Separator className="bg-zinc-100" />
+                <Separator className="bg-zinc-50" />
                 
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-zinc-500 flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-zinc-400" /> Active Listings
+                    <Tag className="h-4 w-4 text-zinc-500" /> Active Listings
                   </span>
-                  <span className="font-black text-black">{listingsCount}</span>
+                  <span className="font-black text-zinc-900">{listingsCount}</span>
                 </div>
                 
-                <Separator className="bg-zinc-100" />
+                <Separator className="bg-zinc-50" />
                 
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-zinc-500 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-zinc-400" /> Exchanges
+                    <MapPin className="h-4 w-4 text-zinc-500" /> Exchanges
                   </span>
-                  <span className="font-black text-black">0</span>
+                  <span className="font-black text-zinc-900">0</span>
                 </div>
 
-                <Separator className="bg-zinc-100" />
+                <Separator className="bg-zinc-50" />
                 
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-zinc-500 flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-zinc-400" /> Response Rate
+                    <MessageSquare className="h-4 w-4 text-zinc-500" /> Response Rate
                   </span>
-                  <span className="font-black text-black">—</span>
+                  <span className="font-black text-zinc-900">—</span>
                 </div>
                 
-                <Separator className="bg-zinc-100" />
+                <Separator className="bg-zinc-50" />
                 
                 <div className="flex items-center justify-between pt-2">
-                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5" />
                     Joined {joinDate}
                   </span>
                 </div>
-
               </div>
             </motion.div>
           </div>
 
           {/* Right Column: User's Listings */}
           <div className="lg:col-span-8">
-            <h2 className="text-2xl font-black tracking-tight text-black mb-6">Active Listings</h2>
+            <h2 className="text-2xl font-black tracking-tight text-zinc-900 mb-6">Active Listings</h2>
             
             {userProfile.listings && userProfile.listings.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -436,10 +430,10 @@ export default function ProfilePage() {
                     transition={{ delay: i * 0.05 }}
                   >
                     <Link href={`/listings/${listing.id}`} className="block h-full group">
-                      <div className="bg-white rounded-2xl overflow-hidden border border-zinc-200 shadow-sm hover:shadow-md transition-all h-full flex flex-col">
+                      <div className="bg-white rounded-2xl overflow-hidden border border-zinc-200 shadow-sm hover:shadow-sm transition-all h-full flex flex-col">
                         
                         {/* Image */}
-                        <div className="aspect-square bg-zinc-100 relative overflow-hidden">
+                        <div className="aspect-square bg-zinc-50 relative overflow-hidden">
                           {listing.images && listing.images.length > 0 ? (
                             <img 
                               src={getImageUrl(listing.images[0].url)} 
@@ -454,7 +448,7 @@ export default function ProfilePage() {
                           
                           {/* Category Badge */}
                           <div className="absolute top-3 left-3 flex flex-col gap-2">
-                            <span className="bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] uppercase font-black tracking-wider text-black shadow-sm">
+                            <span className="bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] uppercase font-black tracking-wider text-zinc-900 shadow-sm">
                               {listing.category}
                             </span>
                           </div>
@@ -470,7 +464,7 @@ export default function ProfilePage() {
                                 }}
                                 className="cursor-pointer"
                               >
-                                <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full bg-white text-zinc-900 shadow-sm hover:bg-zinc-100">
+                                <Button size="icon" variant="secondary" className="h-8 w-8 rounded-full bg-white text-zinc-900 shadow-sm hover:bg-zinc-50">
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -493,16 +487,16 @@ export default function ProfilePage() {
                         {/* Content */}
                         <div className="p-4 flex flex-col flex-1">
                           <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-bold text-black text-sm leading-tight line-clamp-2 pr-2 group-hover:text-[#3252DF] transition-colors">
+                            <h3 className="font-bold text-zinc-900 text-sm leading-tight line-clamp-2 pr-2 group-hover:text-[#3252DF] transition-colors">
                               {listing.title}
                             </h3>
                           </div>
                           
                           <div className="mt-auto pt-3 flex items-end justify-between">
-                            <span className="text-lg font-black text-[#DC2626]">
+                            <span className="text-lg font-black text-zinc-900">
                               ${Number(listing.price).toFixed(2)}
                             </span>
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                               {new Date(listing.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -515,10 +509,10 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-zinc-200 p-12 flex flex-col items-center justify-center text-center shadow-sm">
-                <div className="h-16 w-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4 border border-zinc-100">
+                <div className="h-16 w-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4 border border-zinc-200">
                   <Tag className="h-8 w-8 text-zinc-300" />
                 </div>
-                <h3 className="text-lg font-black text-black mb-1">No active listings</h3>
+                <h3 className="text-lg font-black text-zinc-900 mb-1">No active listings</h3>
                 <p className="text-zinc-500 text-sm font-medium">This student doesn't have any items for sale right now.</p>
               </div>
             )}

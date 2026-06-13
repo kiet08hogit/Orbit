@@ -470,8 +470,8 @@ export default function ChatPage() {
 
   if (!isLoaded || isLoadingInbox && inbox.length === 0) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-zinc-50">
-        <Loader2 className="h-10 w-10 animate-spin text-[#3252DF]" />
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[#f5f5f7]">
+        <Loader2 className="h-10 w-10 animate-spin text-[#0066cc]" />
       </div>
     );
   }
@@ -481,14 +481,14 @@ export default function ChatPage() {
     <div className="h-[calc(100vh-146px)] bg-white flex overflow-hidden font-sans">
       
       {/* ─── SIDEBAR (INBOX) ─── */}
-      <div className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-zinc-200 bg-zinc-50/50 ${activeConversationId ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-4 border-b border-zinc-200 bg-white">
-          <h1 className="text-xl font-black text-black mb-4">Messages</h1>
+      <div className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-black/5 bg-white ${activeConversationId ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-4 border-b border-black/5 bg-white">
+          <h1 className="text-[22px] font-semibold text-zinc-900 mb-4">Messages</h1>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <Input 
-              placeholder="Search conversations..." 
-              className="pl-9 bg-zinc-100 border-transparent focus-visible:ring-[#3252DF]"
+              placeholder="Search..." 
+              className="pl-9 bg-black/5 border-transparent focus-visible:ring-transparent h-9 rounded-[10px] text-[15px]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -518,20 +518,20 @@ export default function ChatPage() {
                 <button
                   key={conv.id}
                   onClick={() => setActiveConversationId(conv.id)}
-                  className={`w-full p-4 flex gap-3 items-start text-left transition-colors border-b border-zinc-100 last:border-0 ${
-                    isActive ? "bg-white border-l-4 border-l-[#3252DF] shadow-sm" : "hover:bg-zinc-100/50 border-l-4 border-l-transparent"
+                  className={`w-full p-4 flex gap-3 items-start text-left transition-colors border-b border-black/5 last:border-0 ${
+                    isActive ? "bg-black/5" : "hover:bg-black/5"
                   }`}
                 >
                   <Avatar className="h-12 w-12 border border-zinc-200 shrink-0">
                     {otherMember?.avatarUrl && <AvatarImage src={otherMember.avatarUrl} alt={name} />}
-                    <AvatarFallback className="bg-zinc-100 text-zinc-600 font-bold">{initial}</AvatarFallback>
+                    <AvatarFallback className="bg-zinc-50 text-zinc-500 font-bold">{initial}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline mb-1">
-                      <span className="font-bold text-black truncate pr-2">{name}</span>
-                      <span className="text-xs text-zinc-400 shrink-0">{timeString}</span>
+                      <span className={`font-semibold truncate pr-2 ${isActive ? "text-zinc-900" : "text-zinc-900"}`}>{name}</span>
+                      <span className={`text-xs shrink-0 ${isActive ? "text-zinc-500" : "text-zinc-500"}`}>{timeString}</span>
                     </div>
-                    <p className={`text-sm truncate ${isActive ? "text-zinc-700 font-medium" : "text-zinc-500"}`}>
+                    <p className={`text-[15px] truncate ${isActive ? "text-zinc-900" : "text-zinc-500"}`}>
                       {latestMessage}
                     </p>
                   </div>
@@ -545,29 +545,29 @@ export default function ChatPage() {
       {/* ─── MAIN CHAT AREA ─── */}
       <div className={`flex-1 flex flex-col min-w-0 overflow-hidden bg-white ${!activeConversationId ? 'hidden md:flex' : 'flex'}`}>
         {!activeConversationId ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500">
             <MessageSquare className="h-16 w-16 mb-4 text-zinc-200" />
             <p className="text-lg font-medium text-zinc-500">Select a conversation to start chatting</p>
           </div>
         ) : (
           <>
             {/* Chat Header */}
-            <div className="h-16 border-b border-zinc-200 flex items-center px-4 justify-between bg-white/80 backdrop-blur-sm shrink-0">
+            <div className="h-[60px] border-b border-black/5 flex items-center px-4 justify-between bg-white shrink-0 z-10 relative">
               <div className="flex items-center gap-3">
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="md:hidden -ml-2 text-zinc-500 hover:text-black"
+                  className="md:hidden -ml-2 text-zinc-500 hover:text-zinc-900"
                   onClick={() => setActiveConversationId(null)}
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <Avatar className="h-10 w-10 border border-zinc-200">
                   {otherActiveMember?.avatarUrl && <AvatarImage src={otherActiveMember.avatarUrl} />}
-                  <AvatarFallback className="bg-zinc-100 text-zinc-600 font-bold">{otherActiveInitial}</AvatarFallback>
+                  <AvatarFallback className="bg-zinc-50 text-zinc-500 font-bold">{otherActiveInitial}</AvatarFallback>
                 </Avatar>
                 <div className="flex items-center gap-2">
-                  <h2 className="font-bold text-black leading-tight">{otherActiveName}</h2>
+                  <h2 className="font-semibold text-zinc-900 text-[15px]">{otherActiveName}</h2>
                   
                   {/* Meetup Verification UI (Header) */}
                   {activeListingSellerId === clerkUser?.id && activeListingId && activeTransaction && (
@@ -591,7 +591,7 @@ export default function ChatPage() {
                                 placeholder="6-digit code" 
                                 value={meetupVerificationCode}
                                 onChange={(e) => setMeetupVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                className="bg-zinc-100 border-transparent focus-visible:ring-indigo-500 h-7 w-24 text-xs text-center rounded-full"
+                                className="bg-zinc-50 border-transparent focus-visible:ring-indigo-500 h-7 w-24 text-xs text-center rounded-full"
                                 maxLength={6}
                               />
                               <Button 
@@ -648,7 +648,7 @@ export default function ChatPage() {
                       <Button 
                         size="sm" 
                         onClick={() => setShowBuyerMeetupModal(true)}
-                        className="bg-zinc-900 hover:bg-black text-white h-7 text-xs px-3 rounded-full shadow-sm"
+                        className="bg-zinc-50 hover:bg-black text-white h-7 text-xs px-3 rounded-full shadow-sm"
                       >
                         Show Code
                       </Button>
@@ -668,17 +668,17 @@ export default function ChatPage() {
               
               <div className="flex items-center gap-2 shrink-0">
                 {meetupError && <span className="text-[10px] text-red-500 font-bold hidden md:inline-block max-w-[120px] truncate">{meetupError}</span>}
-                <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-black">
+                <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-zinc-900">
                   <MoreVertical className="h-5 w-5" />
                 </Button>
               </div>
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-zinc-50/30">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 bg-white">
               {/* Seller Warning Banner for Direct Payment */}
               {activeListingSellerId === clerkUser?.id && transactionStatus === 'PENDING_MEETUP' && activeTransaction?.paymentMethod === 'DIRECT' && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 shadow-sm mx-auto max-w-4xl">
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4 shadow-sm mx-auto max-w-4xl">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="flex flex-col gap-1">
@@ -693,7 +693,7 @@ export default function ChatPage() {
 
               {/* Seller Warning Banner for Stripe Payment */}
               {activeListingSellerId === clerkUser?.id && transactionStatus === 'MEETING_STARTED' && (!activeTransaction || activeTransaction.paymentMethod === 'STRIPE') && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 shadow-sm mx-auto max-w-4xl">
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4 shadow-sm mx-auto max-w-4xl">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="flex flex-col gap-1">
@@ -708,7 +708,7 @@ export default function ChatPage() {
 
               {isLoadingMessages ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
+                  <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
                 </div>
               ) : (
                 <AnimatePresence initial={false}>
@@ -724,7 +724,7 @@ export default function ChatPage() {
                             {showAvatar && (
                               <Avatar className="h-8 w-8 border border-zinc-200">
                                 <AvatarImage src={msg.sender?.avatarUrl || ""} />
-                                <AvatarFallback className="bg-zinc-100 text-zinc-500 text-xs font-bold">
+                                <AvatarFallback className="bg-zinc-50 text-zinc-500 text-xs font-bold">
                                   {msg.sender?.name?.[0]?.toUpperCase() || "U"}
                                 </AvatarFallback>
                               </Avatar>
@@ -734,16 +734,16 @@ export default function ChatPage() {
 
                         <div className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
                           <div
-                            className={`rounded-2xl px-4 py-2.5 shadow-sm text-[15px] leading-relaxed ${
+                            className={`px-4 py-2.5 text-[15px] leading-[1.35] max-w-[100%] break-words ${
                               isMine 
-                                ? "bg-[#3252DF] text-white rounded-br-none" 
-                                : "bg-white border border-zinc-100 text-zinc-800 rounded-bl-none"
+                                ? "bg-[#3B5BFE] text-white rounded-[22px]" 
+                                : "bg-[#efefef] text-zinc-900 rounded-[22px]"
                             }`}
                           >
                             {/* Embedded Listing Snippet */}
                             {msg.listing && (
-                              <div className={`mb-2 p-2 rounded-xl flex items-center gap-3 border ${isMine ? 'bg-white/10 border-white/20' : 'bg-zinc-50 border-zinc-200'}`} onClick={() => router.push(`/listings/${msg.listing?.id}`)} style={{ cursor: 'pointer' }}>
-                                <div className="h-12 w-12 rounded-lg bg-zinc-200 overflow-hidden shrink-0">
+                              <div className={`mb-2 p-2 rounded-2xl flex items-center gap-3 border ${isMine ? 'bg-white/10 border-white/20' : 'bg-zinc-50 border-zinc-200'}`} onClick={() => router.push(`/listings/${msg.listing?.id}`)} style={{ cursor: 'pointer' }}>
+                                <div className="h-12 w-12 rounded-lg bg-zinc-50 overflow-hidden shrink-0">
                                   {msg.listing.images && msg.listing.images.length > 0 ? (
                                     <img src={getImageUrl(msg.listing.images[0].url)} alt="listing" className="h-full w-full object-cover" />
                                   ) : (
@@ -752,7 +752,7 @@ export default function ChatPage() {
                                 </div>
                                 <div className="flex flex-col">
                                   <span className={`text-xs font-bold line-clamp-1 ${isMine ? 'text-white' : 'text-zinc-900'}`}>{msg.listing.title}</span>
-                                  <span className={`text-sm font-black ${isMine ? 'text-white/90' : 'text-[#3252DF]'}`}>${msg.listing.price}</span>
+                                  <span className={`text-sm font-black ${isMine ? 'text-white/90' : 'text-[#0066cc]'}`}>${msg.listing.price}</span>
                                 </div>
                               </div>
                             )}
@@ -760,7 +760,7 @@ export default function ChatPage() {
                             {msg.content}
                           </div>
                           
-                          <span className="text-[10px] text-zinc-400 font-medium mt-1 px-1">
+                          <span className="text-[10px] text-zinc-500 font-medium mt-1 px-1">
                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                             {isMine && msg.isRead && (
                               <span className="ml-1 font-bold text-emerald-500 tracking-wide">
@@ -781,7 +781,7 @@ export default function ChatPage() {
             {contextListing && (
               <div className="px-4 py-3 bg-zinc-50 border-t border-zinc-200 flex items-center justify-between shadow-inner shrink-0">
                 <div className="flex items-center gap-3 w-full">
-                  <div className="h-10 w-10 rounded-md bg-zinc-200 overflow-hidden shrink-0 border border-zinc-300">
+                  <div className="h-10 w-10 rounded-md bg-zinc-50 overflow-hidden shrink-0 border border-zinc-300">
                     {contextListing.images && contextListing.images.length > 0 ? (
                       <img src={getImageUrl(contextListing.images[0].url)} alt="listing" className="h-full w-full object-cover" />
                     ) : (
@@ -795,7 +795,7 @@ export default function ChatPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 w-8 p-0 shrink-0 text-zinc-400 hover:text-zinc-600 rounded-full"
+                    className="h-8 w-8 p-0 shrink-0 text-zinc-500 hover:text-zinc-500 rounded-full"
                     onClick={() => {
                       setContextListing(null);
                       router.replace(`/chat?id=${activeConversationId}`);
@@ -809,24 +809,28 @@ export default function ChatPage() {
             )}
 
             {/* Chat Input */}
-            <div className="p-4 border-t border-zinc-200 bg-white shrink-0 pb-safe">
+            <div className="p-4 bg-white border-t border-black/5 shrink-0 pb-safe">
               <form 
                 onSubmit={handleSendMessage}
                 className="flex gap-2 items-center max-w-4xl mx-auto"
               >
-                <Input
-                  placeholder="Type a message..."
-                  className="flex-1 rounded-full bg-zinc-100 border-transparent focus-visible:ring-[#3252DF] focus-visible:bg-white h-12 px-5"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                />
-                <Button 
-                  type="submit" 
-                  disabled={!newMessage.trim()}
-                  className="rounded-full h-12 w-12 p-0 shrink-0 bg-[#b81d68] hover:bg-[#961754] shadow-sm disabled:opacity-50 transition-transform active:scale-95"
-                >
-                  <Send className="h-5 w-5" />
-                </Button>
+                <div className="flex-1 rounded-full border border-zinc-200 flex items-center px-4 min-h-[44px] bg-white">
+                  <Input
+                    placeholder="Message..."
+                    className="flex-1 bg-transparent border-transparent focus-visible:ring-0 text-[15px] h-[40px] px-0 shadow-sm placeholder:text-zinc-500"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                  />
+                  {newMessage.trim() && (
+                    <button 
+                      type="submit" 
+                      disabled={!newMessage.trim()}
+                      className="text-[#0095f6] font-semibold text-[15px] ml-2 hover:text-zinc-900 transition-colors"
+                    >
+                      Send
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
           </>
@@ -835,7 +839,7 @@ export default function ChatPage() {
       
       {/* Buyer Meetup Modal */}
       <Dialog open={showBuyerMeetupModal} onOpenChange={setShowBuyerMeetupModal}>
-        <DialogContent className="sm:max-w-sm rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-white [&>button]:hidden">
+        <DialogContent className="sm:max-w-sm rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-white [&>button]:hidden">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-center mb-1">Meetup Code</DialogTitle>
             <DialogDescription className="text-sm text-center text-zinc-500 mb-6 px-4">
@@ -845,25 +849,25 @@ export default function ChatPage() {
 
           {activeMeetupCode && (
             <div className="flex flex-col gap-6">
-              <div className="bg-zinc-100 rounded-2xl p-6 flex items-center justify-center">
-                <span className="text-5xl font-black tracking-widest text-[#3252DF]">
+              <div className="bg-zinc-50 rounded-2xl p-6 flex items-center justify-center">
+                <span className="text-5xl font-black tracking-widest text-[#0066cc]">
                   {activeMeetupCode.code}
                 </span>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <span className="font-bold text-amber-800 text-sm">Warning</span>
                 </div>
                 <p className="text-xs text-amber-800 leading-relaxed">
-                  After the seller enters this code, the transaction is final in Circlo.
+                  After the seller enters this code, the transaction is final in Orbit.
                 </p>
               </div>
 
               <Button 
                 onClick={() => setShowBuyerMeetupModal(false)}
-                className="w-full rounded-full h-12 font-bold bg-[#3252DF] hover:bg-[#2841B3] text-white transition-colors"
+                className="w-full rounded-full h-12 font-bold bg-[#0066cc] hover:bg-[#005bb5] text-white transition-colors"
               >
                 Got it
               </Button>

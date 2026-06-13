@@ -124,8 +124,8 @@ export default function ListingsGridPage() {
             className={`absolute inset-0 w-full h-full object-cover ${getCategoryHeroInfo(activeCategory).objectPosition} z-0`}
           />
           {/* The white card overlay */}
-          <div className="absolute left-8 md:left-[10%] top-1/2 -translate-y-1/2 bg-white rounded-xl p-8 shadow-xl max-w-sm z-10 border border-zinc-100">
-            <h2 className="text-2xl font-black text-black mb-6 leading-tight">
+          <div className="absolute left-8 md:left-[10%] top-1/2 -translate-y-1/2 bg-white rounded-2xl p-8 shadow-xl max-w-sm z-10 border border-zinc-200">
+            <h2 className="text-2xl font-black text-zinc-900 mb-6 leading-tight">
               Trying to pass down your items?
             </h2>
             <Link
@@ -135,7 +135,7 @@ export default function ListingsGridPage() {
               Sell now
             </Link>
             <div className="text-center">
-              <a href="#" className="text-sm font-medium text-zinc-600 underline hover:text-black">
+              <a href="#" className="text-sm font-medium text-zinc-500 underline hover:text-zinc-900">
                 How it works
               </a>
             </div>
@@ -146,9 +146,9 @@ export default function ListingsGridPage() {
       {/* Main Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12">
         {searchQuery && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-zinc-100">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-zinc-200">
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-black flex items-center gap-2">
+              <h2 className="text-2xl font-black tracking-tight text-zinc-900 flex items-center gap-2">
                 Search Results
               </h2>
               <p className="text-zinc-500 font-medium mt-1">
@@ -156,7 +156,7 @@ export default function ListingsGridPage() {
               </p>
             </div>
             <Link href="/listings" className="mt-4 sm:mt-0">
-              <Button variant="outline" className="rounded-full border-zinc-200 text-zinc-600 hover:text-black hover:bg-zinc-50 font-bold">
+              <Button variant="outline" className="rounded-full border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 font-bold">
                 Clear Search
               </Button>
             </Link>
@@ -175,26 +175,26 @@ export default function ListingsGridPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="h-20 w-20 bg-zinc-50 border border-zinc-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
+            <div className="h-20 w-20 bg-zinc-50 border border-zinc-200 rounded-full flex items-center justify-center mb-6 shadow-sm">
               <Filter className="h-8 w-8 text-zinc-300" />
             </div>
-            <h3 className="text-xl font-bold text-black mb-2">No listings found</h3>
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">No listings found</h3>
             <p className="text-zinc-500 font-medium max-w-sm">
               {searchQuery ? (
-                <>No items found matching "<span className="font-bold text-black">{searchQuery}</span>" in <span className="font-bold text-black">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>.</>
+                <>No items found matching "<span className="font-bold text-zinc-900">{searchQuery}</span>" in <span className="font-bold text-zinc-900">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>.</>
               ) : (
-                <>There are currently no items available in <span className="font-bold text-black">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>.</>
+                <>There are currently no items available in <span className="font-bold text-zinc-900">{CATEGORIES.find(c => c.id === activeCategory)?.label}</span>.</>
               )}
             </p>
             {searchQuery ? (
               <Link href="/listings">
-                <Button size="lg" className="mt-8 bg-zinc-900 hover:bg-black text-white font-bold rounded-full shadow-lg">
+                <Button size="lg" className="mt-8 bg-zinc-50 hover:bg-black text-white font-bold rounded-full shadow-sm">
                   Clear Search
                 </Button>
               </Link>
             ) : (
               <Link href="/add-product">
-                <Button size="lg" className="mt-8 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold rounded-full shadow-lg shadow-red-500/20">
+                <Button size="lg" className="mt-8 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold rounded-full shadow-sm shadow-red-500/20">
                   Be the first to list one!
                 </Button>
               </Link>
@@ -228,7 +228,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           )}
         </div>
         <div className="p-3 md:p-4 flex flex-col gap-1 bg-white">
-          <div className="font-semibold text-[#1d1d1f] text-[15px] md:text-[17px] leading-tight">
+          <div className="font-semibold text-zinc-900 text-[15px] md:text-[17px] leading-tight">
             ${listing.price.toFixed(2)}
           </div>
           <h3 className="text-[#7a7a7a] text-[13px] md:text-[14px] font-normal leading-tight line-clamp-2">

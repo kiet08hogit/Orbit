@@ -1,8 +1,8 @@
-# Circlo - Relational Database Design
+# Orbit - Relational Database Design
 
 ## Database Choice
 
-Circlo uses:
+Orbit uses:
 
 - Azure Database for PostgreSQL
 
@@ -166,4 +166,4 @@ Fields:
 ## ERD Diagram
 
 See:
-- `Circlo - Relational Database Design`
+- `Orbit - Relational Database Design`

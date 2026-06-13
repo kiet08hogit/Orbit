@@ -48,7 +48,7 @@ export function ClientNav() {
               className={`whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide transition-colors ${
                 isActive 
                   ? 'text-[#DC2626]' 
-                  : 'text-zinc-500 hover:text-black'
+                  : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               {cat.label}
@@ -60,14 +60,14 @@ export function ClientNav() {
         
         <Link 
           href="/community" 
-          className="whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide text-zinc-500 hover:text-black transition-colors"
+          className="whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide text-zinc-500 hover:text-zinc-900 transition-colors"
         >
           COMMUNITY
         </Link>
         
         <Link 
           href="/swipe" 
-          className="whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide text-zinc-500 hover:text-black transition-colors"
+          className="whitespace-nowrap font-semibold text-xs md:text-sm tracking-wide text-zinc-500 hover:text-zinc-900 transition-colors"
         >
           MATCH YOUR NEEDS
         </Link>

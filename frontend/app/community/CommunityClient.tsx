@@ -303,7 +303,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
             <Button 
               onClick={() => setIsCreatingPost(true)}
               size="icon"
-              className="h-10 w-10 rounded-full bg-[#0088FF] hover:bg-[#0077EE] text-white shadow-md flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+              className="h-10 w-10 rounded-full bg-[#0088FF] hover:bg-[#0077EE] text-white shadow-sm flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
             >
               <Plus className="h-5 w-5" strokeWidth={3} />
             </Button>
@@ -326,13 +326,13 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                   layout
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="p-4 sm:p-5 border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors cursor-pointer"
+                  className="p-4 sm:p-5 border-b border-zinc-200 hover:bg-zinc-50/50 transition-colors cursor-pointer"
                 >
                   <div className="flex gap-3 sm:gap-4">
                     {/* Avatar */}
-                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 border border-zinc-100">
+                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0 border border-zinc-200">
                       <AvatarImage src={post.author.avatarUrl || undefined} />
-                      <AvatarFallback className="bg-zinc-100 text-zinc-600 font-bold">
+                      <AvatarFallback className="bg-zinc-50 text-zinc-500 font-bold">
                         {(post.author.name || post.author.username || 'U')[0].toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -346,13 +346,13 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                           <span className="font-bold text-[15px] text-zinc-900">
                             {post.author.name || post.author.username || "Anonymous Student"}
                           </span>
-                          <span className="bg-zinc-100 text-zinc-600 text-[10px] font-black uppercase px-2 py-0.5 rounded-sm">
+                          <span className="bg-zinc-50 text-zinc-500 text-[10px] font-black uppercase px-2 py-0.5 rounded-sm">
                             {post.postType.replace('_', ' ')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0 ml-2">
                           <span className="text-zinc-500 text-[13px] font-medium">{formatDate(post.createdAt)}</span>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-400 hover:text-zinc-900 rounded-full">
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-500 hover:text-zinc-900 rounded-full">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </div>
@@ -367,7 +367,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                       {post.imageUrls && post.imageUrls.length > 0 && (
                         <div className={`mb-3 grid gap-2 ${post.imageUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                           {post.imageUrls.map((url, index) => (
-                            <div key={index} className="rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-100 max-h-[400px]">
+                            <div key={index} className="rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-50 max-h-[400px]">
                               <img 
                                 src={url.startsWith('http') ? url : `http://127.0.0.1:3000${url}`} 
                                 alt={`Post attachment ${index + 1}`} 
@@ -419,12 +419,12 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl shadow-xl overflow-hidden"
+                className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between p-4 border-b border-zinc-100">
-                  <h2 className="text-lg font-black text-black">Create Post</h2>
-                  <Button variant="ghost" size="icon" onClick={() => setIsCreatingPost(false)} className="rounded-full text-zinc-500 hover:bg-zinc-100">
+                <div className="flex items-center justify-between p-4 border-b border-zinc-200">
+                  <h2 className="text-lg font-black text-zinc-900">Create Post</h2>
+                  <Button variant="ghost" size="icon" onClick={() => setIsCreatingPost(false)} className="rounded-full text-zinc-500 hover:bg-zinc-50">
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
@@ -439,7 +439,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                         className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                           newPostType === type 
                             ? "bg-[#3252DF] text-white" 
-                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                            : "bg-zinc-50 text-zinc-500 hover:bg-zinc-50"
                         }`}
                       >
                         {type.replace('_', ' ')}
@@ -449,7 +449,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
 
                   <Textarea 
                     placeholder="What's on your mind?"
-                    className="min-h-[120px] text-lg border-none focus-visible:ring-0 px-0 resize-none placeholder:text-zinc-400"
+                    className="min-h-[120px] text-lg border-none focus-visible:ring-0 px-0 resize-none placeholder:text-zinc-500"
                     value={newPostContent}
                     onChange={(e) => setNewPostContent(e.target.value)}
                     autoFocus
@@ -459,7 +459,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                   {selectedImages.length > 0 && (
                     <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
                       {selectedImages.map((file, index) => (
-                        <div key={index} className="relative shrink-0 h-24 w-24 rounded-xl overflow-hidden border border-zinc-200">
+                        <div key={index} className="relative shrink-0 h-24 w-24 rounded-2xl overflow-hidden border border-zinc-200">
                           <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
                           <button 
                             onClick={() => removeImage(index)}
@@ -472,7 +472,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                     </div>
                   )}
                   
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-100">
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-200">
                     <input 
                       type="file"
                       accept="image/*"
@@ -485,7 +485,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                       onClick={() => fileInputRef.current?.click()}
                       variant="ghost" 
                       size="icon" 
-                      className="text-zinc-400 hover:text-[#3252DF] hover:bg-blue-50 rounded-full"
+                      className="text-zinc-500 hover:text-[#3252DF] hover:bg-blue-50 rounded-full"
                     >
                       <ImageIcon className="h-5 w-5" />
                     </Button>
@@ -519,15 +519,15 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-3xl shadow-xl flex flex-col max-h-[85vh] sm:max-h-[70vh]"
+                className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-2xl shadow-xl flex flex-col max-h-[85vh] sm:max-h-[70vh]"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between p-4 border-b border-zinc-100 shrink-0">
-                  <h2 className="text-lg font-black text-black flex items-center gap-2">
+                <div className="flex items-center justify-between p-4 border-b border-zinc-200 shrink-0">
+                  <h2 className="text-lg font-black text-zinc-900 flex items-center gap-2">
                     <MessageCircle className="h-5 w-5 text-[#3252DF]" />
                     Comments
                   </h2>
-                  <Button variant="ghost" size="icon" onClick={() => setActivePostForComments(null)} className="rounded-full text-zinc-500 hover:bg-zinc-100">
+                  <Button variant="ghost" size="icon" onClick={() => setActivePostForComments(null)} className="rounded-full text-zinc-500 hover:bg-zinc-50">
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
@@ -546,7 +546,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                       <div key={c.id} className="flex gap-3">
                         <Avatar className="h-8 w-8 shrink-0">
                           <AvatarImage src={c.author.avatarUrl || undefined} />
-                          <AvatarFallback className="bg-zinc-100 text-[10px] font-bold">
+                          <AvatarFallback className="bg-zinc-50 text-[10px] font-bold">
                             {(c.author.name || c.author.username || 'U')[0].toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -555,16 +555,16 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                             <span className="font-bold text-[13px] text-zinc-900">
                               {c.author.name || c.author.username || "Anonymous"}
                             </span>
-                            <span className="text-[11px] text-zinc-400">{formatDate(c.createdAt)}</span>
+                            <span className="text-[11px] text-zinc-500">{formatDate(c.createdAt)}</span>
                           </div>
-                          <p className="text-[14px] text-zinc-700 whitespace-pre-wrap">{c.content}</p>
+                          <p className="text-[14px] text-zinc-500 whitespace-pre-wrap">{c.content}</p>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
 
-                <div className="p-4 border-t border-zinc-100 bg-white shrink-0 sm:rounded-b-3xl">
+                <div className="p-4 border-t border-zinc-200 bg-white shrink-0 sm:rounded-b-3xl">
                   <div className="flex gap-2">
                     <Textarea 
                       placeholder="Add a comment..."
