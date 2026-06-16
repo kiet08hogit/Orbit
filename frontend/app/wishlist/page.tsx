@@ -78,46 +78,41 @@ export default function WishlistPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <Link href={`/listings/${listing.id}`} className="block h-full group active:scale-[0.98] transition-transform">
-                  <div className="bg-white rounded-[20px] overflow-hidden border-transparent shadow-[0_2px_20px_-8px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.12)] transition-all h-full flex flex-col">
+                <Link href={`/listings/${listing.id}`} className="block h-full group">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col h-full bg-white rounded-[18px] border border-[#e0e0e0] shadow-sm overflow-hidden hover:-translate-y-1 transition-transform duration-300"
+                  >
                     {/* Image */}
-                    <div className="aspect-square bg-zinc-50 relative overflow-hidden">
+                    <div className="aspect-square relative flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
                       {listing.images && listing.images.length > 0 ? (
                         <img 
                           src={getImageUrl(listing.images[0].url)} 
                           alt={listing.title} 
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500" 
                         />
                       ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-zinc-300">
-                          <Tag className="h-10 w-10" />
-                        </div>
+                        <Tag className="h-10 w-10 text-[#d2d2d7] z-10" />
                       )}
                       {/* Category Badge */}
-                      <div className="absolute top-3 left-3 flex flex-col gap-2">
-                        <span className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-semibold text-white shadow-sm">
+                      <div className="absolute top-3 left-3 z-10">
+                        <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-md text-[9px] uppercase font-black tracking-wider text-zinc-900 shadow-sm">
                           {listing.category}
                         </span>
                       </div>
                     </div>
                     
                     {/* Content */}
-                    <div className="p-4 flex flex-col flex-1">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-zinc-900 text-[15px] leading-tight line-clamp-2 pr-2">
-                          {listing.title}
-                        </h3>
+                    <div className="p-3 flex flex-col gap-1 bg-white">
+                      <div className="font-semibold text-zinc-900 text-[15px] leading-tight">
+                        ${Number(listing.price).toFixed(2)}
                       </div>
-                      <div className="mt-auto pt-3 flex items-end justify-between">
-                        <span className="text-[17px] font-semibold text-zinc-900">
-                          ${Number(listing.price).toFixed(2)}
-                        </span>
-                        <span className="text-[11px] font-medium text-zinc-500">
-                          {new Date(listing.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
+                      <h3 className="text-[#7a7a7a] text-[13px] font-normal leading-tight line-clamp-2">
+                        {listing.title}
+                      </h3>
                     </div>
-                  </div>
+                  </motion.div>
                 </Link>
               </motion.div>
             ))}

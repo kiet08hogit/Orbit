@@ -24,7 +24,7 @@ export default function Home() {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-[21px] md:text-[28px] text-center text-muted-foreground max-w-3xl px-4 mb-10 leading-[1.14] font-medium tracking-tight">
+          <p className="text-[21px] md:text-[28px] text-center text-foreground max-w-3xl px-4 mb-10 leading-[1.14] font-medium tracking-tight">
             Buy. Sell. <br />
             Swap in your uni community.
           </p>
@@ -46,7 +46,7 @@ export default function Home() {
               </Link>
             </Show>
             <Link href="/faqs">
-              <button className="inline-flex items-center justify-center bg-transparent text-muted-foreground border-none px-[22px] py-[11px] rounded-md text-[16px] font-medium hover:text-foreground active:scale-95 transition-all cursor-pointer">
+              <button className="inline-flex items-center justify-center bg-transparent text-primary-foreground border-none px-[22px] py-[11px] rounded-md text-[16px] font-medium active:scale-95 transition-all cursor-pointer">
                 FAQs &gt;
               </button>
             </Link>

@@ -157,7 +157,7 @@ export default function AddProductPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto"
+        className="max-w-lg mx-auto"
       >
         {/* Back Button */}
         <Link
@@ -435,7 +435,7 @@ export default function AddProductPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 rounded-[14px] bg-zinc-50 hover:bg-black text-white text-[15px] font-semibold transition-colors"
+                className="w-full h-12 rounded-[14px] bg-black hover:bg-zinc-50 text-white text-[15px] font-semibold transition-colors"
               >
                 {isLoading ? (
                   <>

@@ -130,7 +130,7 @@ export default function ListingsGridPage() {
             </h2>
             <Link
               href="/add-product"
-              className="block w-full text-center bg-[#b81d68] hover:bg-[#961754] text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4"
+              className="block w-full text-center bg-zinc-900 hover:bg-black text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4"
             >
               Sell now
             </Link>
@@ -168,7 +168,7 @@ export default function ListingsGridPage() {
             <Loader2 className="h-8 w-8 animate-spin text-[#DC2626]" />
           </div>
         ) : listings.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-5 gap-y-8">
             {listings.map((listing) => (
               <ListingCard key={listing.id} listing={listing} />
             ))}

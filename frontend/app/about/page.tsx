@@ -26,8 +26,8 @@ export default function AboutPage() {
         </div>
 
         <div className="w-full bg-zinc-50 rounded-[18px] shadow-sm p-8 md:p-12 flex flex-col gap-6">
-          <h2 className="text-[28px] font-semibold text-white tracking-tight">The Solution</h2>
-          <p className="text-[17px] md:text-[21px] text-[#cccccc] leading-[1.47] font-normal">
+          <h2 className="text-[28px] font-semibold text-zinc-900 tracking-tight">The Solution</h2>
+          <p className="text-[17px] md:text-[21px] text-zinc-900 leading-[1.47] font-normal">
             Orbit is an exclusive marketplace built specifically for UIC students. By requiring a verified @uic.edu email address, we ensure that every transaction is safe, local, and student-to-student. Pass the torch, save money, and match your needs.
           </p>
         </div>

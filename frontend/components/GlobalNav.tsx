@@ -7,6 +7,7 @@ import { SignInButton, Show } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CustomUserButton } from "@/components/CustomUserButton";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import React from "react";
 
 export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
@@ -38,15 +39,16 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
 
         {/* Right Side Actions */}
         <nav className="flex items-center gap-2 md:gap-4 shrink-0">
+          <AnimatedThemeToggler />
           <Show when="signed-out">
             <div className="flex items-center gap-1 md:gap-3">
               <Link href="/about">
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground hover:bg-transparent text-[14px] font-medium transition-colors h-8 px-2 md:px-3 rounded-md">
+                <Button variant="ghost" className="text-foreground hover:text-foreground hover:bg-transparent text-[14px] font-medium transition-colors h-8 px-2 md:px-3 rounded-md">
                   About Orbit
                 </Button>
               </Link>
               <SignInButton mode="modal">
-                <Button className="rounded-md bg-primary hover:opacity-90 text-primary-foreground text-[14px] font-medium border-none transition-all h-[32px] px-4">
+                <Button className="rounded-md bg-primary hover:opacity-90 text-primary-foreground text-[14px] font-medium border-none transition-all h-[32px] px-4 dark:bg-white dark:text-black dark:hover:bg-zinc-200">
                   Log In / Sign Up
                 </Button>
               </SignInButton>
@@ -55,7 +57,7 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
           <Show when="signed-in">
             <div className="flex items-center gap-3">
               <Link href="/add-product">
-                <Button variant="default" className="hidden sm:flex h-[32px] rounded-md text-[14px] font-medium bg-primary hover:opacity-90 text-primary-foreground border-none transition-colors">
+                <Button variant="default" className="hidden sm:flex h-[32px] rounded-md text-[14px] font-medium bg-primary hover:opacity-90 text-primary-foreground border-none transition-colors dark:bg-white dark:text-black dark:hover:bg-zinc-200">
                   + Create Listing
                 </Button>
               </Link>

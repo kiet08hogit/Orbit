@@ -185,243 +185,252 @@ export default function ProfilePage() {
   const listingsCount = userProfile._count?.listings || 0;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white py-10 px-4 sm:px-6 font-sans relative overflow-hidden">
+    <div className="min-h-[calc(100vh-4rem)] bg-white py-8 px-4 sm:px-6 font-sans relative overflow-hidden">
       
-      <div className="max-w-6xl mx-auto z-10">
+      <div className="max-w-4xl mx-auto z-10">
         
         {/* Back Link */}
         <Link
           href="/listings"
-          className="inline-flex items-center gap-2 text-zinc-500 hover:text-zinc-900 transition-colors mb-8 text-sm font-bold"
+          className="inline-flex items-center gap-2 text-zinc-500 hover:text-zinc-900 transition-colors mb-6 text-[13px] font-bold"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m15 18-6-6 6-6"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="m15 18-6-6 6-6"/></svg>
           Back to Marketplace
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="flex flex-col gap-6">
           
-          {/* Left Column: Profile Info & Trust */}
-          <div className="lg:col-span-4 space-y-6">
+          {/* Profile Header & Stats */}
+          <div className="flex flex-col gap-4">
             
-            {/* Main Profile Card */}
+            {/* Top Header Card */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-zinc-200 flex flex-col items-center text-center relative"
+              className="bg-white rounded-3xl p-5 md:p-7 shadow-sm border border-zinc-200 flex flex-col md:flex-row gap-6 items-center md:items-start relative"
             >
               {/* Avatar */}
               <div 
-                className={`h-32 w-32 rounded-full border-4 border-zinc-50 shadow-sm overflow-hidden bg-zinc-50 mb-5 relative ${isEditing ? 'cursor-pointer group' : ''}`}
+                className={`shrink-0 h-24 w-24 md:h-28 md:w-28 rounded-full border-4 border-zinc-50 shadow-sm overflow-hidden bg-zinc-50 relative ${isEditing ? 'cursor-pointer group' : ''}`}
                 onClick={() => isEditing && fileInputRef.current?.click()}
               >
                 {(avatarPreview || userProfile.avatarUrl) ? (
                   <img src={avatarPreview || userProfile.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center text-[#3252DF] text-4xl font-bold bg-[#3252DF]/10">
+                  <div className="h-full w-full flex items-center justify-center text-zinc-400 text-4xl font-bold bg-zinc-100">
                     {(formData.name || 'U').charAt(0).toUpperCase()}
                   </div>
                 )}
                 {isEditing && (
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <Camera className="h-8 w-8 text-white" />
+                    <Camera className="h-6 w-6 text-white" />
                   </div>
                 )}
               </div>
               <input type="file" ref={fileInputRef} onChange={handleAvatarChange} accept="image/*" className="hidden" />
-              
+
               {/* Profile Details */}
-              {isEditing ? (
-                <div className="w-full space-y-4 mb-8 text-left">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-zinc-500 uppercase">Name</label>
-                    <Input name="name" value={formData.name} onChange={handleChange} className="rounded-2xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-zinc-500 uppercase">Username</label>
-                    <Input name="username" value={formData.username} onChange={handleChange} className="rounded-2xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-zinc-500 uppercase">Major</label>
-                    <Input name="major" value={formData.major} onChange={handleChange} className="rounded-2xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-zinc-500 uppercase">Class Year</label>
-                    <Select value={formData.classYear} onValueChange={(val) => setFormData({ ...formData, classYear: val })}>
-                      <SelectTrigger className="rounded-2xl font-medium bg-zinc-50 border-zinc-200 focus:ring-black focus:ring-1"><SelectValue placeholder="Select Year" /></SelectTrigger>
-                      <SelectContent>
-                        {years.map(y => <SelectItem key={y} value={y} className="rounded-lg">{y}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-zinc-500 uppercase">Bio</label>
-                    <Textarea name="bio" value={formData.bio} onChange={handleChange} className="rounded-2xl font-medium resize-none bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1" rows={3} />
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <h1 className="text-2xl font-black tracking-tight text-zinc-900">{userProfile.name || 'Anonymous User'}</h1>
-                    <div className="flex items-center justify-center h-5 w-5 rounded-full bg-emerald-500 text-white shadow-sm" title="Verified UIC Student">
-                      <Shield className="h-3 w-3" />
+              <div className="flex-1 w-full flex flex-col gap-3">
+                {isEditing ? (
+                  <div className="w-full space-y-3 text-left">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Name</label>
+                        <Input name="name" value={formData.name} onChange={handleChange} className="rounded-xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1 h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Username</label>
+                        <Input name="username" value={formData.username} onChange={handleChange} className="rounded-xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1 h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Major</label>
+                        <Input name="major" value={formData.major} onChange={handleChange} className="rounded-xl font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1 h-9 text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Class Year</label>
+                        <Select value={formData.classYear} onValueChange={(val) => setFormData({ ...formData, classYear: val })}>
+                          <SelectTrigger className="rounded-xl font-medium bg-zinc-50 border-zinc-200 focus:ring-black focus:ring-1 h-9 text-sm"><SelectValue placeholder="Select Year" /></SelectTrigger>
+                          <SelectContent>
+                            {years.map(y => <SelectItem key={y} value={y} className="rounded-lg text-sm">{y}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Bio</label>
+                      <Textarea name="bio" value={formData.bio} onChange={handleChange} className="rounded-xl font-medium resize-none bg-zinc-50 border-zinc-200 focus-visible:ring-black focus-visible:ring-1 text-sm" rows={2} />
                     </div>
                   </div>
-                  
-                  <p className="text-zinc-500 text-sm font-bold mb-5">@{userProfile.username || userProfile.id.slice(0,8)}</p>
+                ) : (
+                  <>
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                      <div className="flex flex-col items-center md:items-start text-center md:text-left">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <h1 className="text-2xl font-black tracking-tight text-zinc-900">{userProfile.name || 'Anonymous User'}</h1>
+                          <div className="flex items-center justify-center h-4 w-4 rounded-full bg-blue-500 text-white shadow-sm" title="Verified UIC Student">
+                            <Shield className="h-2.5 w-2.5" />
+                          </div>
+                        </div>
+                        <p className="text-zinc-500 text-[13px] font-bold mb-3">@{userProfile.username || userProfile.id.slice(0,8)}</p>
 
-                  <div className="flex flex-col w-full gap-2 mb-6">
-                    {userProfile.major && (
-                      <div className="flex items-center justify-center gap-2 bg-zinc-50 border border-zinc-200 text-zinc-500 px-3 py-2 font-bold text-sm rounded-2xl">
-                        <BookOpen className="h-4 w-4 text-zinc-500" />
-                        {userProfile.major}
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 mb-3">
+                          {userProfile.major && (
+                            <div className="flex items-center gap-1 bg-zinc-100 text-zinc-600 px-2.5 py-1 font-bold text-[11px] rounded-full">
+                              <BookOpen className="h-3 w-3" />
+                              {userProfile.major}
+                            </div>
+                          )}
+                          {userProfile.classYear && (
+                            <div className="flex items-center gap-1 bg-zinc-100 text-zinc-600 px-2.5 py-1 font-bold text-[11px] rounded-full">
+                              <GraduationCap className="h-3 w-3" />
+                              {userProfile.classYear}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 bg-zinc-100 text-zinc-600 px-2.5 py-1 font-bold text-[11px] rounded-full">
+                            <Calendar className="h-3 w-3" />
+                            Joined {joinDate}
+                          </div>
+                        </div>
+
+                        <div className="text-[13px] font-medium text-zinc-600 max-w-xl">
+                          {userProfile.bio ? (
+                            <p className="leading-relaxed">{userProfile.bio}</p>
+                          ) : (
+                            <p className="italic text-zinc-400">This student hasn't written a bio yet.</p>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    {userProfile.classYear && (
-                      <div className="flex items-center justify-center gap-2 bg-[#3252DF]/5 border border-[#3252DF]/10 text-[#3252DF] px-3 py-1.5 font-bold text-xs rounded-2xl">
-                        <GraduationCap className="h-3.5 w-3.5" />
-                        {userProfile.classYear}
+
+                      {/* Action Buttons Desktop */}
+                      <div className="hidden md:flex flex-col gap-2 shrink-0 min-w-[120px]">
+                        {currentUserId === userProfile.clerkUserId ? (
+                          <Button 
+                            className="rounded-full h-8 font-bold text-[13px] bg-zinc-900 hover:bg-black text-white shadow-sm transition-all"
+                            onClick={() => setIsEditing(true)}
+                          >
+                            Edit Profile
+                          </Button>
+                        ) : (
+                          <>
+                            <Button className="rounded-full h-8 font-bold text-[13px] bg-zinc-900 hover:bg-black text-white shadow-sm transition-all flex gap-1.5">
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              Message
+                            </Button>
+                            <Button variant="ghost" className="rounded-full h-8 font-bold text-[13px] text-zinc-500 hover:text-red-600 hover:bg-red-50 transition-all flex gap-1.5">
+                              <AlertTriangle className="h-3.5 w-3.5" />
+                              Report
+                            </Button>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  </>
+                )}
 
-                  <div className="w-full text-sm font-medium text-zinc-500 text-center mb-8">
-                    {userProfile.bio ? (
-                      <p className="leading-relaxed">{userProfile.bio}</p>
-                    ) : (
-                      <p className="italic text-zinc-500">This student hasn't written a bio yet.</p>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {/* Action Buttons */}
-              <div className="w-full flex flex-col gap-3 mt-auto">
-                {currentUserId === userProfile.clerkUserId ? (
-                  isEditing ? (
+                {/* Edit Mode Save Button */}
+                {isEditing && currentUserId === userProfile.clerkUserId && (
+                  <div className="flex justify-end gap-2 mt-3">
                     <Button 
-                      className="w-full rounded-2xl h-12 font-bold text-sm bg-black hover:bg-zinc-50 text-white shadow-sm flex items-center gap-2 transition-all"
+                      variant="ghost"
+                      className="rounded-full h-8 font-bold text-[13px] text-zinc-500 hover:bg-zinc-100"
+                      onClick={() => setIsEditing(false)}
+                      disabled={isSaving}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      className="rounded-full h-8 font-bold text-[13px] bg-zinc-900 hover:bg-black text-white shadow-sm transition-all min-w-[100px]"
                       onClick={handleSaveProfile}
                       disabled={isSaving}
                     >
-                      {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Profile"}
+                      {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" /> : "Save Changes"}
                     </Button>
-                  ) : (
-                    <Button 
-                      className="w-full rounded-2xl h-12 font-bold text-sm bg-zinc-50 hover:bg-zinc-50 text-zinc-900 shadow-sm flex items-center gap-2 transition-all"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      Edit Profile
-                    </Button>
-                  )
-                ) : (
-                  <Button className="w-full rounded-2xl h-12 font-bold text-sm bg-black hover:bg-zinc-50 text-white shadow-sm flex items-center gap-2 transition-all">
-                    <MessageSquare className="h-5 w-5" />
-                    Message Seller
-                  </Button>
+                  </div>
                 )}
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="ghost" className="w-full rounded-2xl h-11 font-bold text-sm text-zinc-500 hover:text-red-600 hover:bg-red-50 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    Report
-                  </Button>
+
+                {/* Mobile Action Buttons */}
+                {!isEditing && (
+                  <div className="flex md:hidden flex-col gap-2 mt-3 w-full">
+                    {currentUserId === userProfile.clerkUserId ? (
+                      <Button 
+                        className="w-full rounded-full h-9 font-bold text-[13px] bg-zinc-900 hover:bg-black text-white shadow-sm"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        Edit Profile
+                      </Button>
+                    ) : (
+                      <>
+                        <Button className="w-full rounded-full h-9 font-bold text-[13px] bg-zinc-900 hover:bg-black text-white shadow-sm flex gap-1.5">
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          Message Seller
+                        </Button>
+                        <Button variant="ghost" className="w-full rounded-full h-9 font-bold text-[13px] text-zinc-500 hover:text-red-600 hover:bg-red-50 flex gap-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          Report
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Horizontal Stats Bar */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-3xl border border-zinc-200 p-4 md:px-7 md:py-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4"
+            >
+              <div className="flex flex-row justify-around md:justify-start gap-6 md:gap-12 w-full md:w-auto">
+                <div className="flex flex-col items-center md:items-start gap-0.5">
+                  <span className="text-[12px] font-bold text-zinc-500 flex items-center gap-1.5"><Star className="h-3.5 w-3.5" /> Rating</span>
+                  <span className="text-lg font-black text-zinc-900">New</span>
+                </div>
+                <div className="flex flex-col items-center md:items-start gap-0.5">
+                  <span className="text-[12px] font-bold text-zinc-500 flex items-center gap-1.5"><Tag className="h-3.5 w-3.5" /> Active</span>
+                  <span className="text-lg font-black text-zinc-900">{listingsCount}</span>
+                </div>
+                <div className="flex flex-col items-center md:items-start gap-0.5">
+                  <span className="text-[12px] font-bold text-zinc-500 flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> Swaps</span>
+                  <span className="text-lg font-black text-zinc-900">0</span>
                 </div>
               </div>
 
               {/* Stripe Connection Section */}
               {currentUserId === userProfile.clerkUserId && (
-                <div className="w-full mt-6 pt-6 border-t border-zinc-200 flex flex-col items-center">
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="h-5 w-5 text-[#0066cc]" />
-                    <h4 className="font-bold text-sm text-zinc-900">Seller Payouts</h4>
+                <div className="w-full md:w-auto flex flex-col items-center md:items-end gap-1.5 border-t md:border-t-0 md:border-l border-zinc-100 pt-3 md:pt-0 md:pl-6">
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="h-3.5 w-3.5 text-zinc-500" />
+                    <h4 className="font-bold text-[12px] text-zinc-500">Seller Payouts</h4>
                   </div>
-                  <p className="text-xs text-zinc-500 text-center mb-4 leading-relaxed">
-                    Connect your bank account to receive protected payments from buyers through Orbit.
-                  </p>
-                  
                   {isStripeLinked ? (
-                    <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-2xl text-sm font-bold w-full justify-center border border-emerald-100">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Bank Account Connected
+                    <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full text-[11px] font-bold border border-emerald-100">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Connected
                     </div>
                   ) : (
                     <Button 
                       onClick={handleConnectStripe} 
                       disabled={isLoadingStripe}
-                      className="w-full rounded-2xl h-11 font-bold text-sm bg-[#0066cc]/10 hover:bg-[#0066cc]/20 text-[#0066cc] shadow-sm flex items-center gap-2 transition-colors"
+                      variant="outline"
+                      className="rounded-full h-7 font-bold text-[11px] bg-white text-zinc-900 shadow-sm transition-colors w-full md:w-auto px-3"
                     >
-                      {isLoadingStripe ? <Loader2 className="h-4 w-4 animate-spin" /> : "Connect with Stripe"}
+                      {isLoadingStripe ? <Loader2 className="h-2.5 w-2.5 animate-spin mr-1.5" /> : null}
+                      Connect Bank Account
                     </Button>
                   )}
                 </div>
               )}
             </motion.div>
-
-            {/* Trust & Reputation Card */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl border border-zinc-200 p-6 shadow-sm overflow-hidden"
-            >
-              <h3 className="font-bold text-zinc-900 text-sm mb-5 flex items-center gap-2 tracking-wide uppercase">
-                <Shield className="h-4 w-4 text-[#3252DF]" />
-                Trust & Reputation
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-500 flex items-center gap-2">
-                    <Star className="h-4 w-4 text-[#3252DF] fill-[#3252DF]/20" /> Rating
-                  </span>
-                  <span className="font-black text-zinc-900">New</span>
-                </div>
-                
-                <Separator className="bg-zinc-50" />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-500 flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-zinc-500" /> Active Listings
-                  </span>
-                  <span className="font-black text-zinc-900">{listingsCount}</span>
-                </div>
-                
-                <Separator className="bg-zinc-50" />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-500 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-zinc-500" /> Exchanges
-                  </span>
-                  <span className="font-black text-zinc-900">0</span>
-                </div>
-
-                <Separator className="bg-zinc-50" />
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-500 flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-zinc-500" /> Response Rate
-                  </span>
-                  <span className="font-black text-zinc-900">—</span>
-                </div>
-                
-                <Separator className="bg-zinc-50" />
-                
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
-                    <Calendar className="h-3.5 w-3.5" />
-                    Joined {joinDate}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
           </div>
 
-          {/* Right Column: User's Listings */}
-          <div className="lg:col-span-8">
-            <h2 className="text-2xl font-black tracking-tight text-zinc-900 mb-6">Active Listings</h2>
+          {/* User's Listings Section */}
+          <div className="flex flex-col gap-4 mt-2">
+            <h2 className="text-lg font-black tracking-tight text-zinc-900 px-2">Listings by {userProfile.name?.split(' ')[0] || 'User'}</h2>
             
             {userProfile.listings && userProfile.listings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {userProfile.listings.map((listing: any, i: number) => (
                   <motion.div 
                     key={listing.id}
@@ -430,32 +439,34 @@ export default function ProfilePage() {
                     transition={{ delay: i * 0.05 }}
                   >
                     <Link href={`/listings/${listing.id}`} className="block h-full group">
-                      <div className="bg-white rounded-2xl overflow-hidden border border-zinc-200 shadow-sm hover:shadow-sm transition-all h-full flex flex-col">
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-col h-full bg-white rounded-[18px] border border-[#e0e0e0] shadow-sm overflow-hidden hover:-translate-y-1 transition-transform duration-300"
+                      >
                         
                         {/* Image */}
-                        <div className="aspect-square bg-zinc-50 relative overflow-hidden">
+                        <div className="aspect-square relative flex items-center justify-center overflow-hidden bg-[#f5f5f7]">
                           {listing.images && listing.images.length > 0 ? (
                             <img 
                               src={getImageUrl(listing.images[0].url)} 
                               alt={listing.title} 
-                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                              className="absolute inset-0 w-full h-full object-cover z-0 group-hover:scale-105 transition-transform duration-500" 
                             />
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-zinc-300">
-                              <Tag className="h-10 w-10" />
-                            </div>
+                            <Tag className="h-10 w-10 text-[#d2d2d7] z-10" />
                           )}
                           
                           {/* Category Badge */}
-                          <div className="absolute top-3 left-3 flex flex-col gap-2">
-                            <span className="bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] uppercase font-black tracking-wider text-zinc-900 shadow-sm">
+                          <div className="absolute top-3 left-3 z-10">
+                            <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-md text-[9px] uppercase font-black tracking-wider text-zinc-900 shadow-sm">
                               {listing.category}
                             </span>
                           </div>
                           
                           {/* Edit/Delete Button Overlay */}
                           {currentUserId === userProfile.clerkUserId && (
-                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2">
+                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 z-10">
                               <div 
                                 onClick={(e) => { 
                                   e.preventDefault(); 
@@ -485,30 +496,21 @@ export default function ProfilePage() {
                         </div>
                         
                         {/* Content */}
-                        <div className="p-4 flex flex-col flex-1">
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-bold text-zinc-900 text-sm leading-tight line-clamp-2 pr-2 group-hover:text-[#3252DF] transition-colors">
-                              {listing.title}
-                            </h3>
+                        <div className="p-3 flex flex-col gap-1 bg-white">
+                          <div className="font-semibold text-zinc-900 text-[15px] leading-tight">
+                            ${Number(listing.price).toFixed(2)}
                           </div>
-                          
-                          <div className="mt-auto pt-3 flex items-end justify-between">
-                            <span className="text-lg font-black text-zinc-900">
-                              ${Number(listing.price).toFixed(2)}
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                              {new Date(listing.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
+                          <h3 className="text-[#7a7a7a] text-[13px] font-normal leading-tight line-clamp-2">
+                            {listing.title}
+                          </h3>
                         </div>
-
-                      </div>
+                      </motion.div>
                     </Link>
                   </motion.div>
                 ))}
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-zinc-200 p-12 flex flex-col items-center justify-center text-center shadow-sm">
+              <div className="bg-white rounded-[2rem] border border-zinc-200 p-12 flex flex-col items-center justify-center text-center shadow-sm">
                 <div className="h-16 w-16 bg-zinc-50 rounded-full flex items-center justify-center mb-4 border border-zinc-200">
                   <Tag className="h-8 w-8 text-zinc-300" />
                 </div>

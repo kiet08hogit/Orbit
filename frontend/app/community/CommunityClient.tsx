@@ -272,49 +272,41 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-zinc-50/30 font-sans">
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f5f5f7] font-sans pb-24">
       {/* Central Feed Container - Web Optimized Fixed Width */}
-      <div className="max-w-2xl mx-auto bg-white min-h-screen border-x border-zinc-200 shadow-sm relative">
+      <div className="max-w-2xl mx-auto relative pt-6 px-4">
         
-        {/* Top Navigation Tabs */}
-        <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-zinc-200 flex items-center pr-3">
-          <div className="flex flex-1">
+        {/* Top Header - Floating Pill */}
+        <div className="sticky top-6 z-20 flex items-center justify-between mb-8 gap-4">
+          <div className="flex bg-white/80 backdrop-blur-md p-1.5 rounded-full shadow-sm border border-[#e0e0e0]">
             <button 
               onClick={() => setActiveTab("COMMUNITY")}
-              className={`flex-1 py-4 text-sm font-bold text-center relative transition-colors ${activeTab === "COMMUNITY" ? "text-[#3252DF]" : "text-zinc-500 hover:bg-zinc-50"}`}
+              className={`px-6 py-2.5 text-sm font-bold rounded-full transition-all ${activeTab === "COMMUNITY" ? "bg-[#3252DF] text-white shadow-md" : "text-zinc-500 hover:text-zinc-900"}`}
             >
               Community @ UIC
-              {activeTab === "COMMUNITY" && (
-                <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 w-full h-[3px] bg-[#3252DF] rounded-t-full" />
-              )}
             </button>
             <button 
               onClick={() => setActiveTab("FOLLOWING")}
-              className={`flex-1 py-4 text-sm font-bold text-center relative transition-colors ${activeTab === "FOLLOWING" ? "text-[#3252DF]" : "text-zinc-500 hover:bg-zinc-50"}`}
+              className={`px-6 py-2.5 text-sm font-bold rounded-full transition-all ${activeTab === "FOLLOWING" ? "bg-[#3252DF] text-white shadow-md" : "text-zinc-500 hover:text-zinc-900"}`}
             >
               Following
-              {activeTab === "FOLLOWING" && (
-                <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 w-full h-[3px] bg-[#3252DF] rounded-t-full" />
-              )}
             </button>
           </div>
           
-          <div className="shrink-0 ml-2">
-            <Button 
-              onClick={() => setIsCreatingPost(true)}
-              size="icon"
-              className="h-10 w-10 rounded-full bg-[#0088FF] hover:bg-[#0077EE] text-white shadow-sm flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
-            >
-              <Plus className="h-5 w-5" strokeWidth={3} />
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setIsCreatingPost(true)}
+            size="icon"
+            className="h-12 w-12 shrink-0 rounded-full bg-zinc-900 hover:bg-black text-white shadow-md flex items-center justify-center transition-transform hover:scale-105 active:scale-95 border border-zinc-800"
+          >
+            <Plus className="h-6 w-6" strokeWidth={3} />
+          </Button>
         </div>
 
         {/* Feed Posts */}
-        <div className="pb-24">
+        <div className="space-y-6">
           <AnimatePresence mode="popLayout">
             {posts.length === 0 ? (
-              <div className="p-12 text-center text-zinc-500">
+              <div className="bg-white rounded-[24px] border border-[#e0e0e0] shadow-sm p-12 text-center text-zinc-500">
                 <MessageCircle className="h-12 w-12 mx-auto mb-4 text-zinc-300" />
                 <h3 className="text-lg font-bold text-zinc-900 mb-1">No posts yet</h3>
                 <p className="text-sm">Be the first to start a discussion!</p>
@@ -324,9 +316,9 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                 <motion.div
                   key={post.id}
                   layout
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="p-4 sm:p-5 border-b border-zinc-200 hover:bg-zinc-50/50 transition-colors cursor-pointer"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-[24px] border border-[#e0e0e0] shadow-sm p-5 sm:p-6 hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
                 >
                   <div className="flex gap-3 sm:gap-4">
                     {/* Avatar */}
@@ -419,7 +411,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden"
+                className="bg-white w-full max-w-xl rounded-t-[24px] sm:rounded-[24px] shadow-2xl overflow-hidden"
                 onClick={e => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between p-4 border-b border-zinc-200">
@@ -519,7 +511,7 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="bg-white w-full max-w-xl rounded-t-3xl sm:rounded-2xl shadow-xl flex flex-col max-h-[85vh] sm:max-h-[70vh]"
+                className="bg-white w-full max-w-xl rounded-t-[24px] sm:rounded-[24px] shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[70vh]"
                 onClick={e => e.stopPropagation()}
               >
                 <div className="flex items-center justify-between p-4 border-b border-zinc-200 shrink-0">
