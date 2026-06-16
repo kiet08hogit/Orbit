@@ -1,6 +1,6 @@
-# Circlo 🔵
+# Orbit 🔵
 
-**Circlo** is a verified marketplace exclusively for university students. It provides a safe, trusted platform to buy, sell, and swap items with other verified student profiles using their university email addresses.
+**Orbit** is a verified marketplace exclusively for university students. It provides a safe, trusted platform to buy, sell, and swap items with other verified student profiles using their university email addresses.
 
 ## ✨ Features
 
@@ -43,8 +43,8 @@
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/circlo.git
-cd circlo
+git clone https://github.com/your-username/orbit.git
+cd orbit
 ```
 
 ### 2. Backend Setup

@@ -42,6 +42,11 @@ interface Listing {
   images: ListingImage[];
   acceptsDirectPayment: boolean;
   acceptsProtectedPayment: boolean;
+  location?: string;
+  brand?: string;
+  colors?: string;
+  size?: string;
+  material?: string;
 }
 
 const getImageUrl = (url?: string) => {
@@ -252,7 +257,7 @@ export default function ListingDetailPage() {
             <p className="text-zinc-500 mb-6">{error || "Listing not found"}</p>
             <Link
               href="/listings"
-              className="inline-flex items-center gap-2 text-[#3252DF] font-bold hover:text-black transition-colors"
+              className="inline-flex items-center gap-2 text-[#3252DF] font-bold hover:text-zinc-900 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Marketplace
@@ -281,19 +286,19 @@ export default function ListingDetailPage() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white font-sans">
       {/* Breadcrumb */}
-      <div className="border-b border-zinc-100">
+      <div className="border-b border-zinc-200">
         <div className="max-w-[1600px] mx-auto px-4 md:px-8 lg:px-12 py-3">
           <nav className="flex items-center gap-2 text-sm">
             <Link
               href="/home"
-              className="text-zinc-400 hover:text-black transition-colors font-medium"
+              className="text-zinc-500 hover:text-zinc-900 transition-colors font-medium"
             >
               Home
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-zinc-300" />
             <Link
               href={`/listings?category=${listing.category}`}
-              className="text-zinc-400 hover:text-black transition-colors font-medium"
+              className="text-zinc-500 hover:text-zinc-900 transition-colors font-medium"
             >
               {categoryLabel}
             </Link>
@@ -317,9 +322,9 @@ export default function ListingDetailPage() {
                   <button
                     key={img.id}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`w-[100px] h-[100px] rounded-md overflow-hidden border-2 transition-all duration-200 bg-zinc-800 ${activeImageIndex === idx
+                    className={`w-[100px] h-[100px] rounded-md overflow-hidden border-2 transition-all duration-200 bg-zinc-50 ${activeImageIndex === idx
                         ? "border-[#6C5CE7] ring-2 ring-[#6C5CE7]/30 opacity-100"
-                        : "border-zinc-700 opacity-70 hover:opacity-100 hover:border-zinc-500"
+                        : "border-zinc-200 opacity-70 hover:opacity-100 hover:border-zinc-500"
                       }`}
                   >
                     <img
@@ -337,7 +342,7 @@ export default function ListingDetailPage() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="aspect-square bg-zinc-100 border border-zinc-200 rounded-2xl overflow-hidden relative"
+                className="aspect-square bg-zinc-50 border border-zinc-200 rounded-2xl overflow-hidden relative"
               >
                 {listing.images && listing.images.length > 0 ? (
                   <motion.img
@@ -364,9 +369,9 @@ export default function ListingDetailPage() {
                     <button
                       key={img.id}
                       onClick={() => setActiveImageIndex(idx)}
-                      className={`shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all bg-zinc-800 ${activeImageIndex === idx
+                      className={`shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all bg-zinc-50 ${activeImageIndex === idx
                           ? "border-[#6C5CE7] opacity-100"
-                          : "border-zinc-700 opacity-70"
+                          : "border-zinc-200 opacity-70"
                         }`}
                     >
                       <img
@@ -388,7 +393,7 @@ export default function ListingDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <h1 className="text-xl md:text-2xl font-black text-black leading-tight mb-3">
+              <h1 className="text-xl md:text-2xl font-black text-zinc-900 leading-tight mb-3">
                 {listing.title}
               </h1>
             </motion.div>
@@ -399,7 +404,7 @@ export default function ListingDetailPage() {
               transition={{ delay: 0.15 }}
               className="mb-1"
             >
-              <span className="text-2xl font-black text-black">
+              <span className="text-2xl font-black text-zinc-900">
                 ${listing.price.toFixed(2)}
               </span>
             </motion.div>
@@ -414,6 +419,53 @@ export default function ListingDetailPage() {
               <span>Includes Buyer Protection</span>
             </motion.div>
 
+            {/* Extended Details */}
+            {(listing.brand || listing.size || listing.material || listing.colors || listing.location) && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.22 }}
+                className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-2 mb-5 p-4 bg-zinc-50 rounded-2xl border border-zinc-200"
+              >
+                {listing.brand && (
+                  <div>
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Brand</p>
+                    <p className="text-sm font-semibold text-zinc-900">{listing.brand}</p>
+                  </div>
+                )}
+                {listing.size && (
+                  <div>
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Size</p>
+                    <p className="text-sm font-semibold text-zinc-900">{listing.size}</p>
+                  </div>
+                )}
+                {listing.material && (
+                  <div>
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Material</p>
+                    <p className="text-sm font-semibold text-zinc-900">{listing.material}</p>
+                  </div>
+                )}
+                {listing.colors && (
+                  <div>
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Color</p>
+                    <p className="text-sm font-semibold text-zinc-900">{listing.colors}</p>
+                  </div>
+                )}
+                {listing.location && (
+                  <div>
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Location</p>
+                    <p className="text-sm font-semibold text-zinc-900">{listing.location}</p>
+                  </div>
+                )}
+                {listing.weatherFound && (
+                  <div>
+                    <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mb-0.5">Weather Found</p>
+                    <p className="text-sm font-semibold text-zinc-900">{listing.weatherFound}</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
             {/* Description */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -421,12 +473,13 @@ export default function ListingDetailPage() {
               transition={{ delay: 0.25 }}
               className="mb-5"
             >
-              <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-wrap">
+              <h3 className="text-base font-bold text-zinc-900 mb-2">Description</h3>
+              <p className="text-sm text-zinc-500 leading-relaxed whitespace-pre-wrap">
                 {listing.description}
               </p>
             </motion.div>
 
-            <Separator className="mb-5 bg-zinc-100" />
+            <Separator className="mb-5 bg-zinc-50" />
 
             {/* Seller Info */}
             <motion.div
@@ -442,14 +495,14 @@ export default function ListingDetailPage() {
                     alt={sellerName}
                   />
                 )}
-                <AvatarFallback className="font-bold text-sm text-zinc-500 bg-zinc-100">
+                <AvatarFallback className="font-bold text-sm text-zinc-500 bg-zinc-50">
                   {sellerInitial}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="text-sm">
                   Listed by{" "}
-                  <span className="font-bold text-black">{sellerName}</span>
+                  <span className="font-bold text-zinc-900">{sellerName}</span>
                 </p>
                 <div className="flex items-center gap-1 text-emerald-600 text-[11px] font-bold mt-0.5">
                   <CheckCircle2 className="h-3 w-3" />
@@ -458,9 +511,9 @@ export default function ListingDetailPage() {
               </div>
             </motion.div>
 
-            <p className="text-xs text-zinc-400 mb-5">Posted {postedDate}</p>
+            <p className="text-xs text-zinc-500 mb-5">Posted {postedDate}</p>
 
-            <Separator className="mb-5 bg-zinc-100" />
+            <Separator className="mb-5 bg-zinc-50" />
 
             <p className="text-xs text-zinc-500 mb-4">
               Meet the seller to seal the deal – you'll only be charged once you
@@ -478,7 +531,7 @@ export default function ListingDetailPage() {
                 <Link href={`/listings/${listing.id}/edit`}>
                   <Button
                     size="lg"
-                    className="w-full bg-zinc-900 hover:bg-black text-white font-bold h-11 rounded-lg shadow-sm text-sm"
+                    className="w-full bg-zinc-50 hover:bg-black text-white font-bold h-11 rounded-lg shadow-sm text-sm"
                   >
                     Edit Listing
                   </Button>
@@ -543,7 +596,7 @@ export default function ListingDetailPage() {
           >
             <div className="flex items-center gap-2 mb-2">
               <MapPin className="h-5 w-5 text-[#3252DF]" />
-              <h3 className="text-base font-black text-black">
+              <h3 className="text-base font-black text-zinc-900">
                 Campus Meetup Location
               </h3>
             </div>
@@ -553,7 +606,7 @@ export default function ListingDetailPage() {
             </p>
 
             {/* Map container — fills remaining height, min 500px */}
-            <div className="w-full flex-1 min-h-[500px] rounded-xl overflow-hidden border border-zinc-200 shadow-sm">
+            <div className="w-full flex-1 min-h-[500px] rounded-2xl overflow-hidden border border-zinc-200 shadow-sm">
               <CampusMap onLocationSelect={handleMeetupRequest} />
             </div>
 
@@ -561,7 +614,7 @@ export default function ListingDetailPage() {
             <div className="mt-8 pt-6 border-t border-zinc-200 flex justify-center">
               <button 
                 onClick={() => setShowReportDialog(true)}
-                className="text-xs font-semibold text-zinc-400 hover:text-red-500 transition-colors underline underline-offset-4"
+                className="text-xs font-semibold text-zinc-500 hover:text-red-500 transition-colors underline underline-offset-4"
               >
                 Report this listing
               </button>
@@ -599,13 +652,13 @@ export default function ListingDetailPage() {
                 rows={4} 
                 value={reportReason}
                 onChange={(e) => setReportReason(e.target.value)}
-                className="bg-zinc-50 border-zinc-200 resize-none rounded-xl"
+                className="bg-zinc-50 border-zinc-200 resize-none rounded-2xl"
               />
               <div className="flex items-center gap-3 mt-2">
                 <Button variant="ghost" onClick={() => setShowReportDialog(false)} className="flex-1 rounded-full font-bold h-11">
                   Cancel
                 </Button>
-                <Button onClick={handleReportListing} disabled={isSubmittingReport || !reportReason.trim()} className="flex-1 rounded-full font-bold h-11 bg-red-600 hover:bg-red-700 text-white border-0 shadow-none">
+                <Button onClick={handleReportListing} disabled={isSubmittingReport || !reportReason.trim()} className="flex-1 rounded-full font-bold h-11 bg-red-600 hover:bg-red-700 text-white border-0 shadow-sm">
                   {isSubmittingReport ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Report"}
                 </Button>
               </div>
@@ -627,27 +680,27 @@ export default function ListingDetailPage() {
           <div className="flex flex-col gap-4 mt-4">
             {listing.acceptsProtectedPayment && (
               <div 
-                className="border-2 border-emerald-500 bg-emerald-50 rounded-xl p-4 cursor-pointer hover:bg-emerald-100 transition-colors"
+                className="border-2 border-emerald-500 bg-emerald-50 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100 transition-colors"
                 onClick={handleProtectedReservation}
               >
                 <div className="flex items-center gap-3 mb-1">
                   <Shield className="h-5 w-5 text-emerald-600" />
-                  <span className="font-bold text-black">Protected Payment</span>
+                  <span className="font-bold text-zinc-900">Protected Payment</span>
                 </div>
-                <p className="text-sm text-zinc-600 ml-8">Pay securely with card. Funds are held until you confirm the meetup.</p>
+                <p className="text-sm text-zinc-500 ml-8">Pay securely with card. Funds are held until you confirm the meetup.</p>
               </div>
             )}
 
             {listing.acceptsDirectPayment && (
               <div 
-                className="border-2 border-zinc-200 hover:border-[#3252DF] hover:bg-[#3252DF]/5 rounded-xl p-4 cursor-pointer transition-colors"
+                className="border-2 border-zinc-200 hover:border-[#3252DF] hover:bg-[#3252DF]/5 rounded-2xl p-4 cursor-pointer transition-colors"
                 onClick={handleDirectReservation}
               >
                 <div className="flex items-center gap-3 mb-1">
-                  <DollarSign className="h-5 w-5 text-zinc-600" />
-                  <span className="font-bold text-black">Direct Payment</span>
+                  <DollarSign className="h-5 w-5 text-zinc-500" />
+                  <span className="font-bold text-zinc-900">Direct Payment</span>
                 </div>
-                <p className="text-sm text-zinc-600 ml-8">Pay with Cash, Zelle, or Venmo when you meet the seller.</p>
+                <p className="text-sm text-zinc-500 ml-8">Pay with Cash, Zelle, or Venmo when you meet the seller.</p>
               </div>
             )}
           </div>

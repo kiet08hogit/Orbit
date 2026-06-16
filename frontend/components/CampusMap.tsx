@@ -82,7 +82,7 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
       closeButton: false,
       closeOnClick: false,
       offset: 25,
-      className: 'hover-popup shadow-lg rounded-lg overflow-hidden'
+      className: 'hover-popup shadow-sm rounded-lg overflow-hidden'
     });
 
     // Add markers
@@ -100,7 +100,7 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
       popupNode.appendChild(title);
 
       const cat = document.createElement("p");
-      cat.className = "text-[10px] text-zinc-400 uppercase tracking-widest mb-3 font-black";
+      cat.className = "text-[10px] text-zinc-500 uppercase tracking-widest mb-3 font-black";
       cat.innerText = building.category;
       popupNode.appendChild(cat);
 
@@ -164,7 +164,7 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
         <div ref={mapContainer} className="w-full h-full" />
 
         {!process.env.NEXT_PUBLIC_MAPBOX_TOKEN && (
-          <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center text-zinc-500 font-medium z-10 p-4 text-center">
+          <div className="absolute inset-0 bg-zinc-50 flex items-center justify-center text-zinc-500 font-medium z-10 p-4 text-center">
             Mapbox token missing. Please add NEXT_PUBLIC_MAPBOX_TOKEN to .env.local
           </div>
         )}
@@ -172,7 +172,7 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
 
       {/* Selected Location Display */}
       {selectedBuilding && (
-        <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-bottom-2">
+        <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-bottom-2">
           <div className="flex flex-col">
             <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Selected meetup location</span>
             <span className="font-black text-emerald-900 text-lg">{selectedBuilding.name}</span>

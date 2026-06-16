@@ -51,7 +51,7 @@ function CheckoutForm({ clientSecret, listingId }: { clientSecret: string; listi
       <Button 
         type="submit" 
         disabled={!stripe || !elements || isLoading}
-        className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm"
+        className="w-full h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm"
       >
         {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Authorize Payment"}
       </Button>
@@ -122,20 +122,20 @@ export default function CheckoutPage() {
       <div className="max-w-xl mx-auto">
         <button 
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 text-sm font-bold text-zinc-400 hover:text-black mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-bold text-zinc-500 hover:text-zinc-900 mb-8 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Listing
         </button>
 
         <div className="mb-8 flex items-center gap-4">
-          <div className="h-16 w-16 bg-zinc-200 rounded-xl overflow-hidden shrink-0">
+          <div className="h-16 w-16 bg-zinc-50 rounded-2xl overflow-hidden shrink-0">
             {listing.images && listing.images.length > 0 ? (
               <img src={listing.images[0].url.startsWith('http') ? listing.images[0].url : `http://127.0.0.1:3000${listing.images[0].url}`} alt={listing.title} className="h-full w-full object-cover" />
             ) : null}
           </div>
           <div>
-            <h1 className="text-2xl font-black text-black leading-tight mb-1">Checkout</h1>
+            <h1 className="text-2xl font-black text-zinc-900 leading-tight mb-1">Checkout</h1>
             <p className="text-zinc-500 text-sm font-bold truncate max-w-[300px]">{listing.title}</p>
           </div>
           <div className="ml-auto text-right">
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
         <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 mb-8 flex gap-4 items-start">
           <ShieldCheck className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-bold text-emerald-900 text-sm mb-1">Protected by Circlo Escrow</h3>
+            <h3 className="font-bold text-emerald-900 text-sm mb-1">Protected by Orbit Escrow</h3>
             <p className="text-xs text-emerald-800 leading-relaxed">
               Your payment is held securely in escrow. We won't release the funds to the seller until you meet up and enter the 6-digit confirmation code.
             </p>

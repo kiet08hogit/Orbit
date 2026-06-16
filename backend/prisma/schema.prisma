@@ -117,6 +117,13 @@ model Listing {
   acceptsDirectPayment    Boolean @default(true)
   acceptsProtectedPayment Boolean @default(false)
   
+  // Extended Details
+  location     String?
+  brand        String?
+  colors       String?
+  size         String?
+  material     String?
+  
   // Foreign Key linking to the User who created it
   sellerId    String
   seller      User            @relation(fields: [sellerId], references: [id])

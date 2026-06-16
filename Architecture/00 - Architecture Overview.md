@@ -1,8 +1,8 @@
-# Circlo - Architecture Overview
+# Orbit - Architecture Overview
 
 ## Product Summary
 
-Circlo is a verified marketplace and community platform for university students.
+Orbit is a verified marketplace and community platform for university students.
 
 Core features:
 - Buy and sell items
@@ -74,7 +74,7 @@ The system contains:
 
 General application flow:
 
-1. User opens Circlo in the browser
+1. User opens Orbit in the browser
 2. Frontend loads from Azure Static Web Apps
 3. Frontend sends REST or WebSocket requests to backend
 4. Backend verifies the user through Clerk JWT validation

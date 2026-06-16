@@ -7,17 +7,18 @@ import { SignInButton, Show } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CustomUserButton } from "@/components/CustomUserButton";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import React from "react";
 
 export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-50 w-full bg-[rgba(0,0,0,0.8)] backdrop-blur-[20px] backdrop-saturate-[180%] border-b border-white/10 transition-colors duration-300">
+    <header className="sticky top-0 z-50 w-full bg-background border-b border-border transition-colors duration-300">
       <div className="flex h-[44px] md:h-[48px] w-full items-center justify-between px-4 sm:px-8 lg:px-10 gap-4">
         {/* Logo */}
         <div className="flex items-center shrink-0">
-          <Link href="/" className="flex items-center -space-x-1 text-lg font-semibold tracking-tighter text-white hover:opacity-80 transition-opacity">
-            <Image src="/Circlo Logo White-02.png" alt="Circlo Logo" width={50} height={50} className="object-contain" />
-            <span>Circlo</span>
+          <Link href="/" className="flex items-center -space-x-1 text-lg font-semibold tracking-tighter text-foreground hover:opacity-80 transition-opacity">
+            <Image src="/Orbit_logo_transparent.png" alt="Orbit Logo" width={50} height={50} className="object-contain" />
+            <span>Orbit</span>
           </Link>
         </div>
 
@@ -25,12 +26,12 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
         <Show when="signed-in">
           <div className="flex-1 max-w-md hidden md:block px-4">
             <form action="/listings" className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 type="text"
                 name="q"
                 placeholder="Search Products..."
-                className="w-full h-[32px] rounded-full pl-9 bg-zinc-800/50 border-white/10 text-[13px] text-white placeholder:text-zinc-400 focus-visible:ring-1 focus-visible:ring-white/30 focus-visible:bg-zinc-800/80 transition-all"
+                className="w-full h-[32px] rounded-md pl-9 bg-secondary border-none text-[13px] text-foreground placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-secondary/80 transition-all font-mono"
               />
             </form>
           </div>
@@ -38,15 +39,16 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
 
         {/* Right Side Actions */}
         <nav className="flex items-center gap-2 md:gap-4 shrink-0">
+          <AnimatedThemeToggler />
           <Show when="signed-out">
             <div className="flex items-center gap-1 md:gap-3">
               <Link href="/about">
-                <Button variant="ghost" className="text-[#e8e8ed] hover:text-white hover:bg-transparent text-[12px] font-normal transition-colors h-8 px-2 md:px-3">
-                  About Circlo
+                <Button variant="ghost" className="text-foreground hover:text-foreground hover:bg-transparent text-[14px] font-medium transition-colors h-8 px-2 md:px-3 rounded-md">
+                  About Orbit
                 </Button>
               </Link>
               <SignInButton mode="modal">
-                <Button className="rounded-full bg-white hover:bg-zinc-200 text-black text-[12px] font-normal border-none transition-all h-[32px] px-4">
+                <Button className="rounded-md bg-primary hover:opacity-90 text-primary-foreground text-[14px] font-medium border-none transition-all h-[32px] px-4 dark:bg-white dark:text-black dark:hover:bg-zinc-200">
                   Log In / Sign Up
                 </Button>
               </SignInButton>
@@ -55,7 +57,7 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
           <Show when="signed-in">
             <div className="flex items-center gap-3">
               <Link href="/add-product">
-                <Button variant="default" className="hidden sm:flex h-[32px] rounded-full text-[12px] font-medium bg-[#1d1d1f] hover:bg-white/10 text-white border border-white/10 shadow-sm transition-colors">
+                <Button variant="default" className="hidden sm:flex h-[32px] rounded-md text-[14px] font-medium bg-primary hover:opacity-90 text-primary-foreground border-none transition-colors dark:bg-white dark:text-black dark:hover:bg-zinc-200">
                   + Create Listing
                 </Button>
               </Link>

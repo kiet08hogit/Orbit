@@ -141,7 +141,7 @@ export default function EditListingPage() {
         {/* Back Button */}
         <Link
           href={`/listings/${listingId}`}
-          className="inline-flex items-center gap-2 text-zinc-400 hover:text-black transition-colors mb-6 text-sm font-bold"
+          className="inline-flex items-center gap-2 text-zinc-500 hover:text-zinc-900 transition-colors mb-6 text-sm font-bold"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Listing
@@ -149,7 +149,7 @@ export default function EditListingPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-black tracking-tight text-black">
+          <h1 className="text-3xl font-black tracking-tight text-zinc-900">
             Edit Listing
           </h1>
           <p className="text-zinc-500 text-sm font-medium mt-1">
@@ -160,7 +160,7 @@ export default function EditListingPage() {
         {/* Form Card */}
         <div className="bg-white border border-zinc-200 rounded-2xl p-6 md:p-8 shadow-sm">
           {error && (
-            <Alert variant="destructive" className="mb-6 rounded-xl">
+            <Alert variant="destructive" className="mb-6 rounded-2xl">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
@@ -171,9 +171,9 @@ export default function EditListingPage() {
             
             {/* ── Image Display (Read-Only) ── */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <ImagePlus className="h-4 w-4 text-zinc-400" />
-                Photos <span className="text-zinc-400 font-medium text-xs ml-1">(Read-only)</span>
+              <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <ImagePlus className="h-4 w-4 text-zinc-500" />
+                Photos <span className="text-zinc-500 font-medium text-xs ml-1">(Read-only)</span>
               </label>
 
               {images.length > 0 ? (
@@ -181,7 +181,7 @@ export default function EditListingPage() {
                   {images.map((img, idx) => (
                     <div
                       key={img.id}
-                      className="relative aspect-square rounded-xl overflow-hidden border border-zinc-200 bg-zinc-100"
+                      className="relative aspect-square rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-50"
                     >
                       <img
                         src={img.url}
@@ -201,15 +201,15 @@ export default function EditListingPage() {
                   No images attached to this listing.
                 </div>
               )}
-              <p className="text-[11px] text-zinc-400 font-medium">
+              <p className="text-[11px] text-zinc-500 font-medium">
                 Image updates are currently disabled. You must delete and recreate the listing to change images.
               </p>
             </div>
 
             {/* ── Title ── */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <Tag className="h-4 w-4 text-zinc-400" />
+              <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-zinc-500" />
                 Title
               </label>
               <Input
@@ -218,14 +218,14 @@ export default function EditListingPage() {
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="e.g. TI-84 Plus CE Calculator"
-                className="w-full rounded-xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                className="w-full rounded-2xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
               />
             </div>
 
             {/* ── Description ── */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <AlignLeft className="h-4 w-4 text-zinc-400" />
+              <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <AlignLeft className="h-4 w-4 text-zinc-500" />
                 Description
               </label>
               <Textarea
@@ -235,15 +235,15 @@ export default function EditListingPage() {
                 onChange={handleChange}
                 rows={4}
                 placeholder="Describe the condition, location to meet up, etc."
-                className="w-full rounded-xl p-4 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50 resize-none"
+                className="w-full rounded-2xl p-4 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50 resize-none"
               />
             </div>
 
             {/* ── Price + Category ── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-black flex items-center gap-2">
-                  <DollarSign className="h-4 w-4 text-zinc-400" />
+                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-zinc-500" />
                   Price
                 </label>
                 <div className="relative">
@@ -257,21 +257,21 @@ export default function EditListingPage() {
                     value={formData.price}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="w-full rounded-xl pl-8 py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                    className="w-full rounded-2xl pl-8 py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-black flex items-center gap-2">
-                  <ListPlus className="h-4 w-4 text-zinc-400" />
+                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <ListPlus className="h-4 w-4 text-zinc-500" />
                   Category
                 </label>
                 <Select
                   value={formData.category}
                   onValueChange={(val) => setFormData({ ...formData, category: val || 'SCHOOL' })}
                 >
-                  <SelectTrigger className="w-full rounded-xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
+                  <SelectTrigger className="w-full rounded-2xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -287,15 +287,15 @@ export default function EditListingPage() {
 
             {/* ── Status ── */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-black flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-zinc-400" />
+              <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-zinc-500" />
                 Status
               </label>
               <Select
                 value={formData.status}
                 onValueChange={(val) => setFormData({ ...formData, status: val })}
               >
-                <SelectTrigger className="w-full rounded-xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
+                <SelectTrigger className="w-full rounded-2xl py-5 text-sm font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -311,7 +311,7 @@ export default function EditListingPage() {
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="w-full h-12 text-sm font-bold bg-[#272343] hover:bg-black text-white rounded-xl shadow-sm"
+                className="w-full h-12 text-sm font-bold bg-[#272343] hover:bg-black text-white rounded-2xl shadow-sm"
               >
                 {isSaving ? (
                   <>

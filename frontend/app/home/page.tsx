@@ -95,22 +95,22 @@ export default function Home() {
       <div className="relative w-full h-[350px] md:h-[450px] mb-8 overflow-hidden">
         <img
           src="/dj.jpg"
-          alt="Circlo Hero"
+          alt="Orbit Hero"
           className="absolute inset-0 w-full h-full object-cover object-[50%_18%] z-0"
         />
         {/* The white card overlay */}
-        <div className="absolute left-8 md:left-[10%] top-1/2 -translate-y-1/2 bg-white rounded-xl p-8 shadow-xl max-w-sm z-10 border border-zinc-100">
-          <h2 className="text-2xl font-black text-black mb-6 leading-tight">
+        <div className="absolute left-8 md:left-[10%] top-1/2 -translate-y-1/2 bg-white rounded-2xl p-8 shadow-xl max-w-sm z-10 border border-zinc-200">
+          <h2 className="text-2xl font-black text-zinc-900 mb-6 leading-tight">
             Trying to pass down your items?
           </h2>
           <Link
             href="/add-product"
-            className="block w-full text-center bg-[#b81d68] hover:bg-[#961754] text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4"
+            className="block w-full text-center bg-zinc-900 hover:bg-black text-white font-bold py-3 px-6 rounded-lg transition-colors mb-4"
           >
             Sell now
           </Link>
           <div className="text-center">
-            <a href="#" className="text-sm font-medium text-zinc-600 underline hover:text-black">
+            <a href="#" className="text-sm font-medium text-zinc-500 underline hover:text-zinc-900">
               How it works
             </a>
           </div>
@@ -157,7 +157,7 @@ function ProductSection({ title, listings, viewMoreHref }: { title: React.ReactN
   return (
     <section>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[24px] md:text-[28px] font-semibold text-[#1d1d1f] tracking-tight">{title}</h2>
+        <h2 className="text-[24px] md:text-[28px] font-semibold text-zinc-900 tracking-tight">{title}</h2>
         {viewMoreHref && (
           <Link href={viewMoreHref} className="hidden sm:flex items-center text-[17px] font-normal text-[#0066cc] hover:underline transition-colors group">
             View More
@@ -174,7 +174,7 @@ function ProductSection({ title, listings, viewMoreHref }: { title: React.ReactN
       </div>
       {viewMoreHref && (
         <div className="mt-6 sm:hidden">
-          <Link href={viewMoreHref} className="flex items-center justify-center w-full py-3 bg-white border border-[#e0e0e0] text-[#1d1d1f] rounded-[14px] text-[17px] font-normal transition-colors hover:bg-zinc-50">
+          <Link href={viewMoreHref} className="flex items-center justify-center w-full py-3 bg-white border border-[#e0e0e0] text-zinc-900 rounded-[14px] text-[17px] font-normal transition-colors hover:bg-zinc-50">
             View More
           </Link>
         </div>
@@ -203,7 +203,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           )}
         </div>
         <div className="p-3 flex flex-col gap-1 bg-white">
-          <div className="font-semibold text-[#1d1d1f] text-[15px] leading-tight">
+          <div className="font-semibold text-zinc-900 text-[15px] leading-tight">
             ${listing.price.toFixed(2)}
           </div>
           <h3 className="text-[#7a7a7a] text-[13px] font-normal leading-tight line-clamp-2">

@@ -37,7 +37,16 @@ export default function AddProductPage() {
     category: 'SCHOOL',
     acceptsDirectPayment: true,
     acceptsProtectedPayment: false,
+    location: '',
+    brand: '',
+    colors: '',
+    size: '',
+    material: '',
+    weatherFound: '',
   });
+
+  const COLORS = ['Black', 'White', 'Gray', 'Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Purple', 'Orange', 'Brown', 'Multi', 'Other'];
+  const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'One Size', 'Other'];
 
   const [isStripeLinked, setIsStripeLinked] = useState(false);
   const [isLoadingStripeStatus, setIsLoadingStripeStatus] = useState(true);
@@ -110,6 +119,12 @@ export default function AddProductPage() {
       submitData.append('category', formData.category);
       submitData.append('acceptsDirectPayment', formData.acceptsDirectPayment.toString());
       submitData.append('acceptsProtectedPayment', formData.acceptsProtectedPayment.toString());
+      
+      if (formData.location) submitData.append('location', formData.location);
+      if (formData.brand) submitData.append('brand', formData.brand);
+      if (formData.colors) submitData.append('colors', formData.colors);
+      if (formData.size) submitData.append('size', formData.size);
+      if (formData.material) submitData.append('material', formData.material);
 
       images.forEach((img) => {
         submitData.append('images', img.file);
@@ -142,12 +157,12 @@ export default function AddProductPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto"
+        className="max-w-lg mx-auto"
       >
         {/* Back Button */}
         <Link
           href="/listings"
-          className="inline-flex items-center gap-2 text-zinc-500 hover:text-[#1d1d1f] transition-colors mb-6 text-[14px] font-medium"
+          className="inline-flex items-center gap-2 text-zinc-500 hover:text-zinc-900 transition-colors mb-6 text-[14px] font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Marketplace
@@ -155,7 +170,7 @@ export default function AddProductPage() {
 
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-[28px] font-bold tracking-tight text-[#1d1d1f]">
+          <h1 className="text-[28px] font-bold tracking-tight text-zinc-900">
             Create a Listing
           </h1>
         </div>
@@ -173,7 +188,7 @@ export default function AddProductPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* ── Image Upload ── */}
             <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-[#1d1d1f]">Upload Image</label>
+              <label className="text-[13px] font-semibold text-zinc-900">Upload Image</label>
               
               <div className="relative w-full border-2 border-dashed border-zinc-300 rounded-[14px] p-8 flex flex-col items-center justify-center hover:bg-zinc-50 hover:border-[#0066cc] transition-colors group cursor-pointer">
                 <input
@@ -184,9 +199,9 @@ export default function AddProductPage() {
                   onChange={handleImageAdd}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-                <UploadCloud className="h-8 w-8 text-zinc-400 group-hover:text-[#0066cc] transition-colors mb-3" />
-                <p className="text-[14px] text-zinc-600 mb-1 text-center">Drag and drop your image here, or click to select a file</p>
-                <p className="text-[12px] text-zinc-400 text-center">(Only *.jpeg, *.jpg, *.png images will be accepted)</p>
+                <UploadCloud className="h-8 w-8 text-zinc-500 group-hover:text-[#0066cc] transition-colors mb-3" />
+                <p className="text-[14px] text-zinc-500 mb-1 text-center">Drag and drop your image here, or click to select a file</p>
+                <p className="text-[12px] text-zinc-500 text-center">(Only *.jpeg, *.jpg, *.png images will be accepted)</p>
               </div>
 
               {/* Previews */}
@@ -201,7 +216,7 @@ export default function AddProductPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ duration: 0.2 }}
-                        className="relative h-20 w-20 flex-shrink-0 rounded-xl overflow-hidden border border-zinc-200 group bg-zinc-100"
+                        className="relative h-20 w-20 flex-shrink-0 rounded-2xl overflow-hidden border border-zinc-200 group bg-zinc-50"
                       >
                         <img src={img.url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
                         {idx === 0 && (
@@ -221,34 +236,100 @@ export default function AddProductPage() {
                   </AnimatePresence>
                 </div>
               )}
-              <p className="text-[11px] text-zinc-400 font-medium">
+              <p className="text-[11px] text-zinc-500 font-medium">
                 ({images.length}/{MAX_IMAGES}) uploaded. First image will be the cover.
               </p>
             </div>
 
-            {/* ── Category ── */}
-            <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-[#1d1d1f]">Category</label>
-              <Select
-                value={formData.category}
-                onValueChange={(val) => setFormData({ ...formData, category: val || 'SCHOOL' })}
-              >
-                <SelectTrigger className="w-full h-12 rounded-[14px] bg-zinc-50 border-zinc-200 text-[14px] focus:ring-[#0066cc] focus:ring-1">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent className="rounded-[14px]">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat} className="rounded-lg">
-                      {cat.charAt(0) + cat.slice(1).toLowerCase()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* ── Category & Location ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900">Category</label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(val) => setFormData({ ...formData, category: val || 'SCHOOL' })}
+                >
+                  <SelectTrigger className="w-full h-12 rounded-[14px] bg-zinc-50 border-zinc-200 text-[14px] focus:ring-[#0066cc] focus:ring-1">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-[14px]">
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat} className="rounded-lg">
+                        {cat.charAt(0) + cat.slice(1).toLowerCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900">Location</label>
+                <Input
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="e.g. East Campus, Student Center..."
+                  className="w-full h-12 rounded-[14px] px-4 text-[14px] bg-zinc-50 border-zinc-200 focus-visible:ring-[#0066cc] focus-visible:ring-1"
+                />
+              </div>
+            </div>
+
+            {/* ── Brand & Material ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900">Brand</label>
+                <Input
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleChange}
+                  placeholder="e.g. Nike, Apple, Sony..."
+                  className="w-full h-12 rounded-[14px] px-4 text-[14px] bg-zinc-50 border-zinc-200 focus-visible:ring-[#0066cc] focus-visible:ring-1"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900">Material</label>
+                <Input
+                  name="material"
+                  value={formData.material}
+                  onChange={handleChange}
+                  placeholder="e.g. Cotton, Leather, Aluminum..."
+                  className="w-full h-12 rounded-[14px] px-4 text-[14px] bg-zinc-50 border-zinc-200 focus-visible:ring-[#0066cc] focus-visible:ring-1"
+                />
+              </div>
+            </div>
+
+            {/* ── Colors, Size ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900">Colors</label>
+                <Select value={formData.colors} onValueChange={(val) => setFormData({ ...formData, colors: val })}>
+                  <SelectTrigger className="w-full h-12 rounded-[14px] bg-zinc-50 border-zinc-200 text-[14px] focus:ring-[#0066cc] focus:ring-1">
+                    <SelectValue placeholder="Select colors" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-[14px]">
+                    {COLORS.map((color) => (
+                      <SelectItem key={color} value={color} className="rounded-lg">{color}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[13px] font-semibold text-zinc-900">Size</label>
+                <Select value={formData.size} onValueChange={(val) => setFormData({ ...formData, size: val })}>
+                  <SelectTrigger className="w-full h-12 rounded-[14px] bg-zinc-50 border-zinc-200 text-[14px] focus:ring-[#0066cc] focus:ring-1">
+                    <SelectValue placeholder="Select size" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-[14px]">
+                    {SIZES.map((size) => (
+                      <SelectItem key={size} value={size} className="rounded-lg">{size}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* ── Title ── */}
             <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-[#1d1d1f]">Title</label>
+              <label className="text-[13px] font-semibold text-zinc-900">Title</label>
               <Input
                 required
                 name="title"
@@ -261,7 +342,7 @@ export default function AddProductPage() {
 
             {/* ── Price ── */}
             <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-[#1d1d1f]">Price</label>
+              <label className="text-[13px] font-semibold text-zinc-900">Price</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 font-semibold text-[14px]">$</span>
                 <Input
@@ -280,7 +361,7 @@ export default function AddProductPage() {
 
             {/* ── Description ── */}
             <div className="space-y-2">
-              <label className="text-[13px] font-semibold text-[#1d1d1f]">Description</label>
+              <label className="text-[13px] font-semibold text-zinc-900">Description</label>
               <Textarea
                 required
                 name="description"
@@ -294,7 +375,7 @@ export default function AddProductPage() {
 
             {/* ── Payment Settings ── */}
             <div className="space-y-3 pt-2">
-              <label className="text-[13px] font-semibold text-[#1d1d1f]">Payment Options</label>
+              <label className="text-[13px] font-semibold text-zinc-900">Payment Options</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Direct Payment */}
                 <div 
@@ -302,7 +383,7 @@ export default function AddProductPage() {
                   onClick={() => setFormData(prev => ({ ...prev, acceptsDirectPayment: !prev.acceptsDirectPayment }))}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-[#1d1d1f] text-[14px]">Direct Payment</span>
+                    <span className="font-semibold text-zinc-900 text-[14px]">Direct Payment</span>
                     <div className={`h-[18px] w-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${formData.acceptsDirectPayment ? 'border-[#0066cc] bg-[#0066cc]' : 'border-zinc-300'}`}>
                       {formData.acceptsDirectPayment && <div className="h-2 w-2 bg-white rounded-full" />}
                     </div>
@@ -324,18 +405,18 @@ export default function AddProductPage() {
                 >
                   {isLoadingStripeStatus && (
                     <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center">
-                      <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                      <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
                     </div>
                   )}
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-[#1d1d1f] text-[14px] flex items-center gap-1.5">
+                    <span className="font-semibold text-zinc-900 text-[14px] flex items-center gap-1.5">
                       Protected Payment
                     </span>
                     <div className={`h-[18px] w-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${formData.acceptsProtectedPayment ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-300'}`}>
                       {formData.acceptsProtectedPayment && <div className="h-2 w-2 bg-white rounded-full" />}
                     </div>
                   </div>
-                  <p className="text-[12px] text-zinc-500">Card payments via Circlo Escrow.</p>
+                  <p className="text-[12px] text-zinc-500">Card payments via Orbit Escrow.</p>
                   
                   {!isStripeLinked && !isLoadingStripeStatus && (
                     <div className="mt-2 text-[11px] font-semibold text-[#0066cc] hover:underline" onClick={(e) => {
@@ -354,7 +435,7 @@ export default function AddProductPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 rounded-[14px] bg-[#1d1d1f] hover:bg-black text-white text-[15px] font-semibold transition-colors"
+                className="w-full h-12 rounded-[14px] bg-black hover:bg-zinc-50 text-white text-[15px] font-semibold transition-colors"
               >
                 {isLoading ? (
                   <>
