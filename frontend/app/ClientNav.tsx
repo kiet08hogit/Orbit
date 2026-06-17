@@ -34,7 +34,7 @@ export function ClientNav() {
   }
 
   return (
-    <div className="flex w-full items-center justify-center border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black z-40 relative px-4 py-2 transition-colors duration-300">
+    <div className="flex w-full items-center justify-center border-b border-border bg-background z-40 relative px-4 py-2 transition-colors duration-300">
       <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
         {CATEGORIES.map((cat) => {
           const isActive = currentCategory === cat.id;
@@ -44,8 +44,8 @@ export function ClientNav() {
               href={cat.id === 'ALL' ? '/home' : `/listings?category=${cat.id}`}
               className={`whitespace-nowrap px-4 py-2 rounded-full text-xs md:text-sm tracking-wide flex items-center justify-center transition-colors duration-150 ${
                 isActive 
-                  ? 'bg-[#272343] text-white dark:bg-white dark:text-black font-semibold' 
-                  : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 font-medium'
+                  ? 'bg-primary text-primary-foreground font-semibold' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary font-medium'
               }`}
             >
               {cat.label}
@@ -53,14 +53,14 @@ export function ClientNav() {
           );
         })}
         
-        <div className="w-px h-6 bg-zinc-300 dark:bg-zinc-700 mx-2 hidden sm:block shrink-0 transition-colors duration-300"></div>
+        <div className="w-px h-6 bg-border mx-2 hidden sm:block shrink-0 transition-colors duration-300"></div>
         
         <Link 
           href="/community" 
           className={`whitespace-nowrap px-4 py-2 rounded-full text-xs md:text-sm tracking-wide flex items-center justify-center transition-colors duration-150 ${
             currentCategory === 'COMMUNITY' 
-              ? 'bg-[#272343] text-white dark:bg-white dark:text-black font-semibold' 
-              : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 font-medium'
+              ? 'bg-primary text-primary-foreground font-semibold' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-secondary font-medium'
           }`}
         >
           Community
@@ -70,8 +70,8 @@ export function ClientNav() {
           href="/swipe" 
           className={`whitespace-nowrap px-4 py-2 rounded-full text-xs md:text-sm tracking-wide flex items-center justify-center transition-colors duration-150 ${
             currentCategory === 'SWIPE' 
-              ? 'bg-[#272343] text-white dark:bg-white dark:text-black font-semibold' 
-              : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 font-medium'
+              ? 'bg-primary text-primary-foreground font-semibold' 
+              : 'text-muted-foreground hover:text-foreground hover:bg-secondary font-medium'
           }`}
         >
           Match your needs

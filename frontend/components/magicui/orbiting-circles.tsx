@@ -8,6 +8,7 @@ export default function OrbitingCircles({
   delay = 10,
   radius = 50,
   path = true,
+  pathClassName,
 }: {
   className?: string;
   children?: React.ReactNode;
@@ -16,6 +17,7 @@ export default function OrbitingCircles({
   delay?: number;
   radius?: number;
   path?: boolean;
+  pathClassName?: string;
 }) {
   return (
     <>
@@ -26,7 +28,7 @@ export default function OrbitingCircles({
           className="pointer-events-none absolute inset-0 h-full w-full"
         >
           <circle
-            className="stroke-black/10 dark:stroke-white/20 stroke-1"
+            className={cn("stroke-black/10 dark:stroke-white/20 stroke-1", pathClassName)}
             cx="50%"
             cy="50%"
             r={radius}

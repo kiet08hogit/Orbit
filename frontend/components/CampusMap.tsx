@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import { useTheme } from "next-themes";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { uicBuildings, UICBuilding } from "../data/uicBuildings";
 
@@ -10,6 +11,7 @@ interface CampusMapProps {
 }
 
 export default function CampusMap({ onLocationSelect }: CampusMapProps) {
+  const { resolvedTheme } = useTheme();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<{ id: string; el: HTMLDivElement }[]>([]);
@@ -49,7 +51,7 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: resolvedTheme === "dark" ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11",
       center: [-87.6496, 41.8719],
       zoom: 16,
       pitch: 45,
@@ -95,17 +97,17 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
       popupNode.className = "p-1 font-sans min-w-[160px]";
 
       const title = document.createElement("h3");
-      title.className = "font-bold text-gray-900 mb-0.5 text-sm leading-tight";
+      title.className = "font-bold text-foreground mb-0.5 text-sm leading-tight";
       title.innerText = building.name;
       popupNode.appendChild(title);
 
       const cat = document.createElement("p");
-      cat.className = "text-[10px] text-zinc-500 uppercase tracking-widest mb-3 font-black";
+      cat.className = "text-[10px] text-muted-foreground uppercase tracking-widest mb-3 font-black";
       cat.innerText = building.category;
       popupNode.appendChild(cat);
 
       const btn = document.createElement("button");
-      btn.className = "bg-[#3252DF] hover:bg-[#2842B3] text-white font-bold py-1.5 px-3 rounded-md w-full text-xs transition-colors shadow-sm active:scale-95";
+      btn.className = "bg-primary hover:opacity-90 text-white font-bold py-1.5 px-3 rounded-md w-full text-xs transition-colors shadow-sm active:scale-95";
       btn.innerText = "Use this meetup location";
       btn.onclick = () => {
         setSelectedBuilding(building);
@@ -127,9 +129,9 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
 
           hoverPopup.setLngLat(building.coordinates)
             .setHTML(`
-              <div class="p-2 font-sans bg-white min-w-[120px]">
-                <div class="font-bold text-gray-900 text-sm leading-tight">${building.name}</div>
-                <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">${building.category}</div>
+              <div class="p-2 font-sans bg-card border-border min-w-[120px]">
+                <div class="font-bold text-foreground text-sm leading-tight">${building.name}</div>
+                <div class="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5">${building.category}</div>
               </div>
             `)
             .addTo(map.current!);
@@ -151,6 +153,13 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
     };
   }, []);
 
+  
+  useEffect(() => {
+    if (map.current) {
+      map.current.setStyle(resolvedTheme === "dark" ? "mapbox://styles/mapbox/dark-v11" : "mapbox://styles/mapbox/light-v11");
+    }
+  }, [resolvedTheme]);
+
   // 2. Update marker styles when selection changes
   useEffect(() => {
     markersRef.current.forEach(({ id, el }) => {
@@ -164,7 +173,7 @@ export default function CampusMap({ onLocationSelect }: CampusMapProps) {
         <div ref={mapContainer} className="w-full h-full" />
 
         {!process.env.NEXT_PUBLIC_MAPBOX_TOKEN && (
-          <div className="absolute inset-0 bg-zinc-50 flex items-center justify-center text-zinc-500 font-medium z-10 p-4 text-center">
+          <div className="absolute inset-0 bg-zinc-50 flex items-center justify-center text-muted-foreground font-medium z-10 p-4 text-center">
             Mapbox token missing. Please add NEXT_PUBLIC_MAPBOX_TOKEN to .env.local
           </div>
         )}

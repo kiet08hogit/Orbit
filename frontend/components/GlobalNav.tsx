@@ -17,7 +17,7 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
         {/* Logo */}
         <div className="flex items-center shrink-0">
           <Link href="/" className="flex items-center -space-x-1 text-lg font-semibold tracking-tighter text-foreground hover:opacity-80 transition-opacity">
-            <Image src="/Orbit_logo_transparent.png" alt="Orbit Logo" width={50} height={50} className="object-contain" />
+            <Image src="/Orbit_logo_transparent.png" alt="Orbit Logo" width={50} height={50} className="object-contain dark:invert-0 invert" />
             <span>Orbit</span>
           </Link>
         </div>
@@ -48,7 +48,7 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
                 </Button>
               </Link>
               <SignInButton mode="modal">
-                <Button className="rounded-md bg-primary hover:opacity-90 text-primary-foreground text-[14px] font-medium border-none transition-all h-[32px] px-4 dark:bg-white dark:text-black dark:hover:bg-zinc-200">
+                <Button className="rounded-md bg-primary hover:opacity-90 text-primary-foreground text-[14px] font-medium border-none transition-all h-[32px] px-4">
                   Log In / Sign Up
                 </Button>
               </SignInButton>
@@ -57,7 +57,7 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
           <Show when="signed-in">
             <div className="flex items-center gap-3">
               <Link href="/add-product">
-                <Button variant="default" className="hidden sm:flex h-[32px] rounded-md text-[14px] font-medium bg-primary hover:opacity-90 text-primary-foreground border-none transition-colors dark:bg-white dark:text-black dark:hover:bg-zinc-200">
+                <Button variant="default" className="hidden sm:flex h-[32px] rounded-md text-[14px] font-medium bg-primary hover:opacity-90 text-primary-foreground border-none transition-colors">
                   + Create Listing
                 </Button>
               </Link>
