@@ -27,18 +27,46 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={cn("h-full", "font-sans", inter.variable, jetbrainsMono.variable)} suppressHydrationWarning>
-      <body className="h-full bg-background text-[17px] text-foreground antialiased selection:bg-primary selection:text-primary-foreground dark:bg-black dark:text-white">
+      <body className="h-full bg-background dark:bg-card text-[17px] text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
         <ClerkProvider
           appearance={{
             layout: {
-              socialButtonsPlacement: "top",
+              socialButtonsPlacement: "bottom",
+              socialButtonsVariant: "blockButton",
+              logoImageUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="30"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="26" font-weight="900" fill="white">Orbit</text></svg>',
             },
             elements: {
-              formButtonPrimary: "bg-[#272343] hover:bg-[#1A182D] text-white dark:bg-white dark:text-black dark:hover:bg-zinc-200",
+              logoImage: "dark:invert-0 invert",
+              formButtonPrimary: "bg-primary hover:opacity-90 text-primary-foreground transition-all",
+              card: "bg-background text-foreground",
+              headerTitle: "text-foreground",
+              headerSubtitle: "text-muted-foreground",
+              socialButtonsBlockButton: "border-border text-foreground hover:bg-secondary",
+              socialButtonsBlockButtonText: "text-foreground font-semibold",
+              dividerLine: "bg-border",
+              dividerText: "text-muted-foreground",
+              formFieldLabel: "text-foreground",
+              formFieldInput: "bg-secondary border-border text-foreground focus:ring-primary",
+              footerActionText: "text-muted-foreground",
+              footerActionLink: "text-primary hover:text-primary",
+            }
+          }}
+          localization={{
+            signIn: {
+              start: {
+                title: "Sign in to Orbit",
+                subtitle: "Welcome back! Please sign in to continue",
+              }
+            },
+            signUp: {
+              start: {
+                title: "Create your Orbit account",
+                subtitle: "Welcome! Please fill in the details to get started.",
+              }
             }
           }}
         >
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <GlobalNav navActions={<NavActions />} />
 
             {/* Bottom Row: Categories and Links */}
@@ -47,11 +75,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <OnboardingCheck />
             </Show>
 
-            <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-white text-zinc-900 w-full dark:bg-black dark:text-white">
+            <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background dark:bg-card text-foreground w-full">
               {isUic ? (
                 <div className="w-full h-full flex flex-col">{children}</div>
               ) : (
-                <div className="relative w-full max-w-md rounded-2xl border border-border bg-background shadow-xl text-center space-y-8 overflow-hidden mx-4 my-8 p-10 dark:bg-zinc-950 dark:border-zinc-800">
+                <div className="relative w-full max-w-md rounded-2xl border border-border bg-background shadow-xl text-center space-y-8 overflow-hidden mx-4 my-8 p-10">
                   {/* Background glows */}
                   <div className="absolute -top-24 -left-24 -z-10 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
                   <div className="absolute -bottom-24 -right-24 -z-10 h-48 w-48 rounded-full bg-primary/10 blur-[80px]" />
@@ -63,15 +91,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </div>
 
                   <div className="space-y-3">
-                    <h2 className="text-3xl font-black tracking-tight text-foreground dark:text-white">UIC Email Required</h2>
-                    <p className="text-sm font-medium text-muted-foreground leading-relaxed px-2 dark:text-zinc-400">
-                      Orbit is an exclusive marketplace for verified UIC students. Please sign in with an email address ending in <strong className="text-primary dark:text-[#3b82f6]">@uic.edu</strong> to join the community.
+                    <h2 className="text-3xl font-black tracking-tight text-foreground">@uni.edu Required</h2>
+                    <p className="text-sm font-medium text-muted-foreground leading-relaxed px-2">
+                      Orbit is an exclusive marketplace for verified UIC students. Please sign in with an email address ending in <strong className="text-primary">@uic.edu</strong> to join the community.
                     </p>
                   </div>
 
-                  <div className="rounded-xl bg-secondary p-4 border border-border text-xs text-muted-foreground space-y-1 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400">
+                  <div className="rounded-xl bg-secondary p-4 border border-border text-xs text-muted-foreground space-y-1">
                     <p>You are currently signed in as:</p>
-                    <p className="font-mono font-bold text-foreground text-sm truncate dark:text-white">{email}</p>
+                    <p className="font-mono font-bold text-foreground text-sm truncate">{email}</p>
                   </div>
 
                   <div className="pt-2">
