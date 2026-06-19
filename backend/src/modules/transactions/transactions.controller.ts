@@ -54,8 +54,49 @@ export class TransactionsController {
     @Post('verify-meetup-code')
     async verifyMeetupCode(
         @CurrentUser() clerkUser: AuthUser,
-        @Body() body: { listingId: string, buyerId: string, code: string }
+        @Body() body: { transactionId: string, code: string }
     ) {
-        return this.transactionsService.verifyMeetupCode(clerkUser.clerkUserId, body.listingId, body.buyerId, body.code);
+        return this.transactionsService.verifyMeetupCode(clerkUser.clerkUserId, body.transactionId, body.code);
     }
+
+    @Get('active/seller')
+    @UseGuards(ClerkAuthGuard)
+    async getActiveSellerTransactions(@CurrentUser() clerkUser: AuthUser) {
+        return this.transactionsService.getActiveSellerTransactions(clerkUser.clerkUserId);
+    }
+
+    @Get('active/buyer')
+    @UseGuards(ClerkAuthGuard)
+    async getActiveBuyerTransactions(@CurrentUser() clerkUser: AuthUser) {
+        return this.transactionsService.getActiveBuyerTransactions(clerkUser.clerkUserId);
+    }
+
+    @Post(':id/meetup/propose')
+    @UseGuards(ClerkAuthGuard)
+    async proposeMeetup(
+        @CurrentUser() clerkUser: AuthUser,
+        @Param('id') id: string,
+        @Body() body: { location: string, time: string }
+    ) {
+        return this.transactionsService.proposeMeetup(clerkUser.clerkUserId, id, body.location, new Date(body.time));
+    }
+
+    @Post(':id/meetup/accept')
+    @UseGuards(ClerkAuthGuard)
+    async acceptMeetup(
+        @CurrentUser() clerkUser: AuthUser,
+        @Param('id') id: string
+    ) {
+        return this.transactionsService.acceptMeetup(clerkUser.clerkUserId, id);
+    }
+
+    @Post(':id/meetup/cancel')
+    @UseGuards(ClerkAuthGuard)
+    async cancelMeetup(
+        @CurrentUser() clerkUser: AuthUser,
+        @Param('id') id: string
+    ) {
+        return this.transactionsService.cancelMeetup(clerkUser.clerkUserId, id);
+    }
+
 }

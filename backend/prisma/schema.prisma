@@ -67,6 +67,13 @@ enum OrderStatus {
   DISPUTED
 }
 
+enum MeetupStatus {
+  NONE
+  PROPOSED
+  ACCEPTED
+  CANCELLED
+}
+
 // =======================
 // MODELS
 // =======================
@@ -279,6 +286,11 @@ model Transaction {
   meetupVerifiedAt     DateTime?
   meetupVerifyAttempts Int       @default(0)
   meetupLastSentAt     DateTime? // Cooldown tracking
+  
+  // Expanded Meetup Logistics
+  meetupLocation       String?
+  meetupTime           DateTime?
+  meetupStatus         MeetupStatus @default(NONE)
   
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
