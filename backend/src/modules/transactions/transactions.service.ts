@@ -168,35 +168,38 @@ export class TransactionsService {
                     { buyerId: currentUser.id, sellerId: otherUserId },
                     { buyerId: otherUserId, sellerId: currentUser.id }
                 ],
-                orderStatus: { notIn: ['COMPLETED', 'COMPLETED_BY_SELLER', 'CANCELLED'] }
+                orderStatus: { in: ['PENDING_MEETUP', 'PAID_PENDING_MEETUP', 'MEETING_STARTED'] }
             },
             orderBy: { createdAt: 'desc' }
         });
     }
 
-    async verifyMeetupCode(sellerClerkUserId: string, listingId: string, buyerId: string, code: string) {
+    async verifyMeetupCode(sellerClerkUserId: string, transactionId: string, code: string) {
         if (!code || code.length !== 6) throw new BadRequestException('Code must be exactly 6 digits.');
 
         const seller = await this.prisma.user.findUnique({ where: { clerkUserId: sellerClerkUserId } });
         if (!seller) throw new NotFoundException('Seller not found');
 
-        const transaction = await this.prisma.transaction.findFirst({
-            where: { listingId, buyerId, sellerId: seller.id },
-            include: { buyer: true },
-            orderBy: { createdAt: 'desc' }
+        const transaction = await this.prisma.transaction.findUnique({
+            where: { id: transactionId },
+            include: { buyer: true }
         });
 
         if (!transaction) throw new NotFoundException('Transaction not found');
+        if (transaction.sellerId !== seller.id) throw new ForbiddenException('Not your transaction');
+        
         if (transaction.orderStatus === 'COMPLETED' || transaction.orderStatus === 'MEETUP_CONFIRMED' || transaction.orderStatus === 'COMPLETED_BY_SELLER') {
             throw new BadRequestException('Meetup already confirmed.');
         }
 
-        // if (transaction.meetupVerifyAttempts >= 5) {
-        //     throw new BadRequestException('Too many failed attempts. Please request a new code.');
-        // }
+        if (transaction.meetupVerifyAttempts >= 5) {
+            throw new BadRequestException('Too many failed attempts. Please request a new code.');
+        }
 
         // Expiry check removed due to Prisma local timezone parsing bugs on Windows.
         // It's safe to remove for the prototype since codes are 6-digits.
+
+        console.log('[DEBUG] verifyMeetupCode - EXPECTED:', transaction.meetupCode, 'RECEIVED:', code);
 
         if (transaction.meetupCode !== code && code !== '123456') {
             await this.prisma.transaction.update({
@@ -240,4 +243,133 @@ export class TransactionsService {
 
         return { message: "Meetup confirmed successfully." };
     }
+
+    async getActiveSellerTransactions(clerkUserId: string) {
+        const seller = await this.prisma.user.findUnique({ where: { clerkUserId } });
+        if (!seller) throw new NotFoundException('User not found');
+
+        return this.prisma.transaction.findMany({
+            where: {
+                sellerId: seller.id,
+                orderStatus: {
+                    in: ['PENDING_MEETUP', 'PAID_PENDING_MEETUP', 'MEETING_STARTED', 'MEETUP_CONFIRMED', 'COMPLETED_BY_SELLER']
+                }
+            },
+            include: {
+                listing: {
+                    include: { images: true }
+                },
+                buyer: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    async getActiveBuyerTransactions(clerkUserId: string) {
+        const buyer = await this.prisma.user.findUnique({ where: { clerkUserId } });
+        if (!buyer) throw new NotFoundException('User not found');
+
+        return this.prisma.transaction.findMany({
+            where: {
+                buyerId: buyer.id,
+                orderStatus: {
+                    in: ['PENDING_MEETUP', 'PAID_PENDING_MEETUP', 'MEETING_STARTED', 'MEETUP_CONFIRMED']
+                }
+            },
+            include: {
+                listing: {
+                    include: { images: true }
+                },
+                seller: true
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    async proposeMeetup(sellerClerkUserId: string, transactionId: string, location: string, time: Date) {
+        const seller = await this.prisma.user.findUnique({ where: { clerkUserId: sellerClerkUserId } });
+        if (!seller) throw new NotFoundException('Seller not found');
+
+        const transaction = await this.prisma.transaction.findUnique({ 
+            where: { id: transactionId },
+            include: { buyer: true }
+        });
+        if (!transaction) throw new NotFoundException('Transaction not found');
+        if (transaction.sellerId !== seller.id) throw new ForbiddenException('Only the seller can propose a meetup.');
+
+        const updated = await this.prisma.transaction.update({
+            where: { id: transaction.id },
+            data: {
+                meetupLocation: location,
+                meetupTime: time,
+                meetupStatus: 'PROPOSED'
+            }
+        });
+
+        this.chatGateway.sendMeetupUpdate(transaction.buyer.clerkUserId, {
+            type: 'PROPOSED',
+            transactionId: transaction.id,
+            location,
+            time
+        });
+
+        return updated;
+    }
+
+    async acceptMeetup(buyerClerkUserId: string, transactionId: string) {
+        const buyer = await this.prisma.user.findUnique({ where: { clerkUserId: buyerClerkUserId } });
+        if (!buyer) throw new NotFoundException('Buyer not found');
+
+        const transaction = await this.prisma.transaction.findUnique({ 
+            where: { id: transactionId },
+            include: { seller: true }
+        });
+        if (!transaction) throw new NotFoundException('Transaction not found');
+        if (transaction.buyerId !== buyer.id) throw new ForbiddenException('Only the buyer can accept the meetup.');
+        if (transaction.meetupStatus !== 'PROPOSED') throw new BadRequestException('No proposed meetup to accept.');
+
+        const updated = await this.prisma.transaction.update({
+            where: { id: transaction.id },
+            data: { meetupStatus: 'ACCEPTED' }
+        });
+
+        this.chatGateway.sendMeetupUpdate(transaction.seller.clerkUserId, {
+            type: 'ACCEPTED',
+            transactionId: transaction.id
+        });
+
+        return updated;
+    }
+
+    async cancelMeetup(userClerkUserId: string, transactionId: string) {
+        const user = await this.prisma.user.findUnique({ where: { clerkUserId: userClerkUserId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        const transaction = await this.prisma.transaction.findUnique({ 
+            where: { id: transactionId },
+            include: { buyer: true, seller: true }
+        });
+        if (!transaction) throw new NotFoundException('Transaction not found');
+        if (transaction.buyerId !== user.id && transaction.sellerId !== user.id) {
+            throw new ForbiddenException('You are not part of this transaction.');
+        }
+
+        const updated = await this.prisma.transaction.update({
+            where: { id: transaction.id },
+            data: {
+                meetupLocation: null,
+                meetupTime: null,
+                meetupStatus: 'CANCELLED'
+            }
+        });
+
+        const otherUserClerkId = transaction.buyerId === user.id ? transaction.seller.clerkUserId : transaction.buyer.clerkUserId;
+        this.chatGateway.sendMeetupUpdate(otherUserClerkId, {
+            type: 'CANCELLED',
+            transactionId: transaction.id
+        });
+
+        return updated;
+    }
+
 }

@@ -1,5 +1,6 @@
 import { Injectable,NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { time } from 'console';
 
 @Injectable()
 export class ChatService {
@@ -181,5 +182,76 @@ export class ChatService {
 
         return { dbUser, conversation };
     }
-}
 
+    // Pipeline (raw text -> llm extraction (structured w/ Zod) -> database context -> web socket)
+    async detectMeetupProposal(senderClerkUserId: string, conversationId: string, content: string) {
+        if (!process.env.GEMINI_API_KEY) return null;
+        
+        // regex filtering to reduce unnecessary calls to llm
+        const meetupKeywords = /meet|catch up|swap|trade|at|see|now|today|tomorrow|tonight|morning|afternoon|evening|time|pm|am|clock|building|center|hall|library|street|quad|gym|starbucks|cafe|coffee|dorm|union|commons|plaza|\d/i;
+
+        if (!meetupKeywords.test(content)) {
+            return null;
+        }
+
+        try {
+            const { ChatGoogleGenerativeAI } = require('@langchain/google-genai');
+            const { z } = require('zod');
+            
+            const llm = new ChatGoogleGenerativeAI({
+                modelName: "gemini-1.5-flash",
+                apiKey: process.env.GEMINI_API_KEY,
+            });
+            
+            const schema = z.object({
+                isMeetupProposal: z.boolean().describe("True if the user is proposing a specific physical meetup location and time."),
+                location: z.string().nullable().describe("The physical location proposed, or null if none."),
+                time: z.string().nullable().describe("The time proposed, or null if none."),
+            });
+
+            const structuredLlm = llm.withStructuredOutput(schema);
+
+            const prompt = `Analyze this chat message between a buyer and seller: "${content}". 
+            Does the user propose a specific physical meetup location and time?`;
+
+            const parsed = await structuredLlm.invoke(prompt);
+
+            if (parsed.isMeetupProposal && parsed.location && parsed.time) {
+                const conversation = await this.prisma.conversation.findUnique({
+                    where: { id: conversationId },
+                    include: { members: { include: { user: true } } }
+                });
+                if (!conversation) return null;
+                
+                const sender = conversation.members.find((m: any) => m.user.clerkUserId === senderClerkUserId);
+                const other = conversation.members.find((m: any) => m.user.clerkUserId !== senderClerkUserId);
+                if (!sender || !other) return null;
+
+                const transaction = await this.prisma.transaction.findFirst({
+                    where: {
+                        OR: [
+                            { buyerId: sender.user.id, sellerId: other.user.id },
+                            { buyerId: other.user.id, sellerId: sender.user.id }
+                        ],
+                        orderStatus: { in: ['PENDING_MEETUP', 'PAID_PENDING_MEETUP', 'MEETING_STARTED'] }
+                    },
+                    include: { seller: true }
+                });
+
+                if (transaction) {
+                    return {
+                        sellerClerkUserId: transaction.seller.clerkUserId,
+                        payload: {
+                            transactionId: transaction.id,
+                            location: parsed.location,
+                            time: parsed.time
+                        }
+                    };
+                }
+            }
+        } catch (e) {
+            console.error("AI detection error:", e);
+        }
+        return null;
+    }
+}

@@ -57,12 +57,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         listingId
       );
 
-      // Broadcast the message to every member's personal room!
       if (conversation) {
         conversation.members.forEach((member) => {
           this.server.to(member.user.clerkUserId).emit('receive_message', savedMessage);
         });
       }
+
+      // AI Meetup Detection
+      this.chatService.detectMeetupProposal(client.user.clerkUserId, conversationId, content)
+        .then(suggestion => {
+            if (suggestion) {
+                this.server.to(suggestion.sellerClerkUserId).emit('ai_meetup_suggestion', suggestion.payload);
+            }
+        }).catch(e => console.error(e));
       
       return savedMessage;
     } catch (err) {
@@ -106,5 +113,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   sendMeetupConfirmed(buyerClerkUserId: string, sellerClerkUserId: string, payload: any) {
     this.server.to(buyerClerkUserId).emit('meetup_confirmed', payload);
     this.server.to(sellerClerkUserId).emit('meetup_confirmed', payload);
+  }
+
+  sendMeetupUpdate(userId: string, payload: any) {
+    this.server.to(userId).emit('meetup_update', payload);
   }
 }
