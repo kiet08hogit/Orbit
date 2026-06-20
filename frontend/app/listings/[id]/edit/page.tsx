@@ -289,7 +289,7 @@ export default function EditListingPage() {
  </label>
  <Select
  value={formData.status}
- onValueChange={(val) => setFormData({ ...formData, status: val })}
+ onValueChange={(val) => setFormData({ ...formData, status: val || 'ACTIVE' })}
  >
  <SelectTrigger className="w-full rounded-2xl py-5 text-sm font-medium bg-secondary border-border focus:ring-[#3252DF]/50">
  <SelectValue placeholder="Select status" />
