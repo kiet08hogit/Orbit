@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Loader2, Camera, User, BookOpen, Calendar, AlignLeft, Sparkles, AlertCircle } from 'lucide-react';
@@ -58,7 +58,7 @@ export default function OnboardingPage() {
       
       if (avatarFile && user) {
         const updatedUser = await user.setProfileImage({ file: avatarFile });
-        avatarUrl = updatedUser.imageUrl;
+        avatarUrl = updatedUser.publicUrl;
       }
 
       await axios.patch('http://127.0.0.1:3000/users/me', {

@@ -47,6 +47,7 @@ interface Listing {
  colors?: string;
  size?: string;
  material?: string;
+ weatherFound?: string;
 }
 
 const getImageUrl = (url?: string) => {
