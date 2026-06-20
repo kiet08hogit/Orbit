@@ -52,7 +52,7 @@ export function CustomUserButton() {
         <DropdownMenuSeparator className="bg-border" />
         <DropdownMenuItem
           className="cursor-pointer py-2.5 px-3 text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:focus:bg-red-950/50 dark:focus:text-red-300"
-          onClick={() => signOut(() => router.push("/"))}
+          onClick={() => signOut(() => { window.location.href = "/"; })}
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span className="font-medium">Sign Out</span>
