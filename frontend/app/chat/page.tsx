@@ -754,7 +754,7 @@ export default function ChatPage() {
         {/* Buyer View: Dashboard Button */}
         {activeListingSellerId !== clerkUser?.id && (
           <div className="flex items-center gap-2 ml-2 md:ml-4 md:border-l md:border-border md:pl-4">
-            <Button size="sm" onClick={openBuyerVerificationBoard} className="bg-secondary hover:bg-foreground text-primary-foreground h-7 text-xs px-3 rounded-full shadow-sm">
+            <Button size="sm" onClick={openBuyerVerificationBoard} className="bg-secondary hover:bg-foreground hover:text-secondary h-7 text-xs px-3 rounded-full shadow-sm text-foreground">
               My Purchases
             </Button>
           </div>

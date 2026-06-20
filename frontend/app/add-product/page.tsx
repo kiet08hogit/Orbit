@@ -299,7 +299,7 @@ export default function AddProductPage() {
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div className="space-y-2">
  <label className="text-[13px] font-semibold text-foreground">Colors</label>
- <Select value={formData.colors} onValueChange={(val) => setFormData({ ...formData, colors: val })}>
+ <Select value={formData.colors} onValueChange={(val) => setFormData({ ...formData, colors: val || '' })}>
  <SelectTrigger className="w-full h-12 rounded-[14px] bg-secondary border-border text-[14px] focus:ring-[#0066cc] focus:ring-1">
  <SelectValue placeholder="Select colors" />
  </SelectTrigger>
@@ -312,7 +312,7 @@ export default function AddProductPage() {
  </div>
  <div className="space-y-2">
  <label className="text-[13px] font-semibold text-foreground">Size</label>
- <Select value={formData.size} onValueChange={(val) => setFormData({ ...formData, size: val })}>
+ <Select value={formData.size} onValueChange={(val) => setFormData({ ...formData, size: val || '' })}>
  <SelectTrigger className="w-full h-12 rounded-[14px] bg-secondary border-border text-[14px] focus:ring-[#0066cc] focus:ring-1">
  <SelectValue placeholder="Select size" />
  </SelectTrigger>
