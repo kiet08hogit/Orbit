@@ -526,7 +526,7 @@ export default function ListingDetailPage() {
  <Link href={`/listings/${listing.id}/edit`}>
  <Button
  size="lg"
- className="w-full bg-secondary hover:bg-foreground text-primary-foreground font-bold h-11 rounded-lg shadow-sm text-sm"
+ className="w-full bg-secondary hover:bg-foreground text-foreground hover:text-background font-bold h-11 rounded-lg shadow-sm text-sm"
  >
  Edit Listing
  </Button>
@@ -540,7 +540,7 @@ export default function ListingDetailPage() {
  setShowPaymentModal(true);
  }}
  disabled={isReserving}
- className="w-full bg-[#b81d68] hover:bg-[#961754] text-primary-foreground font-bold h-11 rounded-lg shadow-sm text-sm"
+ className="w-full bg-orange-500 hover:bg-orange-600 text-primary-foreground font-bold h-11 rounded-lg shadow-sm text-sm"
  >
  {isReserving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
  {isReserving ? "Reserving..." : "Reserve Your Order"}
@@ -670,7 +670,7 @@ export default function ListingDetailPage() {
 
  <div className="flex flex-col gap-4 mt-4">
  {listing.acceptsProtectedPayment && (
- <div className="border-2 border-emerald-500 bg-emerald-50 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100 transition-colors"
+ <div className="border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
  onClick={handleProtectedReservation}
  >
  <div className="flex items-center gap-3 mb-1">

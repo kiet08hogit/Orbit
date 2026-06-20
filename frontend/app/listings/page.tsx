@@ -130,7 +130,7 @@ export default function ListingsGridPage() {
  </h2>
  <Link
  href="/add-product"
- className="block w-full text-center bg-zinc-900 hover:bg-foreground text-primary-foreground font-bold py-3 px-6 rounded-lg transition-colors mb-4"
+ className="block w-full text-center bg-foreground hover:bg-foreground/90 text-background font-bold py-3 px-6 rounded-lg transition-colors mb-4"
  >
  Sell now
  </Link>
