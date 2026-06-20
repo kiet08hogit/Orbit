@@ -117,7 +117,7 @@ export default function ProfilePage() {
  let avatarUrl = userProfile.avatarUrl;
  if (avatarFile && clerkUser) {
  const updatedUser = await clerkUser.setProfileImage({ file: avatarFile });
- avatarUrl = updatedUser.imageUrl;
+ avatarUrl = updatedUser.publicUrl;
  }
 
  await axios.patch('http://127.0.0.1:3000/users/me', {
@@ -237,7 +237,7 @@ export default function ProfilePage() {
  </div>
  <div className="space-y-1">
  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Class Year</label>
- <Select value={formData.classYear} onValueChange={(val) => setFormData({ ...formData, classYear: val })}>
+ <Select value={formData.classYear} onValueChange={(val) => setFormData({ ...formData, classYear: val || '' })}>
  <SelectTrigger className="rounded-xl font-medium bg-secondary border-border focus:ring-black focus:ring-1 h-9 text-sm"><SelectValue placeholder="Select Year" /></SelectTrigger>
  <SelectContent>
  {years.map(y => <SelectItem key={y} value={y} className="rounded-lg text-sm">{y}</SelectItem>)}
