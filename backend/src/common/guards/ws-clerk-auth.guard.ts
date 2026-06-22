@@ -40,8 +40,8 @@ export class WsClerkAuthGuard implements CanActivate {
         (email) => email.id === clerkUser.primaryEmailAddressId
       )?.emailAddress;
 
-      if (!primaryEmail || !primaryEmail.endsWith('@uic.edu')) {
-         throw new WsException('Only @uic.edu emails are allowed.');
+      if (!primaryEmail || !primaryEmail.endsWith('.edu')) {
+         throw new WsException('Only .edu emails are allowed.');
       }
 
       // 6. Cache the user info on the socket client for the entire connection lifetime!

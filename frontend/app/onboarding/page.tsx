@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Loader2, Camera, User, BookOpen, Calendar, AlignLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { Loader2, Camera, User, BookOpen, Calendar, AlignLeft, Sparkles, AlertCircle, GraduationCap } from 'lucide-react';
 import axios from 'axios';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,7 +20,7 @@ export default function OnboardingPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
@@ -30,9 +30,32 @@ export default function OnboardingPage() {
     major: '',
     classYear: '',
     bio: '',
+    university: '',
   });
 
+  const [isUniversityLocked, setIsUniversityLocked] = useState(false);
+
   const years = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', 'Faculty/Staff'];
+
+  useEffect(() => {
+    if (user?.primaryEmailAddress?.emailAddress) {
+      const email = user.primaryEmailAddress.emailAddress;
+      if (email.endsWith('@uic.edu')) {
+        setFormData((prev) => ({ ...prev, university: 'University of Illinois Chicago' }));
+        setIsUniversityLocked(true);
+      } else if (email.endsWith('@illinois.edu')) {
+        setFormData((prev) => ({ ...prev, university: 'University of Illinois Urbana-Champaign' }));
+        setIsUniversityLocked(true);
+      } else if (email.endsWith('@depaul.edu')) {
+        setFormData((prev) => ({ ...prev, university: 'DePaul University' }));
+        setIsUniversityLocked(true);
+      } else if (email.endsWith('.edu')) {
+        const domain = email.split('@')[1];
+        setFormData((prev) => ({ ...prev, university: domain }));
+        setIsUniversityLocked(false);
+      }
+    }
+  }, [user]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -53,9 +76,9 @@ export default function OnboardingPage() {
 
     try {
       const token = await getToken();
-      
+
       let avatarUrl = undefined;
-      
+
       if (avatarFile && user) {
         const updatedUser = await user.setProfileImage({ file: avatarFile });
         avatarUrl = updatedUser.publicUrl;
@@ -82,34 +105,34 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-zinc-50 flex flex-col items-center justify-center p-4 py-12 font-sans relative overflow-hidden">
-      
-      {/* Background Orbs */}
-      <div className="absolute top-0 right-0 -z-10 h-96 w-96 rounded-full bg-[#3252DF]/10 blur-[100px]" />
-      <div className="absolute bottom-0 left-0 -z-10 h-96 w-96 rounded-full bg-[#DC2626]/10 blur-[100px]" />
+    <div className="min-h-[calc(100vh-4rem)] bg-background flex flex-col items-center justify-center p-4 py-12 font-sans relative overflow-hidden">
 
-      <motion.div 
+      {/* Background Orbs */}
+      <div className="absolute top-0 right-0 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-[100px]" />
+      <div className="absolute bottom-0 left-0 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-[100px]" />
+
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-xl"
+        className="w-full max-w-2xl"
       >
         {/* Header */}
         <div className="text-center mb-8 space-y-2">
-          <div className="inline-flex items-center justify-center p-3 bg-[#3252DF]/10 rounded-2xl mb-4">
-            <Sparkles className="h-8 w-8 text-[#3252DF]" />
-          </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900">
+          {/* <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-2xl mb-4">
+            <Sparkles className="h-8 w-8 text-primary" />
+          </div> */}
+          <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
             Welcome to Orbit!
           </h1>
-          <p className="text-zinc-500 text-lg font-medium">
+          <p className="text-muted-foreground text-lg font-medium">
             Let's set up your student profile before you enter the marketplace.
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white border border-zinc-200 rounded-2xl p-8 shadow-xl shadow-zinc-200/50">
-          
+        <div className="bg-card border border-border rounded-2xl p-8 shadow-xl">
+
           {error && (
             <Alert variant="destructive" className="mb-6 rounded-2xl">
               <AlertCircle className="h-4 w-4" />
@@ -119,17 +142,17 @@ export default function OnboardingPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             {/* Avatar Upload */}
             <div className="flex flex-col items-center justify-center space-y-4 mb-8">
-              <div 
-                className="relative h-24 w-24 rounded-full border-4 border-white shadow-sm overflow-hidden bg-zinc-50 group cursor-pointer"
+              <div
+                className="relative h-24 w-24 rounded-full border-4 border-background shadow-sm overflow-hidden bg-secondary group cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center text-zinc-500 bg-zinc-50">
+                  <div className="h-full w-full flex items-center justify-center text-muted-foreground bg-secondary">
                     <User className="h-10 w-10" />
                   </div>
                 )}
@@ -137,14 +160,14 @@ export default function OnboardingPage() {
                   <Camera className="h-6 w-6 text-white" />
                 </div>
               </div>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleAvatarChange} 
-                accept="image/*" 
-                className="hidden" 
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                accept="image/*"
+                className="hidden"
               />
-              <p className="text-sm font-bold text-[#3252DF] cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              <p className="text-sm font-bold text-primary cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                 Upload Profile Picture
               </p>
             </div>
@@ -152,8 +175,8 @@ export default function OnboardingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                  <User className="h-4 w-4 text-zinc-500" />
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
                   Full Name
                 </label>
                 <Input
@@ -161,15 +184,15 @@ export default function OnboardingPage() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="e.g. Jane Doe"
-                  className="w-full rounded-2xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                  placeholder="Enter your full name"
+                  className="w-full rounded-xl py-6 text-base font-medium bg-secondary border-border focus-visible:ring-primary/50"
                 />
               </div>
 
               {/* Username */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                  <User className="h-4 w-4 text-zinc-500" />
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
                   Username
                 </label>
                 <Input
@@ -177,15 +200,32 @@ export default function OnboardingPage() {
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="e.g. janedoe"
-                  className="w-full rounded-2xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                  placeholder="Enter a unique username"
+                  className="w-full rounded-xl py-6 text-base font-medium bg-secondary border-border focus-visible:ring-primary/50"
+                />
+              </div>
+
+              {/* University */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                  University
+                </label>
+                <Input
+                  required
+                  name="university"
+                  value={formData.university}
+                  onChange={handleChange}
+                  disabled={isUniversityLocked}
+                  placeholder="e.g. University of Illinois Chicago"
+                  className="w-full rounded-xl py-6 text-base font-medium bg-secondary border-border focus-visible:ring-primary/50 disabled:opacity-70 disabled:cursor-not-allowed"
                 />
               </div>
 
               {/* Major */}
               <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-zinc-500" />
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
                   Major
                 </label>
                 <Input
@@ -194,21 +234,21 @@ export default function OnboardingPage() {
                   value={formData.major}
                   onChange={handleChange}
                   placeholder="e.g. Computer Science"
-                  className="w-full rounded-2xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50"
+                  className="w-full rounded-xl py-6 text-base font-medium bg-secondary border-border focus-visible:ring-primary/50"
                 />
               </div>
 
               {/* Class Year */}
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-zinc-500" />
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   Class Year
                 </label>
-                <Select 
-                  value={formData.classYear} 
+                <Select
+                  value={formData.classYear}
                   onValueChange={(val) => setFormData({ ...formData, classYear: val || '' })}
                 >
-                  <SelectTrigger className="w-full rounded-2xl py-6 text-base font-medium bg-zinc-50 border-zinc-200 focus:ring-[#3252DF]/50">
+                  <SelectTrigger className="w-full rounded-xl py-6 text-base font-medium bg-secondary border-border focus:ring-primary/50">
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -224,8 +264,8 @@ export default function OnboardingPage() {
 
             {/* Bio */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-zinc-900 flex items-center gap-2">
-                <AlignLeft className="h-4 w-4 text-zinc-500" />
+              <label className="text-sm font-bold text-foreground flex items-center gap-2">
+                <AlignLeft className="h-4 w-4 text-muted-foreground" />
                 Short Bio
               </label>
               <Textarea
@@ -234,7 +274,7 @@ export default function OnboardingPage() {
                 onChange={handleChange}
                 rows={3}
                 placeholder="Tell the community a bit about yourself..."
-                className="w-full rounded-2xl p-4 text-base font-medium bg-zinc-50 border-zinc-200 focus-visible:ring-[#3252DF]/50 resize-none"
+                className="w-full rounded-xl p-4 text-base font-medium bg-secondary border-border focus-visible:ring-primary/50 resize-none"
               />
             </div>
 
@@ -242,8 +282,8 @@ export default function OnboardingPage() {
             <div className="pt-4">
               <Button
                 type="submit"
-                disabled={isLoading || !formData.classYear}
-                className="w-full h-14 text-lg font-bold bg-[#3252DF] hover:bg-[#2842B3] text-white rounded-2xl shadow-sm shadow-[#3252DF]/20"
+                disabled={isLoading || !formData.classYear || !formData.university}
+                className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-sm"
               >
                 {isLoading ? (
                   <>

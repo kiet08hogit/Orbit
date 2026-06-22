@@ -60,7 +60,7 @@ export default function Home() {
               </Link>
             </Show>
             <Link href="/faqs">
-              <button className="inline-flex items-center justify-center bg-transparent text-primary-foreground border-none px-[22px] py-[11px] rounded-md text-[16px] font-medium active:scale-95 transition-all cursor-pointer">
+              <button className="inline-flex items-center justify-center bg-transparent text-foreground hover:opacity-80 border-none px-[22px] py-[11px] rounded-md text-[16px] font-medium active:scale-95 transition-all cursor-pointer">
                 FAQs &gt;
               </button>
             </Link>
@@ -82,9 +82,9 @@ export default function Home() {
               What is Orbit?
             </h2>
             <p className="text-[19px] md:text-[22px] font-medium leading-relaxed tracking-tight max-w-xl text-gray-400 dark:text-[#5a5852]">
-              Orbit is the first exclusive marketplace for students to buy,
+              Orbit is the student exclusive marketplace to buy,
               sell, and swap anything. Stop making big companies richer, make
-              your friends rich so all you need to do is Orbit it.
+              your friends richer instead, all you need to do is to Orbit it.
             </p>
 
             {/* Features (Aligned Vertically) */}

@@ -430,7 +430,7 @@ export default function AddProductPage() {
  <Button
  type="submit"
  disabled={isLoading}
- className="w-full h-12 rounded-[14px] bg-foreground hover:bg-secondary text-primary-foreground text-[15px] font-semibold transition-colors"
+ className="w-full h-12 rounded-[14px] bg-foreground hover:bg-secondary text-background text-[15px] font-semibold transition-colors"
  >
  {isLoading ? (
  <>

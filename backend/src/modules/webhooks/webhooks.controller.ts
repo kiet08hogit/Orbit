@@ -37,7 +37,7 @@ export class WebhooksController {
 
         const eventType = evt.type;
 
-        // Auto-delete non-UIC signups
+        // Auto-delete non-university signups
         if (eventType === 'user.created') {
             const { id, email_addresses, primary_email_address_id } = evt.data;
             const primaryEmailObj = email_addresses?.find(
@@ -45,15 +45,15 @@ export class WebhooksController {
             );
             const email = primaryEmailObj?.email_address;
 
-            if (!email || !email.endsWith('@uic.edu')) {
-                console.log(`[Webhook] Restricting non-UIC signup: ${email}. Deleting user ${id}...`);
+            if (!email || !email.endsWith('.edu')) {
+                console.log(`[Webhook] Restricting non-edu signup: ${email}. Deleting user ${id}...`);
                 try {
                     await this.clerkClient.users.deleteUser(id);
-                    console.log(`[Webhook] Successfully deleted non-UIC user: ${id}`);
+                    console.log(`[Webhook] Successfully deleted non-edu user: ${id}`);
                 } catch (err) {
-                    console.error(`[Webhook] Failed to delete non-UIC user: ${id}`, err);
+                    console.error(`[Webhook] Failed to delete non-edu user: ${id}`, err);
                 }
-                return { success: true, message: 'Deleted non-UIC user' };
+                return { success: true, message: 'Deleted non-edu user' };
             }
         }
 

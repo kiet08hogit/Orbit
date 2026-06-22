@@ -25,7 +25,7 @@ export class ClerkAuthGuard implements CanActivate {
     if (process.env.NODE_ENV !== 'production' && token === 'dev-token') {
       request.user = {
         clerkUserId: 'dev_user_12345',
-        email: 'dev@uic.edu',
+        email: 'dev@uni.edu',
       };
       return true;
     }
@@ -43,9 +43,9 @@ export class ClerkAuthGuard implements CanActivate {
         (email) => email.id === clerkUser.primaryEmailAddressId
       )?.emailAddress;
 
-      // 4. Enforce UIC domain
-      if (!primaryEmail || !primaryEmail.endsWith('@uic.edu')) {
-        throw new ForbiddenException('Only @uic.edu emails are allowed on Orbit.');
+      // 4. Enforce university domain
+      if (!primaryEmail || !primaryEmail.endsWith('.edu')) {
+        throw new ForbiddenException('Only .edu emails are allowed on Orbit.');
       }
 
       // 5. Attach user info to the request so controllers can use it
@@ -55,7 +55,10 @@ export class ClerkAuthGuard implements CanActivate {
       };
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.getStatus) {
+        throw error;
+      }
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
