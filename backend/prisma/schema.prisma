@@ -36,6 +36,19 @@ model User {
   reportsMade         Report[]             @relation("ReportsMade")
   buyerTransactions   Transaction[]        @relation("BuyerTransactions")
   sellerTransactions  Transaction[]        @relation("SellerTransactions")
+
+  // Notification Preferences
+  emailNotifications  Boolean @default(true)
+  emailFrequency      String  @default("daily")
+  digestTime          String  @default("04:00")
+  notifyMessages      Boolean @default(true)
+  notifyComments      Boolean @default(true)
+  notifyWishlists     Boolean @default(true)
+  notifyMeetups       Boolean @default(true)
+  notifyReminders     Boolean @default(true)
+  
+  // Content Preferences
+  profanityFilter     Boolean @default(true)
 }
 
 model Listing {
@@ -254,6 +267,8 @@ enum OrderStatus {
   CANCELLED
   REFUNDED
   DISPUTED
+  EXPIRED
+  DECLINED
 }
 
 enum MeetupStatus {

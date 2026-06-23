@@ -99,4 +99,16 @@ export class TransactionsController {
         return this.transactionsService.cancelMeetup(clerkUser.clerkUserId, id);
     }
 
+    @Get('offers')
+    @UseGuards(ClerkAuthGuard)
+    async getMyOffers(@CurrentUser() clerkUser: AuthUser) {
+        return this.transactionsService.getMyOffers(clerkUser.clerkUserId);
+    }
+
+    @Get('history')
+    @UseGuards(ClerkAuthGuard)
+    async getPurchaseHistory(@CurrentUser() clerkUser: AuthUser) {
+        return this.transactionsService.getPurchaseHistory(clerkUser.clerkUserId);
+    }
+
 }

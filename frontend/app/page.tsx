@@ -84,7 +84,7 @@ export default function Home() {
             <p className="text-[19px] md:text-[22px] font-medium leading-relaxed tracking-tight max-w-xl text-gray-400 dark:text-[#5a5852]">
               Orbit is the student exclusive marketplace to buy,
               sell, and swap anything. Stop making big companies richer, make
-              your friends richer instead, all you need to do is to Orbit it.
+              your friends rich instead, all you need to do is to Orbit it.
             </p>
 
             {/* Features (Aligned Vertically) */}
@@ -98,18 +98,42 @@ export default function Home() {
                     Verified Students
                   </h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
-                    Buy and sell with peers you trust via school email.
+                    Trade safely with peers using a verified .edu email.
                   </p>
                 </div>
               </div>
               <div className="flex flex-row items-center text-left gap-4">
                 <div className="bg-[#1a1a1a] dark:bg-[#ffffff] p-2 rounded-full shadow-sm border border-[#333] dark:border-[#e6e5e0]">
-                  <MessageCircle className="h-4 w-4 text-[#f54e00]" />
+                  <Banknote className="h-4 w-4 text-[#f54e00]" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-bold mb-0.5">In-App Chat</h3>
+                  <h3 className="text-[14px] font-bold mb-0.5">Meetup Codes</h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
-                    No sketchy DMs. Keep communication safely in the app.
+                    Funds are held securely until you exchange the code in person.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-row items-center text-left gap-4">
+                <div className="bg-[#1a1a1a] dark:bg-[#ffffff] p-2 rounded-full shadow-sm border border-[#333] dark:border-[#e6e5e0]">
+                  <ShoppingBag className="h-4 w-4 text-[#f54e00]" />
+                </div>
+                <div>
+                  <h3 className="text-[14px] font-bold mb-0.5">
+                    Campus Local
+                  </h3>
+                  <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
+                    No shipping fees. Pick up your items the same day on campus.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-row items-center text-left gap-4">
+                <div className="bg-[#1a1a1a] dark:bg-[#ffffff] p-2 rounded-full shadow-sm border border-[#333] dark:border-[#e6e5e0]">
+                  <Sparkles className="h-4 w-4 text-[#f54e00]" />
+                </div>
+                <div>
+                  <h3 className="text-[14px] font-bold mb-0.5">Swipe to Match</h3>
+                  <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
+                    Tinder-style swiping makes discovering new listings fun.
                   </p>
                 </div>
               </div>
@@ -118,22 +142,20 @@ export default function Home() {
                   <ShieldCheck className="h-4 w-4 text-[#f54e00]" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-bold mb-0.5">
-                    Protected Payments
-                  </h3>
+                  <h3 className="text-[14px] font-bold mb-0.5">Secure Payment</h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
-                    Orbit Escrow ensures safe transactions & protects money.
+                    Orbit Escrow ensures safe transactions & protects your money.
                   </p>
                 </div>
               </div>
               <div className="flex flex-row items-center text-left gap-4">
                 <div className="bg-[#1a1a1a] dark:bg-[#ffffff] p-2 rounded-full shadow-sm border border-[#333] dark:border-[#e6e5e0]">
-                  <Smartphone className="h-4 w-4 text-[#f54e00]" />
+                  <MessageCircle className="h-4 w-4 text-[#f54e00]" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-bold mb-0.5">Swipe to Buy</h3>
+                  <h3 className="text-[14px] font-bold mb-0.5">Real-Time Chat</h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
-                    Buy your item just by swiping.
+                    No sketchy DMs. Keep communication safely inside the app.
                   </p>
                 </div>
               </div>
@@ -147,7 +169,7 @@ export default function Home() {
                 Find your items
               </div>
               <div className="text-[17px] text-gray-400 dark:text-[#807d72] mt-1">
-                Dorm • Clothes • School • Events • Services • Uni Community
+                Buying and selling in your community has never been this easy
               </div>
             </div>
 
@@ -198,46 +220,46 @@ export default function Home() {
         {/* Community Offering Section */}
         <div className="w-full max-w-7xl mx-auto py-24 px-6 lg:px-12">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 tracking-tight">
-            See what your community is offering
+            See what's popping around your uni community
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="flex flex-col items-center text-center group cursor-pointer">
               <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0]">
                 <img
-                  src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=800"
-                  alt="Item"
+                  src="/Goods.jpg"
+                  alt="Goods"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-1">Item</h3>
+              <h3 className="text-xl font-bold mb-1">Goods</h3>
               <p className="text-sm text-gray-400 dark:text-[#807d72]">
-                dorm, clothing, school and more
+                Dorm, Clothing, School, and more
               </p>
             </div>
             <div className="flex flex-col items-center text-center group cursor-pointer">
               <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0]">
                 <img
-                  src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800"
+                  src="/Services.png"
                   alt="Service"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-1">Service</h3>
+              <h3 className="text-xl font-bold mb-1">Services</h3>
               <p className="text-sm text-gray-400 dark:text-[#807d72]">
-                Academic and Career tutoring, or moving
+                CS prep, all kinds of tutoring, resumes, and career larping, we’ve got your back
               </p>
             </div>
             <div className="flex flex-col items-center text-center group cursor-pointer">
               <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0]">
                 <img
-                  src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=800"
+                  src="/sublease.jpg"
                   alt="Sublease"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <h3 className="text-xl font-bold mb-1">Sublease</h3>
+              <h3 className="text-xl font-bold mb-1">Subleases</h3>
               <p className="text-sm text-gray-400 dark:text-[#807d72]">
-                Apartments or rooms for sublease
+                Need a room or a sublet? Someone’s got a spot
               </p>
             </div>
           </div>
@@ -248,89 +270,66 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-8 tracking-tight">
             Shop by Category
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             <Link href="/listings?category=HOUSING" className="group block">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
                 <img
-                  src="https://images.unsplash.com/photo-1505693314120-0d443867891c?auto=format&fit=crop&q=80&w=600"
+                  src="/dorm.jpg"
                   alt="Dorm"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <h3 className="text-center font-semibold text-sm">
-                Furniture & Dorm
-              </h3>
+              <h3 className="text-center font-semibold text-sm">Dorms</h3>
             </Link>
+
+            <Link href="/listings?category=SCHOOL" className="group block">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
+                <img
+                  src="/school%20supplies.jpg"
+                  alt="School Supplies"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <h3 className="text-center font-semibold text-sm">School Supplies</h3>
+            </Link>
+
             <Link href="/listings?category=OTHER" className="group block">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
                 <img
-                  src="https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&q=80&w=600"
+                  src="/electronics.jpg"
                   alt="Electronics"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <h3 className="text-center font-semibold text-sm">Electronics</h3>
             </Link>
-            <Link href="/listings?category=SCHOOL" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
-                  src="https://images.unsplash.com/photo-1456735190827-d1262f71b8a3?auto=format&fit=crop&q=80&w=600"
-                  alt="School Supplies"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <h3 className="text-center font-semibold text-sm">
-                School Supplies
-              </h3>
-            </Link>
+
             <Link href="/listings?category=CLOTHES" className="group block">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
                 <img
-                  src="https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&q=80&w=600"
+                  src="/clothing.jpg"
                   alt="Clothing"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <h3 className="text-center font-semibold text-sm">Clothing</h3>
             </Link>
+
             <Link href="/listings?category=LEISURE" className="group block">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
                 <img
-                  src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=600"
+                  src="/rave.JPG"
                   alt="Event Tickets"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <h3 className="text-center font-semibold text-sm">
-                Event Tickets
-              </h3>
+              <h3 className="text-center font-semibold text-sm">Event Tickets</h3>
             </Link>
-            <Link href="/listings?category=OTHER" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
-                  src="https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=600"
-                  alt="Transportation"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <h3 className="text-center font-semibold text-sm">
-                Transportation
-              </h3>
-            </Link>
-            <Link href="/listings?category=OTHER" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
-                  src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=600"
-                  alt="Handmade"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </div>
-              <h3 className="text-center font-semibold text-sm">Handmade</h3>
-            </Link>
+
             <Link href="/listings?category=ACCESSORIES" className="group block">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
                 <img
-                  src="https://images.unsplash.com/photo-1509319117193-57bab727e09d?auto=format&fit=crop&q=80&w=600"
+                  src="/accessories.jpg"
                   alt="Accessories"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -343,7 +342,7 @@ export default function Home() {
         {/* Shop by Campus Section */}
         <div className="w-full max-w-7xl mx-auto py-16 px-6 lg:px-12 mb-20">
           <h2 className="text-3xl font-bold mb-8 tracking-tight">
-            Shop by Campus
+            We are launching at:
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <div className="group cursor-pointer">
@@ -380,7 +379,7 @@ export default function Home() {
       </div>
 
       {/* Footer Section */}
-      <footer className="w-full bg-secondary text-secondary-foreground pt-20 pb-12 px-6 lg:px-12 relative z-10 border-t border-border">
+      <footer className="w-full bg-secondary text-secondary-foreground pt-20 pb-12 px-6 lg:px-12 relative z-10 border-t border-border overflow-hidden">
         <div className="w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
           {/* Logo / Brand */}
           <div className="flex flex-col gap-6 md:col-span-1">
