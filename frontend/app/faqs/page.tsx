@@ -21,56 +21,8 @@ export default function FaqsPage() {
           Everything you need to know about buying, selling, and swapping on Orbit safely.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Feature 1: University Exclusive */}
-          <div className="w-full bg-card rounded-[18px] border border-border shadow-sm p-8 flex flex-col gap-4 hover:-translate-y-1 transition-transform duration-300">
-            <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mb-2">
-              <ShieldCheck className="w-6 h-6 text-foreground" />
-            </div>
-            <h2 className="text-[28px] font-semibold text-foreground tracking-tight leading-tight">Verified Students Only</h2>
-            <p className="text-[17px] text-muted-foreground leading-relaxed mt-2">
-              Orbit is exclusively for the university community. Every user is verified using their student email address (ending in .edu). This ensures you are meeting and trading with real students from your own campus.
-            </p>
-          </div>
-
-          {/* Feature 2: Secure Payment & Meetup Code */}
-          <div className="w-full bg-secondary rounded-[18px] shadow-sm p-8 flex flex-col gap-4 hover:-translate-y-1 transition-transform duration-300">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-2">
-              <CreditCard className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <h2 className="text-[28px] font-semibold text-foreground tracking-tight leading-tight">Secure Payment via Meetup Code</h2>
-            <p className="text-[17px] text-muted-foreground leading-[1.47] font-normal">
-              No more sketchy cash handoffs. Pay securely through the app using Stripe. You&apos;ll receive a unique <strong>Meetup Code</strong>. The seller only gets paid after you meet up, verify the item, and hand them your code.
-            </p>
-          </div>
-
-          {/* Feature 3: Campus Listings */}
-          <div className="w-full bg-card rounded-[18px] border border-border shadow-sm p-8 flex flex-col gap-4 hover:-translate-y-1 transition-transform duration-300">
-            <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mb-2">
-              <ShoppingBag className="w-6 h-6 text-foreground" />
-            </div>
-            <h2 className="text-[28px] font-semibold text-foreground tracking-tight leading-tight">Local Campus Listings</h2>
-            <p className="text-[17px] text-muted-foreground leading-[1.47] font-normal">
-              Explore a massive catalog of dorm essentials, textbooks, clothing, and event tickets. Since everything is local to your university, you can pick up items the exact same day without worrying about shipping fees.
-            </p>
-          </div>
-
-          {/* Feature 4: Swipe to Match */}
-          <div className="w-full bg-card rounded-[18px] border border-border shadow-sm p-8 flex flex-col gap-4 hover:-translate-y-1 transition-transform duration-300">
-            <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center mb-2">
-              <Sparkles className="w-6 h-6 text-foreground" />
-            </div>
-            <h2 className="text-[28px] font-semibold text-foreground tracking-tight leading-tight">Swipe to Match</h2>
-            <p className="text-[17px] text-muted-foreground leading-[1.47] font-normal">
-              Finding items is actually fun. Use our Tinder-style swipe feature to quickly discover new listings. Swipe right to save an item to your wishlist, or swipe left to pass. Curate your campus aesthetic effortlessly.
-            </p>
-          </div>
-
-        </div>
-
         {/* FAQ Section */}
-        <div className="w-full flex flex-col gap-6 mt-16">
+        <div className="w-full flex flex-col gap-6">
           <h2 className="text-[40px] font-semibold text-foreground tracking-tighter leading-[1.07] mb-2">
             Frequently Asked Questions
           </h2>

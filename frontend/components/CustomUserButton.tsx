@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, ListOrdered, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function CustomUserButton() {
@@ -47,8 +47,33 @@ export function CustomUserButton() {
           onClick={() => router.push(`/profile/${user.id}`)}
         >
           <User className="mr-2 h-4 w-4" />
-          <span className="font-medium">My Profile</span>
+          <span className="font-medium">Profile</span>
         </DropdownMenuItem>
+
+        <DropdownMenuItem 
+          className="cursor-pointer py-2.5 px-3 focus:bg-secondary"
+          onClick={() => router.push(`/offers`)}
+        >
+          <ListOrdered className="mr-2 h-4 w-4" />
+          <span className="font-medium">Offers</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem 
+          className="cursor-pointer py-2.5 px-3 focus:bg-secondary"
+          onClick={() => router.push(`/purchase-history`)}
+        >
+          <ListOrdered className="mr-2 h-4 w-4" />
+          <span className="font-medium">Purchase History</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem 
+          className="cursor-pointer py-2.5 px-3 focus:bg-secondary"
+          onClick={() => router.push(`/settings`)}
+        >
+          <Settings className="mr-2 h-4 w-4" />
+          <span className="font-medium">Settings</span>
+        </DropdownMenuItem>
+
         <DropdownMenuSeparator className="bg-border" />
         <DropdownMenuItem
           className="cursor-pointer py-2.5 px-3 text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:focus:bg-red-950/50 dark:focus:text-red-300"

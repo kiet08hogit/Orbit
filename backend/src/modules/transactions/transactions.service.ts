@@ -371,5 +371,61 @@ export class TransactionsService {
 
         return updated;
     }
+    async getMyOffers(clerkUserId: string) {
+        const user = await this.prisma.user.findUnique({ where: { clerkUserId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        const activeTransactions = await this.prisma.transaction.findMany({
+            where: {
+                OR: [
+                    { buyerId: user.id },
+                    { sellerId: user.id }
+                ],
+                orderStatus: {
+                    in: ['PENDING_PAYMENT', 'PENDING_MEETUP', 'PAID_PENDING_MEETUP', 'MEETING_STARTED']
+                }
+            },
+            include: {
+                listing: { include: { images: true } },
+                buyer: true,
+                seller: true
+            },
+            orderBy: { updatedAt: 'desc' }
+        });
+
+        return {
+            my_offers: activeTransactions.filter(t => t.buyerId === user.id),
+            received_offers: activeTransactions.filter(t => t.sellerId === user.id),
+            meetups: activeTransactions.filter(t => t.meetupStatus !== 'NONE' || t.orderStatus === 'PAID_PENDING_MEETUP' || t.orderStatus === 'MEETING_STARTED' || t.orderStatus === 'PENDING_MEETUP')
+        };
+    }
+
+    async getPurchaseHistory(clerkUserId: string) {
+        const user = await this.prisma.user.findUnique({ where: { clerkUserId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        const historyTransactions = await this.prisma.transaction.findMany({
+            where: {
+                OR: [
+                    { buyerId: user.id },
+                    { sellerId: user.id }
+                ],
+                orderStatus: {
+                    in: ['COMPLETED', 'CANCELLED', 'EXPIRED', 'DECLINED', 'PAID_PENDING_MEETUP', 'MEETUP_CONFIRMED', 'COMPLETED_BY_SELLER']
+                }
+            },
+            include: {
+                listing: { include: { images: true } },
+                buyer: true,
+                seller: true
+            },
+            orderBy: { updatedAt: 'desc' }
+        });
+
+        return {
+            buying: historyTransactions.filter(t => t.buyerId === user.id),
+            selling: historyTransactions.filter(t => t.sellerId === user.id)
+        };
+    }
 
 }
