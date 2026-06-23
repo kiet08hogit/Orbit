@@ -33,6 +33,9 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
+import { toast } from "sonner";
+
+// ... [existing imports] ...
 interface Seller {
   id: string;
   name?: string;
@@ -40,6 +43,7 @@ interface Seller {
   email?: string;
   avatarUrl?: string;
   clerkUserId?: string;
+  university?: string;
 }
 
 interface ListingImage {
@@ -80,6 +84,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   LEISURE: "Leisure",
   ACCESSORIES: "Accessories",
   OTHER: "Other",
+  SERVICES: "Services",
 };
 
 export default function ListingDetailPage() {
@@ -175,10 +180,12 @@ export default function ListingDetailPage() {
         router.push(`/chat?id=${conversation.id}&listingId=${listing?.id}`);
       } else {
         console.error("Failed to start conversation");
+        toast.error("Failed to start conversation.");
         setIsStartingChat(false);
       }
     } catch (err) {
       console.error("Error starting chat:", err);
+      toast.error("An error occurred starting the chat.");
       setIsStartingChat(false);
     }
   };
@@ -206,6 +213,7 @@ export default function ListingDetailPage() {
       }
     } catch (err) {
       console.error("Error starting chat:", err);
+      toast.error("Failed to request meetup.");
     }
   };
 
@@ -229,12 +237,13 @@ export default function ListingDetailPage() {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+      toast.success("Order reserved via Direct Payment!");
       if (res.data) {
         router.push(`/chat?id=${res.data.id}`);
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to reserve listing.");
+      toast.error("Failed to reserve listing.");
     } finally {
       setIsReserving(false);
       setShowPaymentModal(false);
@@ -243,6 +252,9 @@ export default function ListingDetailPage() {
 
   const handleProtectedReservation = () => {
     if (!isSignedIn) return router.push("/sign-in");
+    toast("Redirecting to Secure Checkout...", {
+      description: "You'll be able to review your order before paying.",
+    });
     router.push(`/checkout/${listing?.id}`);
   };
 

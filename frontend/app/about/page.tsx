@@ -25,8 +25,8 @@ export default function AboutPage() {
 
  <div className="w-full bg-secondary rounded-[18px] shadow-sm p-8 md:p-12 flex flex-col gap-6">
  <h2 className="text-[28px] font-semibold text-foreground tracking-tight">The Solution</h2>
- <p className="text-[17px] md:text-[21px] text-foreground leading-[1.47] font-normal">
- Orbit is an exclusive marketplace built specifically for UIC students. By requiring a verified @uic.edu email address, we ensure that every transaction is safe, local, and student-to-student. Pass the torch, save money, and match your needs.
+ <p className="text-gray-400 dark:text-[#807d72] mb-6 leading-relaxed">
+ Orbit is an exclusive marketplace built specifically for university students. By requiring a verified .edu email address, we ensure that every transaction is safe, local, and student-to-student. Pass the torch, save money, and match your needs.
  </p>
  </div>
 

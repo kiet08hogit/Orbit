@@ -11,19 +11,20 @@ import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 import { NavActions } from "@/components/NavActions";
 import { GlobalNav } from "@/components/GlobalNav";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
-  title: "Orbit | Verified UIC Student Marketplace",
-  description: "Buy, sell, and swap items safely with verified @uic.edu student profiles.",
+  title: "Orbit | Verified Student Marketplace",
+  description: "Buy, sell, and swap items safely with verified .edu student profiles.",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
   const email = user?.emailAddresses[0]?.emailAddress;
-  const isUic = email ? email.endsWith("@uic.edu") : true;
+  const isEdu = email ? email.endsWith(".edu") : true;
 
   return (
     <html lang="en" className={cn("h-full", "font-sans", inter.variable, jetbrainsMono.variable)} suppressHydrationWarning>
@@ -52,6 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             }
           }}
           localization={{
+            formFieldInputPlaceholder__emailAddress: "you@uni.edu",
             signIn: {
               start: {
                 title: "Sign in to Orbit",
@@ -76,7 +78,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Show>
 
             <main className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background dark:bg-card text-foreground w-full">
-              {isUic ? (
+              {isEdu ? (
                 <div className="w-full h-full flex flex-col">{children}</div>
               ) : (
                 <div className="relative w-full max-w-md rounded-2xl border border-border bg-background shadow-xl text-center space-y-8 overflow-hidden mx-4 my-8 p-10">
@@ -93,7 +95,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <div className="space-y-3">
                     <h2 className="text-3xl font-black tracking-tight text-foreground">@uni.edu Required</h2>
                     <p className="text-sm font-medium text-muted-foreground leading-relaxed px-2">
-                      Orbit is an exclusive marketplace for verified UIC students. Please sign in with an email address ending in <strong className="text-primary">@uic.edu</strong> to join the community.
+                      Orbit is an exclusive marketplace for verified university students. Please sign in with an email address ending in <strong className="text-primary">.edu</strong> to join the community.
                     </p>
                   </div>
 
@@ -110,6 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </main>
           </ThemeProvider>
         </ClerkProvider>
+        <Toaster />
       </body>
     </html>
   );

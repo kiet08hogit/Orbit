@@ -29,8 +29,8 @@ export default function FaqsPage() {
               <ShieldCheck className="w-6 h-6 text-foreground" />
             </div>
             <h2 className="text-[28px] font-semibold text-foreground tracking-tight leading-tight">Verified Students Only</h2>
-            <p className="text-[17px] text-muted-foreground leading-[1.47] font-normal">
-              Orbit is exclusively for the university community. Every user is verified using their student email address (like @uic.edu). This ensures you are meeting and trading with real students from your own campus.
+            <p className="text-[17px] text-muted-foreground leading-relaxed mt-2">
+              Orbit is exclusively for the university community. Every user is verified using their student email address (ending in .edu). This ensures you are meeting and trading with real students from your own campus.
             </p>
           </div>
 

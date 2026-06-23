@@ -83,7 +83,7 @@ export class ListingsService {
             orderBy: { createdAt: 'desc' },
             include: {
                 images: true,
-                seller: { select: { id: true, email: true } },
+                seller: { select: { id: true, email: true, university: true } },
             },
         });
     }
@@ -132,7 +132,7 @@ export class ListingsService {
             include: {
                 images: true,
                 seller: {
-                    select: { id: true, name: true, username: true, avatarUrl: true }
+                    select: { id: true, name: true, username: true, avatarUrl: true, university: true }
                 }
             }
         });
@@ -199,7 +199,7 @@ export class ListingsService {
             include: {
                 images: true,
                 seller: {
-                    select: { id: true, name: true, username: true, avatarUrl: true }
+                    select: { id: true, name: true, username: true, avatarUrl: true, university: true }
                 }
             }
         });
@@ -279,7 +279,7 @@ export class ListingsService {
                 where: { id: { in: ids } },
                 include: {
                     images: true,
-                    seller: { select: { id: true, name: true, username: true, email: true, clerkUserId: true } },
+                    seller: { select: { id: true, name: true, username: true, email: true, clerkUserId: true, university: true } },
                 },
             });
 
@@ -356,7 +356,7 @@ export class ListingsService {
             where: { id: { in: ids } },
             include: {
                 images: true,
-                seller: { select: { id: true, name: true, username: true, email: true, clerkUserId: true } },
+                seller: { select: { id: true, name: true, username: true, email: true, clerkUserId: true, university: true } },
             },
         });
 
@@ -402,7 +402,7 @@ export class ListingsService {
             where: { id: { in: ids }, status: 'ACTIVE' },
             include: {
                 images: true,
-                seller: { select: { id: true, name: true, username: true, email: true, clerkUserId: true } }
+                seller: { select: { id: true, name: true, username: true, email: true, clerkUserId: true, university: true } }
             }
         });
 
@@ -440,7 +440,7 @@ export class ListingsService {
                 listing: {
                     include: {
                         images: true,
-                        seller: { select: { id: true, name: true, username: true, email: true, clerkUserId: true } }
+                        seller: { select: { id: true, name: true, username: true, email: true, clerkUserId: true, university: true } }
                     }
                 }
             }

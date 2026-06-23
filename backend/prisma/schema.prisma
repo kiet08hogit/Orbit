@@ -1,4 +1,3 @@
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
@@ -9,9 +8,198 @@ datasource db {
   extensions = [vector]
 }
 
-// =======================
-// ENUMS
-// =======================
+model User {
+  id                  String               @id @default(uuid())
+  clerkUserId         String               @unique
+  email               String               @unique
+  name                String?
+  username            String?              @unique
+  bio                 String?
+  avatarUrl           String?
+  major               String?
+  classYear           String?
+  onboardingComplete  Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  stripeAccountId     String?              @unique
+  stripeAccountLinked Boolean              @default(false)
+  university          String?
+  conversationMembers ConversationMember[]
+  interactions        Interaction[]
+  listings            Listing[]
+  listingViews        ListingView[]
+  messages            Message[]
+  posts               Post[]
+  postComments        PostComment[]
+  postLikes           PostLike[]
+  reportsReceived     Report[]             @relation("ReportsReceived")
+  reportsMade         Report[]             @relation("ReportsMade")
+  buyerTransactions   Transaction[]        @relation("BuyerTransactions")
+  sellerTransactions  Transaction[]        @relation("SellerTransactions")
+}
+
+model Listing {
+  id                      String                 @id @default(uuid())
+  title                   String
+  description             String
+  price                   Float
+  category                ListingCategory
+  status                  ListingStatus          @default(ACTIVE)
+  sellerId                String
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  embedding               Unsupported("vector")?
+  acceptsDirectPayment    Boolean                @default(true)
+  acceptsProtectedPayment Boolean                @default(false)
+  brand                   String?
+  colors                  String?
+  location                String?
+  material                String?
+  size                    String?
+  interactions            Interaction[]
+  seller                  User                   @relation(fields: [sellerId], references: [id])
+  images                  ListingImage[]
+  views                   ListingView[]
+  messages                Message[]
+  reports                 Report[]
+  transactions            Transaction[]
+}
+
+model ListingImage {
+  id        String   @id @default(uuid())
+  url       String
+  listingId String
+  createdAt DateTime @default(now())
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id        String        @id @default(uuid())
+  content   String
+  postType  PostType
+  imageUrls String[]
+  authorId  String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  author    User          @relation(fields: [authorId], references: [id])
+  comments  PostComment[]
+  likes     PostLike[]
+}
+
+model PostLike {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+model PostComment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Interaction {
+  id        String          @id @default(uuid())
+  type      InteractionType
+  userId    String
+  listingId String
+  createdAt DateTime        @default(now())
+  listing   Listing         @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id])
+
+  @@unique([userId, listingId])
+}
+
+model Conversation {
+  id        String               @id @default(uuid())
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  members   ConversationMember[]
+  messages  Message[]
+}
+
+model ConversationMember {
+  id             String       @id @default(uuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@unique([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  content        String
+  conversationId String
+  senderId       String
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  listingId      String?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  listing        Listing?     @relation(fields: [listingId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+}
+
+model Transaction {
+  id                    String        @id @default(uuid())
+  listingId             String
+  buyerId               String
+  sellerId              String
+  meetupCode            String?
+  meetupCodeExpiresAt   DateTime?
+  meetupVerifiedAt      DateTime?
+  meetupVerifyAttempts  Int           @default(0)
+  meetupLastSentAt      DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  amount                Int           @default(0)
+  orderStatus           OrderStatus   @default(PENDING_MEETUP)
+  paymentMethod         PaymentMethod @default(DIRECT)
+  paymentStatus         PaymentStatus @default(UNPAID)
+  stripePaymentIntentId String?       @unique
+  meetupLocation        String?
+  meetupStatus          MeetupStatus  @default(NONE)
+  meetupTime            DateTime?
+  buyer                 User          @relation("BuyerTransactions", fields: [buyerId], references: [id])
+  listing               Listing       @relation(fields: [listingId], references: [id])
+  seller                User          @relation("SellerTransactions", fields: [sellerId], references: [id])
+}
+
+model Report {
+  id             String   @id @default(uuid())
+  reporterId     String
+  reportedUserId String?
+  listingId      String?
+  reason         String
+  status         String   @default("PENDING")
+  createdAt      DateTime @default(now())
+  listing        Listing? @relation(fields: [listingId], references: [id])
+  reportedUser   User?    @relation("ReportsReceived", fields: [reportedUserId], references: [id])
+  reporter       User     @relation("ReportsMade", fields: [reporterId], references: [id])
+}
+
+model ListingView {
+  id        String   @id @default(uuid())
+  userId    String
+  listingId String
+  viewedAt  DateTime @default(now()) @updatedAt
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, listingId])
+}
 
 enum ListingCategory {
   HOUSING
@@ -19,15 +207,16 @@ enum ListingCategory {
   SCHOOL
   LEISURE
   ACCESSORIES
+  SERVICES
   OTHER
 }
 
 enum ListingStatus {
   ACTIVE
-  PENDING_PAYMENT
-  RESERVED
   SOLD
   REMOVED
+  PENDING_PAYMENT
+  RESERVED
 }
 
 enum PostType {
@@ -72,251 +261,4 @@ enum MeetupStatus {
   PROPOSED
   ACCEPTED
   CANCELLED
-}
-
-// =======================
-// MODELS
-// =======================
-
-model User {
-  id          String   @id @default(uuid())
-  clerkUserId String   @unique
-  email       String   @unique
-
-  // Profile fields
-  name        String?
-  username    String?  @unique
-  bio         String?
-  avatarUrl   String?
-  major       String?
-  classYear   String?
-  onboardingComplete Boolean @default(false)
-  
-  stripeAccountId    String? @unique
-  stripeAccountLinked Boolean @default(false)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships (keep these exactly as they are)
-  listings            Listing[]
-  posts               Post[]
-  interactions        Interaction[]
-  conversationMembers ConversationMember[]
-  messages            Message[]
-  postLikes           PostLike[]
-  postComments        PostComment[]
-  buyerTransactions   Transaction[] @relation("BuyerTransactions")
-  sellerTransactions  Transaction[] @relation("SellerTransactions")
-  reportsMade         Report[]      @relation("ReportsMade")
-  reportsReceived     Report[]      @relation("ReportsReceived")
-  listingViews        ListingView[]
-}
-
-model Listing {
-  id          String          @id @default(uuid())
-  title       String
-  description String
-  price       Float           // Storing price as a Float or Decimal
-  category    ListingCategory
-  status      ListingStatus   @default(ACTIVE)
-
-  acceptsDirectPayment    Boolean @default(true)
-  acceptsProtectedPayment Boolean @default(false)
-  
-  // Extended Details
-  location     String?
-  brand        String?
-  colors       String?
-  size         String?
-  material     String?
-  
-  // Foreign Key linking to the User who created it
-  sellerId    String
-  seller      User            @relation(fields: [sellerId], references: [id])
-
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-
-  // Relationships
-  images       ListingImage[]
-  interactions Interaction[]
-  messages     Message[]
-  transactions Transaction[]
-  reports      Report[]
-  views        ListingView[]
-
-  // AI Embeddings
-  embedding    Unsupported("vector(768)")?
-}
-
-model ListingImage {
-  id        String   @id @default(uuid())
-  url       String
-  
-  // Foreign Key to Listing. 'onDelete: Cascade' means if the listing is deleted, delete its images too.
-  listingId String
-   listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-}
-
-model Post {
-  id        String   @id @default(uuid())
-  content   String
-  postType  PostType
-  imageUrls String[]
-  
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  likes     PostLike[]
-  comments  PostComment[]
-}
-
-model PostLike {
-  id        String   @id @default(uuid())
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-
-  @@unique([postId, userId])
-}
-
-model PostComment {
-  id        String   @id @default(uuid())
-  content   String
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Interaction {
-  id        String          @id @default(uuid())
-  type      InteractionType
-  
-  userId    String
-  user      User            @relation(fields: [userId], references: [id])
-  
-  listingId String
-  listing   Listing         @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime        @default(now())
-
-  // Constraint: A user can only interact (like/skip) with a specific listing once
-  @@unique([userId, listingId])
-}
-
-model Conversation {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  members   ConversationMember[]
-  messages  Message[]
-}
-
-model ConversationMember {
-  id             String       @id @default(uuid())
-  
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
-  userId         String
-  user           User         @relation(fields: [userId], references: [id])
-
-  joinedAt       DateTime     @default(now())
-
-  // Constraint: A user can only join the exact same conversation once
-  @@unique([conversationId, userId])
-}
-
-model Message {
-  id             String       @id @default(uuid())
-  content        String
-  
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
-  senderId       String
-  sender         User         @relation(fields: [senderId], references: [id])
-
-  isRead         Boolean      @default(false)
-
-  listingId      String?
-  listing        Listing?     @relation(fields: [listingId], references: [id], onDelete: SetNull)
-
-  createdAt      DateTime     @default(now())
-}
-
-// =======================
-// MEETUP & TRANSACTIONS
-// =======================
-
-model Transaction {
-  id             String            @id @default(uuid())
-  
-  listingId      String
-  listing        Listing           @relation(fields: [listingId], references: [id])
-  
-  buyerId        String
-  buyer          User              @relation("BuyerTransactions", fields: [buyerId], references: [id])
-  
-  sellerId       String
-  seller         User              @relation("SellerTransactions", fields: [sellerId], references: [id])
-  
-  paymentMethod  PaymentMethod     @default(DIRECT)
-  paymentStatus  PaymentStatus     @default(UNPAID)
-  orderStatus    OrderStatus       @default(PENDING_MEETUP)
-  
-  stripePaymentIntentId String?    @unique
-  amount                Int        @default(0)
-  
-  // Verification fields
-  meetupCode           String?
-  meetupCodeExpiresAt  DateTime?
-  meetupVerifiedAt     DateTime?
-  meetupVerifyAttempts Int       @default(0)
-  meetupLastSentAt     DateTime? // Cooldown tracking
-  
-  // Expanded Meetup Logistics
-  meetupLocation       String?
-  meetupTime           DateTime?
-  meetupStatus         MeetupStatus @default(NONE)
-  
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-}
-
-model Report {
-  id             String   @id @default(uuid())
-  reporterId     String
-  reportedUserId String?  
-  listingId      String?  
-  reason         String
-  status         String   @default("PENDING") // PENDING, REVIEWED, RESOLVED
-  createdAt      DateTime @default(now())
-
-  reporter       User     @relation("ReportsMade", fields: [reporterId], references: [id])
-  reportedUser   User?    @relation("ReportsReceived", fields: [reportedUserId], references: [id])
-  listing        Listing? @relation(fields: [listingId], references: [id])
-}
-
-model ListingView {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  listingId String
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  viewedAt  DateTime @default(now()) @updatedAt
-
-  @@unique([userId, listingId])
 }

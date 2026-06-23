@@ -16,6 +16,8 @@ interface Seller {
  name?: string;
  username?: string;
  avatarUrl?: string;
+ email?: string;
+ university?: string;
 }
 
 interface Listing {
@@ -38,11 +40,20 @@ export default function SwipePage() {
  const { getToken, isLoaded, isSignedIn } = useAuth();
  const [listings, setListings] = useState<Listing[]>([]);
  const [isLoading, setIsLoading] = useState(true);
+ const [userProfile, setUserProfile] = useState<any>(null);
+
  useEffect(() => {
  if (!isLoaded || !isSignedIn) return;
  const fetchFeed = async () => {
  try {
  const token = await getToken();
+
+ // Fetch user profile to get university
+ try {
+ const userRes = await axios.get("http://127.0.0.1:3000/users/me", { headers: { Authorization: `Bearer ${token}` } });
+ setUserProfile(userRes.data);
+ } catch (e) {}
+
  const res = await axios.get("http://127.0.0.1:3000/listings", {
  headers: { Authorization: `Bearer ${token}` }
  });
@@ -96,23 +107,87 @@ export default function SwipePage() {
 
  if (!isLoaded || isLoading) {
  return (
- <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-secondary">
+ <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-card">
  <Loader2 className="h-10 w-10 animate-spin text-[#3252DF]" />
  </div>
  );
  }
 
  return (
- <div className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden bg-background dark:bg-card font-sans">
+ <div className="min-h-[calc(100vh-4rem)] bg-background dark:bg-card flex flex-col font-sans overflow-hidden">
+ 
+ <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col md:flex-row gap-8">
+ 
+ {/* Sidebar Filters */}
+ <aside className="w-full md:w-64 shrink-0 hidden md:block space-y-8 mt-[70px]">
+ <div>
+ <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Distance</h3>
+ <div className="space-y-3">
+ <label className="flex items-center gap-3 cursor-pointer group">
+ <div className="w-5 h-5 rounded border border-border group-hover:border-foreground flex items-center justify-center bg-foreground text-background">✓</div>
+ <span className="text-sm font-medium text-foreground">All</span>
+ </label>
+ <label className="flex items-center gap-3 cursor-pointer group">
+ <div className="w-5 h-5 rounded border border-border group-hover:border-foreground"></div>
+ <span className="text-sm font-medium text-muted-foreground">@ {userProfile?.university || 'your university'}</span>
+ </label>
+ </div>
+ </div>
+
+ <div>
+ <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Prices</h3>
+ <div className="space-y-3">
+ {['All', '$0 to $50', '$50 to $100', '$100 to $300', '$300+'].map((price, idx) => (
+ <label key={price} className="flex items-center gap-3 cursor-pointer group">
+ <div className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? 'bg-foreground text-background flex items-center justify-center' : ''}`}>
+ {idx === 0 && '✓'}
+ </div>
+ <span className={`text-sm font-medium ${idx === 0 ? 'text-foreground' : 'text-muted-foreground'}`}>{price}</span>
+ </label>
+ ))}
+ </div>
+ </div>
+
+ <div>
+ <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Condition</h3>
+ <div className="space-y-3">
+ {['Any', 'New', 'Like New', 'Good', 'Fair'].map((cond, idx) => (
+ <label key={cond} className="flex items-center gap-3 cursor-pointer group">
+ <div className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? 'bg-foreground text-background flex items-center justify-center' : ''}`}>
+ {idx === 0 && '✓'}
+ </div>
+ <span className={`text-sm font-medium ${idx === 0 ? 'text-foreground' : 'text-muted-foreground'}`}>{cond}</span>
+ </label>
+ ))}
+ </div>
+ </div>
+
+ <div>
+ <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Buying Options</h3>
+ <div className="space-y-3">
+ {['Any', 'Meetup on campus', 'Self pickup'].map((opt, idx) => (
+ <label key={opt} className="flex items-center gap-3 cursor-pointer group">
+ <div className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? 'bg-foreground text-background flex items-center justify-center' : ''}`}>
+ {idx === 0 && '✓'}
+ </div>
+ <span className={`text-sm font-medium ${idx === 0 ? 'text-foreground' : 'text-muted-foreground'}`}>{opt}</span>
+ </label>
+ ))}
+ </div>
+ </div>
+ </aside>
+
+ {/* Swipe Deck Container */}
+ <div className="flex-1 flex flex-col items-center justify-center min-h-[700px] relative">
  {/* Title / Header */}
- <div className="absolute top-8 text-center z-20">
+ <div className="absolute top-0 text-center z-20">
  <h1 className="text-2xl font-black text-foreground tracking-tight flex items-center justify-center gap-2">
  <AuroraText colors={["#3252DF", "#6366F1", "#A855F7", "#3b82f6"]}>Match Your Needs</AuroraText>
  </h1>
  <p className="text-sm font-medium text-muted-foreground mt-1">Swipe right to save to your wishlist</p>
  </div>
 
- <div className="relative h-[600px] w-full max-w-[400px] mt-8 flex items-center justify-center">
+ <div className="relative h-[600px] w-full max-w-[400px] mt-16 flex items-center justify-center">
  <AnimatePresence>
  {activeListing ? (
  <>
@@ -265,6 +340,8 @@ export default function SwipePage() {
  </motion.div>
  </div>
 
+ </div>
+ </main>
  </div>
  );
 }

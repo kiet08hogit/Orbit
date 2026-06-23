@@ -38,6 +38,7 @@ export default function ProfilePage() {
  bio: '',
  major: '',
  classYear: '',
+ university: '',
  });
 
  const [isStripeLinked, setIsStripeLinked] = useState(false);
@@ -60,6 +61,7 @@ export default function ProfilePage() {
  bio: res.data.bio || '',
  major: res.data.major || '',
  classYear: res.data.classYear || '',
+ university: res.data.university || '',
  });
 
  // Fetch Stripe status if own profile
@@ -236,6 +238,10 @@ export default function ProfilePage() {
  <Input name="major" value={formData.major} onChange={handleChange} className="rounded-xl font-medium bg-secondary border-border focus-visible:ring-black focus-visible:ring-1 h-9 text-sm" />
  </div>
  <div className="space-y-1">
+ <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">University</label>
+ <Input name="university" value={formData.university} onChange={handleChange} className="rounded-xl font-medium bg-secondary border-border focus-visible:ring-black focus-visible:ring-1 h-9 text-sm" disabled />
+ </div>
+ <div className="space-y-1">
  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Class Year</label>
  <Select value={formData.classYear} onValueChange={(val) => setFormData({ ...formData, classYear: val || '' })}>
  <SelectTrigger className="rounded-xl font-medium bg-secondary border-border focus:ring-black focus:ring-1 h-9 text-sm"><SelectValue placeholder="Select Year" /></SelectTrigger>
@@ -267,6 +273,12 @@ export default function ProfilePage() {
  <div className="flex items-center gap-1 bg-secondary text-muted-foreground px-2.5 py-1 font-bold text-[11px] rounded-full">
  <BookOpen className="h-3 w-3" />
  {userProfile.major}
+ </div>
+ )}
+ {userProfile.university && (
+ <div className="flex items-center gap-1 bg-secondary text-muted-foreground px-2.5 py-1 font-bold text-[11px] rounded-full">
+ <GraduationCap className="h-3 w-3" />
+ {userProfile.university}
  </div>
  )}
  {userProfile.classYear && (

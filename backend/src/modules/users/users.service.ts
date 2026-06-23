@@ -16,16 +16,31 @@ export class UsersService {
             },
         });
 
+        let defaultUniversity = null;
+        if (email.endsWith('@uic.edu')) defaultUniversity = 'University of Illinois Chicago';
+        else if (email.endsWith('@illinois.edu')) defaultUniversity = 'University of Illinois Urbana-Champaign';
+        else if (email.endsWith('@depaul.edu')) defaultUniversity = 'DePaul University';
+        else if (email.endsWith('.edu')) defaultUniversity = email.split('@')[1];
+
         if (!user) {
             user = await this.prisma.user.create({
-                data: { clerkUserId, email },
+                data: { clerkUserId, email, university: defaultUniversity },
             });
-        } else if (user.clerkUserId !== clerkUserId) {
-            // If the user deleted and recreated their account in Clerk, update their new clerkUserId
-            user = await this.prisma.user.update({
-                where: { email },
-                data: { clerkUserId },
-            });
+        } else {
+            let updateData: any = {};
+            if (user.clerkUserId !== clerkUserId) {
+                updateData.clerkUserId = clerkUserId;
+            }
+            if (!user.university && defaultUniversity) {
+                updateData.university = defaultUniversity;
+            }
+            
+            if (Object.keys(updateData).length > 0) {
+                user = await this.prisma.user.update({
+                    where: { email },
+                    data: updateData,
+                });
+            }
         }
 
         return user;
