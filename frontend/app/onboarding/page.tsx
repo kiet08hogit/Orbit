@@ -1,16 +1,32 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Loader2, Camera, User, BookOpen, Calendar, AlignLeft, Sparkles, AlertCircle, GraduationCap } from 'lucide-react';
-import axios from 'axios';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useRef, useEffect } from "react";
+import { useAuth, useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import {
+  Loader2,
+  Camera,
+  User,
+  BookOpen,
+  Calendar,
+  AlignLeft,
+  Sparkles,
+  AlertCircle,
+  GraduationCap,
+} from "lucide-react";
+import axios from "axios";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function OnboardingPage() {
   const { getToken } = useAuth();
@@ -19,38 +35,51 @@ export default function OnboardingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    major: '',
-    classYear: '',
-    bio: '',
-    university: '',
+    name: "",
+    username: "",
+    major: "",
+    classYear: "",
+    bio: "",
+    university: "",
   });
 
   const [isUniversityLocked, setIsUniversityLocked] = useState(false);
 
-  const years = ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', 'Faculty/Staff'];
+  const years = [
+    "Freshman",
+    "Sophomore",
+    "Junior",
+    "Senior",
+    "Graduate",
+    "Faculty/Staff",
+  ];
 
   useEffect(() => {
     if (user?.primaryEmailAddress?.emailAddress) {
       const email = user.primaryEmailAddress.emailAddress;
-      if (email.endsWith('@uic.edu')) {
-        setFormData((prev) => ({ ...prev, university: 'University of Illinois Chicago' }));
+      if (email.endsWith("@uic.edu")) {
+        setFormData((prev) => ({
+          ...prev,
+          university: "University of Illinois Chicago",
+        }));
         setIsUniversityLocked(true);
-      } else if (email.endsWith('@illinois.edu')) {
-        setFormData((prev) => ({ ...prev, university: 'University of Illinois Urbana-Champaign' }));
+      } else if (email.endsWith("@illinois.edu")) {
+        setFormData((prev) => ({
+          ...prev,
+          university: "University of Illinois Urbana-Champaign",
+        }));
         setIsUniversityLocked(true);
-      } else if (email.endsWith('@depaul.edu')) {
-        setFormData((prev) => ({ ...prev, university: 'DePaul University' }));
+      } else if (email.endsWith("@depaul.edu")) {
+        setFormData((prev) => ({ ...prev, university: "DePaul University" }));
         setIsUniversityLocked(true);
-      } else if (email.endsWith('.edu')) {
-        const domain = email.split('@')[1];
+      } else if (email.endsWith(".edu")) {
+        const domain = email.split("@")[1];
         setFormData((prev) => ({ ...prev, university: domain }));
         setIsUniversityLocked(false);
       }
@@ -65,14 +94,16 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       const token = await getToken();
@@ -84,20 +115,25 @@ export default function OnboardingPage() {
         avatarUrl = updatedUser.publicUrl;
       }
 
-      await axios.patch('http://127.0.0.1:3000/users/me', {
-        ...formData,
-        ...(avatarUrl && { avatarUrl }),
-        onboardingComplete: true
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      await axios.patch(
+        "http://127.0.0.1:3000/users/me",
+        {
+          ...formData,
+          ...(avatarUrl && { avatarUrl }),
+          onboardingComplete: true,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
       // Redirect to marketplace home
-      window.location.href = '/home';
+      window.location.href = "/home";
     } catch (err: any) {
-      const backendMessage = err.response?.data?.message || err.message || 'Failed to save profile.';
+      const backendMessage =
+        err.response?.data?.message || err.message || "Failed to save profile.";
       setError(backendMessage);
     } finally {
       setIsLoading(false);
@@ -106,7 +142,6 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background flex flex-col items-center justify-center p-4 py-12 font-sans relative overflow-hidden">
-
       {/* Background Orbs */}
       <div className="absolute top-0 right-0 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-[100px]" />
       <div className="absolute bottom-0 left-0 -z-10 h-96 w-96 rounded-full bg-primary/10 blur-[100px]" />
@@ -132,7 +167,6 @@ export default function OnboardingPage() {
 
         {/* Form Card */}
         <div className="bg-card border border-border rounded-2xl p-8 shadow-xl">
-
           {error && (
             <Alert variant="destructive" className="mb-6 rounded-2xl">
               <AlertCircle className="h-4 w-4" />
@@ -142,7 +176,6 @@ export default function OnboardingPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-
             {/* Avatar Upload */}
             <div className="flex flex-col items-center justify-center space-y-4 mb-8">
               <div
@@ -150,7 +183,11 @@ export default function OnboardingPage() {
                 onClick={() => fileInputRef.current?.click()}
               >
                 {avatarPreview ? (
-                  <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
+                  <img
+                    src={avatarPreview}
+                    alt="Avatar"
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-muted-foreground bg-secondary">
                     <User className="h-10 w-10" />
@@ -167,7 +204,10 @@ export default function OnboardingPage() {
                 accept="image/*"
                 className="hidden"
               />
-              <p className="text-sm font-bold text-primary cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              <p
+                className="text-sm font-bold text-primary cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 Upload Profile Picture
               </p>
             </div>
@@ -246,7 +286,9 @@ export default function OnboardingPage() {
                 </label>
                 <Select
                   value={formData.classYear}
-                  onValueChange={(val) => setFormData({ ...formData, classYear: val || '' })}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, classYear: val || "" })
+                  }
                 >
                   <SelectTrigger className="w-full rounded-xl py-6 text-base font-medium bg-secondary border-border focus:ring-primary/50">
                     <SelectValue placeholder="Select year" />
@@ -282,7 +324,9 @@ export default function OnboardingPage() {
             <div className="pt-4">
               <Button
                 type="submit"
-                disabled={isLoading || !formData.classYear || !formData.university}
+                disabled={
+                  isLoading || !formData.classYear || !formData.university
+                }
                 className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl shadow-sm"
               >
                 {isLoading ? (
@@ -291,11 +335,10 @@ export default function OnboardingPage() {
                     Saving Profile...
                   </>
                 ) : (
-                  'Complete Profile'
+                  "Complete Profile"
                 )}
               </Button>
             </div>
-
           </form>
         </div>
       </motion.div>

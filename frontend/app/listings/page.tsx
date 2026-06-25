@@ -58,46 +58,47 @@ const CATEGORIES = [
 const getCategoryHeroInfo = (category: string | null) => {
   switch (category) {
     case "HOUSING":
-      return { 
-        image: "/dorm.avif", 
+      return {
+        image: "/dorm.avif",
         objectPosition: "object-[50%_18%]",
         title: "Housing & Furniture",
-        description: "Move in and settle with all the essentials."
+        description: "Move in and settle with all the essentials.",
       };
     case "CLOTHES":
-      return { 
-        image: "/clothes.webp", 
+      return {
+        image: "/clothes.webp",
         objectPosition: "object-center",
         title: "Clothing & Apparel",
-        description: "Refresh your wardrobe with great finds on campus."
+        description: "Refresh your wardrobe with great finds on campus.",
       };
     case "SCHOOL":
-      return { 
-        image: "/book.avif", 
+      return {
+        image: "/book.avif",
         objectPosition: "object-[50%_35%]",
         title: "School Supplies",
-        description: "Everything you need for your classes, for less."
+        description: "Everything you need for your classes, for less.",
       };
     case "LEISURE":
-      return { 
-        image: "/kayak.jpg", 
+      return {
+        image: "/kayak.jpg",
         objectPosition: "object-center",
         title: "Leisure & Hobbies",
-        description: "Find gear and tickets for your weekend adventures."
+        description: "Find gear and tickets for your weekend adventures.",
       };
     case "ACCESSORIES":
-      return { 
-        image: "/dj.jpg", 
+      return {
+        image: "/dj.jpg",
         objectPosition: "object-center",
         title: "Accessories",
-        description: "Complete your look with the perfect accessories."
+        description: "Complete your look with the perfect accessories.",
       };
     default:
-      return { 
-        image: "/dj.jpg", 
+      return {
+        image: "/dj.jpg",
         objectPosition: "object-center",
         title: "Trying to pass down your items?",
-        description: "Sell your items quickly and safely to other students on campus."
+        description:
+          "Sell your items quickly and safely to other students on campus.",
       };
   }
 };
@@ -118,16 +119,22 @@ export default function ListingsGridPage() {
 
   useEffect(() => {
     const fetchListings = async () => {
-      if (!isLoaded || !isSignedIn) return;
+      if (!isLoaded) return;
       setIsLoading(true);
       try {
-        const token = await getToken();
-        
-        // Fetch user profile to get university
-        try {
-          const userRes = await axios.get("http://127.0.0.1:3000/users/me", { headers: { Authorization: `Bearer ${token}` } });
-          setUserProfile(userRes.data);
-        } catch (e) {}
+        let headers: any = {};
+        if (isSignedIn) {
+          const token = await getToken();
+          headers = { Authorization: `Bearer ${token}` };
+
+          // Fetch user profile to get university
+          try {
+            const userRes = await axios.get("http://127.0.0.1:3000/users/me", {
+              headers,
+            });
+            setUserProfile(userRes.data);
+          } catch (e) {}
+        }
 
         const params = new URLSearchParams();
         if (activeCategory !== "ALL") {
@@ -142,9 +149,7 @@ export default function ListingsGridPage() {
         }
 
         const url = `${baseUrl}${params.toString() ? `?${params.toString()}` : ""}`;
-        const res = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(url, { headers });
 
         setListings(res.data);
       } catch (err) {
@@ -192,7 +197,7 @@ export default function ListingsGridPage() {
                 Sell now
               </Link>
             </div>
-            
+
             {/* Right Side (Image) */}
             <div className="w-full md:w-1/2 h-[200px] md:h-full relative">
               <img
@@ -207,60 +212,100 @@ export default function ListingsGridPage() {
 
       {/* Main Content with Sidebar Layout */}
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col md:flex-row gap-8">
-        
         {/* Sidebar Filters */}
         <aside className="w-full md:w-64 shrink-0 hidden md:block space-y-8 mt-[70px]">
           <div>
-            <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Distance</h3>
+            <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">
+              Distance
+            </h3>
             <div className="space-y-3">
               <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="w-5 h-5 rounded border border-border group-hover:border-foreground flex items-center justify-center bg-foreground text-background">✓</div>
+                <div className="w-5 h-5 rounded border border-border group-hover:border-foreground flex items-center justify-center bg-foreground text-background">
+                  ✓
+                </div>
                 <span className="text-sm font-medium text-foreground">All</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div className="w-5 h-5 rounded border border-border group-hover:border-foreground"></div>
-                <span className="text-sm font-medium text-muted-foreground">@ {userProfile?.university || 'your university'}</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  @ {userProfile?.university || "your university"}
+                </span>
               </label>
             </div>
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Prices</h3>
+            <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">
+              Prices
+            </h3>
             <div className="space-y-3">
-              {['All', '$0 to $50', '$50 to $100', '$100 to $300', '$300+'].map((price, idx) => (
-                <label key={price} className="flex items-center gap-3 cursor-pointer group">
-                  <div className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? 'bg-foreground text-background flex items-center justify-center' : ''}`}>
-                    {idx === 0 && '✓'}
+              {["All", "$0 to $50", "$50 to $100", "$100 to $300", "$300+"].map(
+                (price, idx) => (
+                  <label
+                    key={price}
+                    className="flex items-center gap-3 cursor-pointer group"
+                  >
+                    <div
+                      className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? "bg-foreground text-background flex items-center justify-center" : ""}`}
+                    >
+                      {idx === 0 && "✓"}
+                    </div>
+                    <span
+                      className={`text-sm font-medium ${idx === 0 ? "text-foreground" : "text-muted-foreground"}`}
+                    >
+                      {price}
+                    </span>
+                  </label>
+                ),
+              )}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">
+              Condition
+            </h3>
+            <div className="space-y-3">
+              {["Any", "New", "Like New", "Good", "Fair"].map((cond, idx) => (
+                <label
+                  key={cond}
+                  className="flex items-center gap-3 cursor-pointer group"
+                >
+                  <div
+                    className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? "bg-foreground text-background flex items-center justify-center" : ""}`}
+                  >
+                    {idx === 0 && "✓"}
                   </div>
-                  <span className={`text-sm font-medium ${idx === 0 ? 'text-foreground' : 'text-muted-foreground'}`}>{price}</span>
+                  <span
+                    className={`text-sm font-medium ${idx === 0 ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    {cond}
+                  </span>
                 </label>
               ))}
             </div>
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Condition</h3>
+            <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">
+              Buying Options
+            </h3>
             <div className="space-y-3">
-              {['Any', 'New', 'Like New', 'Good', 'Fair'].map((cond, idx) => (
-                <label key={cond} className="flex items-center gap-3 cursor-pointer group">
-                  <div className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? 'bg-foreground text-background flex items-center justify-center' : ''}`}>
-                    {idx === 0 && '✓'}
+              {["Any", "Meetup on campus", "Self pickup"].map((opt, idx) => (
+                <label
+                  key={opt}
+                  className="flex items-center gap-3 cursor-pointer group"
+                >
+                  <div
+                    className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? "bg-foreground text-background flex items-center justify-center" : ""}`}
+                  >
+                    {idx === 0 && "✓"}
                   </div>
-                  <span className={`text-sm font-medium ${idx === 0 ? 'text-foreground' : 'text-muted-foreground'}`}>{cond}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Buying Options</h3>
-            <div className="space-y-3">
-              {['Any', 'Meetup on campus', 'Self pickup'].map((opt, idx) => (
-                <label key={opt} className="flex items-center gap-3 cursor-pointer group">
-                  <div className={`w-5 h-5 rounded border border-border group-hover:border-foreground ${idx === 0 ? 'bg-foreground text-background flex items-center justify-center' : ''}`}>
-                    {idx === 0 && '✓'}
-                  </div>
-                  <span className={`text-sm font-medium ${idx === 0 ? 'text-foreground' : 'text-muted-foreground'}`}>{opt}</span>
+                  <span
+                    className={`text-sm font-medium ${idx === 0 ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    {opt}
+                  </span>
                 </label>
               ))}
             </div>
@@ -276,8 +321,12 @@ export default function ListingsGridPage() {
                   Search Results
                 </h2>
                 <p className="text-muted-foreground font-medium mt-1">
-                  ( {displayedListings.length} of {listings.length} listings ) matching "
-                  <span className="text-[#3252DF] font-bold">{searchQuery}</span>"
+                  ( {displayedListings.length} of {listings.length} listings )
+                  matching "
+                  <span className="text-[#3252DF] font-bold">
+                    {searchQuery}
+                  </span>
+                  "
                 </p>
               </div>
               <Link href="/listings" className="mt-4 sm:mt-0">
@@ -293,7 +342,8 @@ export default function ListingsGridPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-4 border-b border-border">
               <div>
                 <h2 className="text-3xl font-black tracking-tight text-foreground">
-                  {CATEGORIES.find((c) => c.id === activeCategory)?.label || "ALL PRODUCTS"}
+                  {CATEGORIES.find((c) => c.id === activeCategory)?.label ||
+                    "ALL PRODUCTS"}
                 </h2>
                 <p className="text-muted-foreground font-medium mt-1">
                   ( {displayedListings.length} of {listings.length} listings )
@@ -313,34 +363,39 @@ export default function ListingsGridPage() {
                   <ListingCard key={listing.id} listing={listing} />
                 ))}
               </div>
-              
+
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="mt-12 mb-4">
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationPrevious 
-                          href="#" 
+                        <PaginationPrevious
+                          href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            if (currentPage > 1) setCurrentPage(p => p - 1);
+                            if (currentPage > 1) setCurrentPage((p) => p - 1);
                           }}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                          className={
+                            currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : ""
+                          }
                         />
                       </PaginationItem>
-                      
+
                       {[...Array(totalPages)].map((_, i) => {
                         const pageNum = i + 1;
                         if (
-                          pageNum === 1 || 
-                          pageNum === totalPages || 
-                          (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          (pageNum >= currentPage - 1 &&
+                            pageNum <= currentPage + 1)
                         ) {
                           return (
                             <PaginationItem key={pageNum}>
-                              <PaginationLink 
-                                href="#" 
+                              <PaginationLink
+                                href="#"
                                 isActive={pageNum === currentPage}
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -352,22 +407,34 @@ export default function ListingsGridPage() {
                             </PaginationItem>
                           );
                         }
-                        
-                        if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
-                          return <PaginationItem key={pageNum}><PaginationEllipsis /></PaginationItem>;
+
+                        if (
+                          pageNum === currentPage - 2 ||
+                          pageNum === currentPage + 2
+                        ) {
+                          return (
+                            <PaginationItem key={pageNum}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          );
                         }
-                        
+
                         return null;
                       })}
-                      
+
                       <PaginationItem>
-                        <PaginationNext 
-                          href="#" 
+                        <PaginationNext
+                          href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            if (currentPage < totalPages) setCurrentPage(p => p + 1);
+                            if (currentPage < totalPages)
+                              setCurrentPage((p) => p + 1);
                           }}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                          className={
+                            currentPage === totalPages
+                              ? "pointer-events-none opacity-50"
+                              : ""
+                          }
                         />
                       </PaginationItem>
                     </PaginationContent>
@@ -412,9 +479,9 @@ function ListingCard({ listing }: { listing: Listing }) {
           ) : (
             <Tag className="h-10 w-10 text-[#d2d2d7] z-10" />
           )}
-          
+
           {/* Transparent Heart Button */}
-          <button 
+          <button
             className="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-black/20 backdrop-blur-sm text-white hover:bg-black/40 transition-colors"
             onClick={(e) => {
               e.preventDefault();
@@ -425,7 +492,7 @@ function ListingCard({ listing }: { listing: Listing }) {
             <Heart className="h-4 w-4" />
           </button>
         </div>
-        
+
         <div className="p-3 flex flex-col gap-1 bg-card flex-1">
           <div className="font-semibold text-foreground text-[15px] md:text-[16px] leading-tight">
             ${listing.price.toFixed(2)}
@@ -433,7 +500,7 @@ function ListingCard({ listing }: { listing: Listing }) {
           <h3 className="text-muted-foreground text-[13px] md:text-[14px] font-normal leading-tight line-clamp-2 mb-1">
             {listing.title}
           </h3>
-          
+
           {listing.seller?.university && (
             <div className="mt-auto pt-2 text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-t border-border/50">
               <GraduationCap className="h-3 w-3 shrink-0" />

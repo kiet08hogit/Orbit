@@ -24,9 +24,12 @@ export default function PurchaseHistoryPage() {
       try {
         const token = await getToken();
         if (!token) return;
-        const res = await axios.get(`http://127.0.0.1:3000/transactions/history`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await axios.get(
+          `http://127.0.0.1:3000/transactions/history`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         setHistory(res.data);
       } catch (error) {
         console.error("Failed to fetch history", error);
@@ -64,11 +67,27 @@ export default function PurchaseHistoryPage() {
 
   const renderTransactions = (transactions: any[]) => {
     // Apply filters
-    const filtered = transactions.filter(t => {
+    const filtered = transactions.filter((t) => {
       if (activeFilter === "All") return true;
-      if (activeFilter === "Completed" && (t.orderStatus === "COMPLETED" || t.orderStatus === "COMPLETED_BY_SELLER" || t.orderStatus === "MEETUP_CONFIRMED")) return true;
-      if (activeFilter === "Cancelled" && (t.orderStatus === "CANCELLED" || t.orderStatus === "EXPIRED" || t.orderStatus === "DECLINED")) return true;
-      if (activeFilter === "Reserved" && t.orderStatus === "PAID_PENDING_MEETUP") return true;
+      if (
+        activeFilter === "Completed" &&
+        (t.orderStatus === "COMPLETED" ||
+          t.orderStatus === "COMPLETED_BY_SELLER" ||
+          t.orderStatus === "MEETUP_CONFIRMED")
+      )
+        return true;
+      if (
+        activeFilter === "Cancelled" &&
+        (t.orderStatus === "CANCELLED" ||
+          t.orderStatus === "EXPIRED" ||
+          t.orderStatus === "DECLINED")
+      )
+        return true;
+      if (
+        activeFilter === "Reserved" &&
+        t.orderStatus === "PAID_PENDING_MEETUP"
+      )
+        return true;
       return false;
     });
 
@@ -77,22 +96,39 @@ export default function PurchaseHistoryPage() {
     return (
       <div className="space-y-4">
         {filtered.map((tx) => (
-          <div key={tx.id} className="p-4 border border-border rounded-xl flex items-start gap-4">
+          <div
+            key={tx.id}
+            className="p-4 border border-border rounded-xl flex items-start gap-4"
+          >
             <div className="w-20 h-20 bg-secondary rounded-lg overflow-hidden shrink-0">
               {tx.listing.images?.[0]?.url && (
-                <img src={tx.listing.images[0].url} alt={tx.listing.title} className="w-full h-full object-cover" />
+                <img
+                  src={tx.listing.images[0].url}
+                  alt={tx.listing.title}
+                  className="w-full h-full object-cover"
+                />
               )}
             </div>
             <div className="flex-1">
               <div className="flex justify-between">
-                <h3 className="font-bold text-foreground">{tx.listing.title}</h3>
-                <span className="font-bold text-foreground">${(tx.amount / 100).toFixed(2)}</span>
+                <h3 className="font-bold text-foreground">
+                  {tx.listing.title}
+                </h3>
+                <span className="font-bold text-foreground">
+                  ${(tx.amount / 100).toFixed(2)}
+                </span>
               </div>
               <p className="text-sm text-muted-foreground mb-2">
-                Status: <span className="font-semibold">{tx.orderStatus.replace(/_/g, ' ')}</span>
+                Status:{" "}
+                <span className="font-semibold">
+                  {tx.orderStatus.replace(/_/g, " ")}
+                </span>
               </p>
               <div className="inline-block px-3 py-1 bg-secondary rounded-full text-xs font-semibold text-muted-foreground">
-                Payment: {tx.paymentMethod === 'STRIPE' ? 'Orbit Secure Payment' : 'Direct / In-Person'}
+                Payment:{" "}
+                {tx.paymentMethod === "STRIPE"
+                  ? "Orbit Secure Payment"
+                  : "Direct / In-Person"}
               </div>
             </div>
           </div>
@@ -112,30 +148,38 @@ export default function PurchaseHistoryPage() {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">Purchase History</h1>
-              <p className="text-sm text-muted-foreground font-medium mt-1">Review your completed, reserved, and cancelled orders.</p>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">
+                Purchase History
+              </h1>
+              <p className="text-sm text-muted-foreground font-medium mt-1">
+                Review your completed, reserved, and cancelled orders.
+              </p>
             </div>
             <div className="relative w-full md:w-64">
               <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-muted-foreground" />
               </div>
-              <Input 
-                placeholder="Search History..." 
+              <Input
+                placeholder="Search History..."
                 className="pl-9 rounded-full bg-secondary/50 border-border focus-visible:ring-1"
               />
             </div>
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="buying" className="w-full" onValueChange={setActiveTab}>
+          <Tabs
+            defaultValue="buying"
+            className="w-full"
+            onValueChange={setActiveTab}
+          >
             <TabsList className="w-full justify-start border-b border-border rounded-none h-auto p-0 bg-transparent gap-8">
-              <TabsTrigger 
+              <TabsTrigger
                 value="buying"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-bold"
               >
                 Buying History
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="selling"
                 className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-bold text-muted-foreground data-[state=active]:text-foreground"
               >
@@ -145,7 +189,9 @@ export default function PurchaseHistoryPage() {
 
             {/* Filters */}
             <div className="flex items-center gap-3 py-6 overflow-x-auto scrollbar-hide">
-              <span className="text-sm font-bold text-foreground whitespace-nowrap">Filter:</span>
+              <span className="text-sm font-bold text-foreground whitespace-nowrap">
+                Filter:
+              </span>
               <div className="flex gap-2">
                 {filters.map((filter) => (
                   <button
@@ -172,7 +218,7 @@ export default function PurchaseHistoryPage() {
                 <TabsContent value="buying" className="mt-0 outline-none">
                   {renderTransactions(history.buying)}
                 </TabsContent>
-                
+
                 <TabsContent value="selling" className="mt-0 outline-none">
                   {renderTransactions(history.selling)}
                 </TabsContent>

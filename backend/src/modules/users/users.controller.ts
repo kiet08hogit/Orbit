@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, UseGuards, Param, Body, NotFoundException, ConflictException, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Patch, UseGuards, Param, Body, NotFoundException, ConflictException, UseInterceptors, Query, Post } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { UsersService } from './users.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
@@ -33,16 +33,29 @@ export class UsersController {
         }
     }
 
+    @Get('search')
+    @UseGuards(ClerkAuthGuard)
+    async searchUsers(@Query('q') query: string) {
+        if (!query) return [];
+        return this.usersService.searchUsers(query);
+    }
+
     @Get(':id')
     @UseGuards(ClerkAuthGuard)
-    @UseInterceptors(CacheInterceptor)
-    async getUser(@Param('id') id: string) {
-
-        const user = await this.usersService.getUserById(id);
+    async getUser(@Param('id') id: string, @CurrentUser() clerkUser: AuthUser) {
+        const user = await this.usersService.getUserById(id, clerkUser?.clerkUserId);
         if (!user){
             throw new NotFoundException("User not found");
         }
         return user;
+    }
+
+    @Post(':id/follow')
+    @UseGuards(ClerkAuthGuard)
+    async toggleFollow(@Param('id') id: string, @CurrentUser() clerkUser: AuthUser) {
+        const result = await this.usersService.toggleFollow(id, clerkUser.clerkUserId);
+        if (!result) throw new NotFoundException("User not found or cannot follow yourself");
+        return result;
     }
 
 

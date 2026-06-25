@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException,
 import { PrismaService } from '../../database/prisma.service';
 import { ChatGateway } from '../chat/chat.gateway';
 import { PaymentsService } from '../payments/payments.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class TransactionsService {
         private chatGateway: ChatGateway,
         @Inject(forwardRef(() => PaymentsService))
         private paymentsService: PaymentsService,
+        private notificationsService: NotificationsService
     ) {}
 
     // Generate a secure 6-digit code
@@ -43,6 +45,16 @@ export class TransactionsService {
                 orderStatus: 'PENDING_MEETUP',
                 amount: Math.round(listing.price * 100),
             }
+        });
+
+        await this.notificationsService.createNotification({
+            userId: listing.sellerId,
+            type: 'PURCHASE',
+            title: 'New Reservation',
+            content: `${buyer.name || buyer.username || 'A student'} reserved your item: ${listing.title}`,
+            actorId: buyer.id,
+            listingId: listing.id,
+            linkUrl: `/purchase-history`
         });
 
         return transaction;

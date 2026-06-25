@@ -29,7 +29,6 @@ export class ListingsController {
     }
 
     @Get('all')
-    @UseGuards(ClerkAuthGuard)
     @UseInterceptors(CacheInterceptor)
     async getAllListings(
         @Query('category') category?: ListingCategory,
@@ -39,7 +38,6 @@ export class ListingsController {
     }
 
     @Get('recommendations')
-    @UseGuards(ClerkAuthGuard)
     @UseInterceptors(CacheInterceptor)
     async getRecommendations(
         @Query('q') q: string,
@@ -104,7 +102,6 @@ export class ListingsController {
     }
 
     @Get(':id')
-    @UseGuards(ClerkAuthGuard)
     @UseInterceptors(CacheInterceptor)
     async getListing(@Param('id') id: string) {
         const listing = await this.listingsService.findById(id);

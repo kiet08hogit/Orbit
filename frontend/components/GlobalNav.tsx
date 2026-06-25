@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import React from "react";
 
+import { NotificationsMenu } from "@/components/NotificationsMenu";
+
 export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
   const pathname = usePathname() || "";
 
@@ -49,15 +51,30 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
               {/* Dropdown Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="inline-flex items-center justify-center whitespace-nowrap shrink-0 rounded-md border border-border bg-secondary text-foreground text-[13px] font-semibold h-[32px] px-3 gap-1 hover:bg-secondary/80">
-                  {pathname.startsWith('/community') ? 'Community' : 'Marketplace'}
+                  {pathname.startsWith("/community")
+                    ? "Community"
+                    : "Marketplace"}
                   <ChevronDown className="h-3.5 w-3.5 opacity-70" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[140px] rounded-xl border-border bg-popover shadow-lg">
+                <DropdownMenuContent
+                  align="start"
+                  className="w-[140px] rounded-xl border-border bg-popover shadow-lg"
+                >
                   <DropdownMenuItem className="cursor-pointer p-0">
-                    <Link href="/home" className="w-full h-full font-medium px-2 py-1.5 block">Marketplace</Link>
+                    <Link
+                      href="/home"
+                      className="w-full h-full font-medium px-2 py-1.5 block"
+                    >
+                      Marketplace
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer p-0">
-                    <Link href="/community" className="w-full h-full font-medium px-2 py-1.5 block">Community</Link>
+                    <Link
+                      href="/community"
+                      className="w-full h-full font-medium px-2 py-1.5 block"
+                    >
+                      Community
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -109,6 +126,7 @@ export function GlobalNav({ navActions }: { navActions?: React.ReactNode }) {
               <div className="scale-90 opacity-80 hover:opacity-100 transition-opacity flex items-center">
                 {navActions}
               </div>
+              <NotificationsMenu />
               <div className="scale-90 flex items-center">
                 <CustomUserButton />
               </div>
