@@ -16,7 +16,7 @@ import { useAuth } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 type NotificationType =
   | "FOLLOW"
@@ -47,7 +47,6 @@ export function NotificationsMenu() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState<NotificationType>("ALL");
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const fetchNotifications = async (currentFilter: NotificationType) => {
     try {
@@ -85,36 +84,37 @@ export function NotificationsMenu() {
       fetchNotifications(filter);
       fetchUnreadCount();
 
-      // Socket.io for realtime
-      const socket = io("http://127.0.0.1:3000", {
-        auth: {
-          token: "dummy", // we should ideally pass clerk token, but our backend authenticate expects Authorization header in REST.
-          // For now, let's just use the query or token if ChatGateway uses it.
-        },
-        query: { userId },
-      });
+      let socket: Socket | null = null;
 
-      socket.on("connect", async () => {
+      const initSocket = async () => {
         const token = await getToken();
-        socket.emit("authenticate", { token });
-      });
-
-      socket.on("new_notification", (newNotif: Notification) => {
-        setUnreadCount((prev) => prev + 1);
-        if (filter === "ALL" || filter === newNotif.type) {
-          setNotifications((prev) => [newNotif, ...prev]);
-        }
-        toast({
-          title: newNotif.title,
-          description: newNotif.content || "",
+        socket = io("http://127.0.0.1:3000", {
+          auth: { token },
+          query: { userId },
         });
-      });
+
+        socket.on("connect", () => {
+          socket!.emit("authenticate", { token });
+        });
+
+        socket.on("new_notification", (newNotif: Notification) => {
+          setUnreadCount((prev) => prev + 1);
+          if (filter === "ALL" || filter === newNotif.type) {
+            setNotifications((prev) => [newNotif, ...prev]);
+          }
+          toast(newNotif.title, {
+            description: newNotif.content || "",
+          });
+        });
+      };
+      
+      initSocket();
 
       return () => {
-        socket.disconnect();
+        socket?.disconnect();
       };
     }
-  }, [userId, filter]);
+  }, [userId, filter, getToken]);
 
   const markAsRead = async (id: string, linkUrl: string | null) => {
     try {
@@ -158,17 +158,11 @@ export function NotificationsMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-[32px] w-[32px] rounded-full hover:bg-secondary"
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-background"></span>
-          )}
-        </Button>
+      <DropdownMenuTrigger className="relative flex items-center justify-center h-[32px] w-[32px] rounded-full hover:bg-secondary focus:outline-none">
+        <Bell className="h-4 w-4" />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-background"></span>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[320px] rounded-xl p-0">
         <div className="flex items-center justify-between p-3 border-b border-border">

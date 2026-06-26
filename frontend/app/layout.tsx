@@ -149,9 +149,9 @@ export default async function RootLayout({
               </main>
             )}
           </ThemeProvider>
+          <MiniChatWidget />
+          <Toaster />
         </ClerkProvider>
-        <MiniChatWidget />
-        <Toaster />
       </body>
     </html>
   );

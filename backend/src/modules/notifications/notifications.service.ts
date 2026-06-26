@@ -36,7 +36,7 @@ export class NotificationsService {
     // Assuming user joined a room with their userId
     const user = await this.prisma.user.findUnique({ where: { id: data.userId } });
     if (user) {
-      this.chatGateway.server.to(`user_${user.clerkUserId}`).emit('new_notification', notification);
+      this.chatGateway.server.to(user.clerkUserId).emit('new_notification', notification);
     }
 
     return notification;

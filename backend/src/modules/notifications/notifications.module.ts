@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { NotificationsController } from './notifications.controller';
-import { DatabaseModule } from '../../database/database.module';
+import { PrismaModule } from '../../database/prisma.module';
 import { ChatModule } from '../chat/chat.module';
 
 @Module({
-  imports: [DatabaseModule, ChatModule],
+  imports: [PrismaModule, ChatModule],
   providers: [NotificationsService],
   controllers: [NotificationsController],
   exports: [NotificationsService],

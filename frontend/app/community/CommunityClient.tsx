@@ -239,7 +239,10 @@ export function CommunityClient({ initialPosts }: { initialPosts: Post[] }) {
       );
       setActivePostForComments((prevActivePost) => {
         if (prevActivePost === postId) {
-          setComments((prevComments) => [...prevComments, comment]);
+          setComments((prevComments) => {
+            if (prevComments.some(c => c.id === comment.id)) return prevComments;
+            return [...prevComments, comment];
+          });
         }
         return prevActivePost;
       });
