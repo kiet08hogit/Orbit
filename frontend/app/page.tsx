@@ -82,9 +82,9 @@ export default function Home() {
               What is Orbit?
             </h2>
             <p className="text-[19px] md:text-[22px] font-medium leading-relaxed tracking-tight max-w-xl text-gray-400 dark:text-[#5a5852]">
-              Orbit is the student exclusive marketplace to buy,
-              sell, and swap anything. Stop making big companies richer, make
-              your friends rich instead, all you need to do is to Orbit it.
+              Orbit is the student exclusive marketplace to buy, sell, and swap
+              anything. Stop making big companies richer, make your friends rich
+              instead, all you need to do is to Orbit it.
             </p>
 
             {/* Features (Aligned Vertically) */}
@@ -109,7 +109,8 @@ export default function Home() {
                 <div>
                   <h3 className="text-[14px] font-bold mb-0.5">Meetup Codes</h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
-                    Funds are held securely until you exchange the code in person.
+                    Funds are held securely until you exchange the code in
+                    person.
                   </p>
                 </div>
               </div>
@@ -118,9 +119,7 @@ export default function Home() {
                   <ShoppingBag className="h-4 w-4 text-[#f54e00]" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-bold mb-0.5">
-                    Campus Local
-                  </h3>
+                  <h3 className="text-[14px] font-bold mb-0.5">Campus Local</h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
                     No shipping fees. Pick up your items the same day on campus.
                   </p>
@@ -131,7 +130,9 @@ export default function Home() {
                   <Sparkles className="h-4 w-4 text-[#f54e00]" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-bold mb-0.5">Swipe to Match</h3>
+                  <h3 className="text-[14px] font-bold mb-0.5">
+                    Swipe to Match
+                  </h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
                     Tinder-style swiping makes discovering new listings fun.
                   </p>
@@ -142,9 +143,12 @@ export default function Home() {
                   <ShieldCheck className="h-4 w-4 text-[#f54e00]" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-bold mb-0.5">Secure Payment</h3>
+                  <h3 className="text-[14px] font-bold mb-0.5">
+                    Secure Payment
+                  </h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
-                    Orbit Escrow ensures safe transactions & protects your money.
+                    Orbit Escrow ensures safe transactions & protects your
+                    money.
                   </p>
                 </div>
               </div>
@@ -153,7 +157,9 @@ export default function Home() {
                   <MessageCircle className="h-4 w-4 text-[#f54e00]" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-bold mb-0.5">Real-Time Chat</h3>
+                  <h3 className="text-[14px] font-bold mb-0.5">
+                    Real-Time Chat
+                  </h3>
                   <p className="text-gray-400 dark:text-[#807d72] text-[13px] leading-snug m-0">
                     No sketchy DMs. Keep communication safely inside the app.
                   </p>
@@ -223,11 +229,15 @@ export default function Home() {
             See what's popping around your uni community
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center text-center group cursor-pointer">
-              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0]">
-                <img
+            <Link
+              href="/listings"
+              className="flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0] relative">
+                <Image
                   src="/Goods.jpg"
                   alt="Goods"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -235,25 +245,34 @@ export default function Home() {
               <p className="text-sm text-gray-400 dark:text-[#807d72]">
                 Dorm, Clothing, School, and more
               </p>
-            </div>
-            <div className="flex flex-col items-center text-center group cursor-pointer">
-              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0]">
-                <img
+            </Link>
+            <Link
+              href="/listings?category=SERVICES"
+              className="flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0] relative">
+                <Image
                   src="/Services.png"
                   alt="Service"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
               <h3 className="text-xl font-bold mb-1">Services</h3>
               <p className="text-sm text-gray-400 dark:text-[#807d72]">
-                CS prep, all kinds of tutoring, resumes, and career larping, we’ve got your back
+                CS prep, all kinds of tutoring, resumes, and career larping,
+                we’ve got your back
               </p>
-            </div>
-            <div className="flex flex-col items-center text-center group cursor-pointer">
-              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0]">
-                <img
+            </Link>
+            <Link
+              href="/listings?category=SUBLEASE"
+              className="flex flex-col items-center text-center group cursor-pointer"
+            >
+              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0] relative">
+                <Image
                   src="/sublease.jpg"
                   alt="Sublease"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -261,7 +280,7 @@ export default function Home() {
               <p className="text-sm text-gray-400 dark:text-[#807d72]">
                 Need a room or a sublet? Someone’s got a spot
               </p>
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -271,11 +290,12 @@ export default function Home() {
             Shop by Category
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            <Link href="/listings?category=HOUSING" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
+            <Link href="/listings?category=DORM" className="group block">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0] relative">
+                <Image
                   src="/dorm.jpg"
                   alt="Dorm"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -283,21 +303,25 @@ export default function Home() {
             </Link>
 
             <Link href="/listings?category=SCHOOL" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0] relative">
+                <Image
                   src="/school%20supplies.jpg"
                   alt="School Supplies"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <h3 className="text-center font-semibold text-sm">School Supplies</h3>
+              <h3 className="text-center font-semibold text-sm">
+                School Supplies
+              </h3>
             </Link>
 
             <Link href="/listings?category=OTHER" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0] relative">
+                <Image
                   src="/electronics.jpg"
                   alt="Electronics"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -305,10 +329,11 @@ export default function Home() {
             </Link>
 
             <Link href="/listings?category=CLOTHES" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0] relative">
+                <Image
                   src="/clothing.jpg"
                   alt="Clothing"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -316,21 +341,25 @@ export default function Home() {
             </Link>
 
             <Link href="/listings?category=LEISURE" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0] relative">
+                <Image
                   src="/rave.JPG"
                   alt="Event Tickets"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
-              <h3 className="text-center font-semibold text-sm">Event Tickets</h3>
+              <h3 className="text-center font-semibold text-sm">
+                Event Tickets
+              </h3>
             </Link>
 
             <Link href="/listings?category=ACCESSORIES" className="group block">
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0]">
-                <img
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0] relative">
+                <Image
                   src="/accessories.jpg"
                   alt="Accessories"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -347,9 +376,10 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <div className="group cursor-pointer">
               <div className="w-full h-48 md:h-56 rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0] relative">
-                <img
+                <Image
                   src="/UIC.webp"
                   alt="UIC"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -364,9 +394,10 @@ export default function Home() {
                     Coming Soon
                   </span>
                 </div>
-                <img
+                <Image
                   src="/UIUC.jpg"
                   alt="UIUC"
+                  fill
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>

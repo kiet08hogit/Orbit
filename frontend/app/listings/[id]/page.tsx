@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, SignUpButton } from "@clerk/nextjs";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import axios from "axios";
@@ -78,7 +78,8 @@ const getImageUrl = (url?: string) => {
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  HOUSING: "Dorm",
+  DORM: "Dorm",
+  SUBLEASE: "Sublease",
   CLOTHES: "Clothes",
   SCHOOL: "School",
   LEISURE: "Leisure",
@@ -110,46 +111,43 @@ export default function ListingDetailPage() {
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (!isSignedIn) {
-      router.push("/");
-      return;
-    }
-
     const fetchListingAndView = async () => {
       try {
-        const token = await getToken();
+        let headers: any = {};
+        let token = null;
+        if (isSignedIn) {
+          token = await getToken();
+          headers = { Authorization: `Bearer ${token}` };
+        }
+
         const res = await axios.get(
           `http://127.0.0.1:3000/listings/${params.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
+          { headers },
         );
 
         const data = res.data;
         setListing(data);
 
-        // Record View
-        axios
-          .post(
-            `http://127.0.0.1:3000/listings/${params.id}/view`,
-            {},
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            },
-          )
-          .catch((e) => console.error("Failed to record view", e));
+        if (isSignedIn) {
+          // Record View
+          axios
+            .post(
+              `http://127.0.0.1:3000/listings/${params.id}/view`,
+              {},
+              { headers },
+            )
+            .catch((e) => console.error("Failed to record view", e));
 
-        // Check if wishlisted
-        const wishlistRes = await axios.get(
-          `http://127.0.0.1:3000/listings/wishlist`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-        const isLiked = wishlistRes.data.some(
-          (item: any) => item.id === params.id,
-        );
-        setIsWishlisted(isLiked);
+          // Check if wishlisted
+          const wishlistRes = await axios.get(
+            `http://127.0.0.1:3000/listings/wishlist`,
+            { headers },
+          );
+          const isLiked = wishlistRes.data.some(
+            (item: any) => item.id === params.id,
+          );
+          setIsWishlisted(isLiked);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to fetch listing");
       } finally {
@@ -634,6 +632,22 @@ export default function ListingDetailPage() {
                     Edit Listing
                   </Button>
                 </Link>
+              ) : !isSignedIn ? (
+                <div className="bg-secondary p-5 rounded-xl border border-border mt-2 text-center shadow-sm">
+                  <Shield className="h-8 w-8 text-emerald-600 mx-auto mb-3" />
+                  <h3 className="font-bold text-base text-foreground mb-1">
+                    .edu Verification Required
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Sign in with your university email to reserve this item,
+                    message the seller, or save it to your wishlist.
+                  </p>
+                  <SignUpButton mode="modal">
+                    <Button className="w-full bg-foreground text-background font-bold h-11 rounded-lg">
+                      Verify .edu Email
+                    </Button>
+                  </SignUpButton>
+                </div>
               ) : (
                 <>
                   <Button

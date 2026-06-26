@@ -3,6 +3,7 @@ import { PostsService } from './posts.service';
 import { PrismaService } from '../../database/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ChatGateway } from '../chat/chat.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 import { NotFoundException } from '@nestjs/common';
 import { PostType } from '@prisma/client';
 
@@ -40,12 +41,17 @@ describe('PostsService', () => {
       },
     };
 
+    const mockNotificationsService = {
+      createNotification: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PostsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: StorageService, useValue: mockStorageService },
         { provide: ChatGateway, useValue: mockChatGateway },
+        { provide: NotificationsService, useValue: mockNotificationsService },
       ],
     }).compile();
 
@@ -80,6 +86,7 @@ describe('PostsService', () => {
           content: 'Hello World',
           postType: PostType.DISCUSSION,
           imageUrls: ['/uploads/test.jpg'],
+          isAnonymous: false,
           author: { connect: { id: mockUser.id } },
         },
         include: expect.any(Object),

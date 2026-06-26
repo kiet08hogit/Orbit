@@ -56,7 +56,8 @@ export default function EditListingPage() {
   const categories = [
     "SCHOOL",
     "CLOTHES",
-    "HOUSING",
+    "DORM",
+    "SUBLEASE",
     "LEISURE",
     "ACCESSORIES",
     "OTHER",

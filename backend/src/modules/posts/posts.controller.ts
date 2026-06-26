@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, UseGuards, Req, UseInterceptors, UploadedFiles, Param } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, UseGuards, Req, UseInterceptors, UploadedFiles, Param, Query } from '@nestjs/common';
+import { PostType } from '@prisma/client';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
@@ -11,9 +12,9 @@ export class PostsController {
 
   @Get()
   @UseGuards(ClerkAuthGuard)
-  async getAllPosts(@Req() req) {
+  async getAllPosts(@Req() req, @Query('type') type?: PostType) {
     const clerkUserId = req.user.clerkUserId;
-    const posts = await this.postsService.getAllPosts(clerkUserId);
+    const posts = await this.postsService.getAllPosts(clerkUserId, type);
     const ids = posts.map(p => p.id);
     const dups = ids.filter((item, index) => ids.indexOf(item) !== index);
     if (dups.length > 0) {
@@ -52,5 +53,12 @@ export class PostsController {
   @UseGuards(ClerkAuthGuard)
   getComments(@Param('id') id: string) {
     return this.postsService.getComments(id);
+  }
+
+  @Delete(':id')
+  @UseGuards(ClerkAuthGuard)
+  deletePost(@Req() req, @Param('id') id: string) {
+    const clerkUserId = req.user.clerkUserId;
+    return this.postsService.deletePost(clerkUserId, id);
   }
 }

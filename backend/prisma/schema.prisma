@@ -37,6 +37,12 @@ model User {
   buyerTransactions   Transaction[]        @relation("BuyerTransactions")
   sellerTransactions  Transaction[]        @relation("SellerTransactions")
 
+  followers           User[]               @relation("UserFollows")
+  following           User[]               @relation("UserFollows")
+
+  notificationsReceived Notification[]     @relation("NotificationsReceived")
+  notificationsSent     Notification[]     @relation("NotificationsSent")
+
   // Notification Preferences
   emailNotifications  Boolean @default(true)
   emailFrequency      String  @default("daily")
@@ -87,16 +93,17 @@ model ListingImage {
 }
 
 model Post {
-  id        String        @id @default(uuid())
-  content   String
-  postType  PostType
-  imageUrls String[]
-  authorId  String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  author    User          @relation(fields: [authorId], references: [id])
-  comments  PostComment[]
-  likes     PostLike[]
+  id          String        @id @default(uuid())
+  content     String
+  postType    PostType
+  imageUrls   String[]
+  authorId    String
+  isAnonymous Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  author      User          @relation(fields: [authorId], references: [id])
+  comments    PostComment[]
+  likes       PostLike[]
 }
 
 model PostLike {
@@ -215,7 +222,8 @@ model ListingView {
 }
 
 enum ListingCategory {
-  HOUSING
+  DORM
+  SUBLEASE
   CLOTHES
   SCHOOL
   LEISURE
@@ -276,4 +284,30 @@ enum MeetupStatus {
   PROPOSED
   ACCEPTED
   CANCELLED
+}
+
+enum NotificationType {
+  FOLLOW
+  LIKE
+  COMMENT
+  PURCHASE
+  OFFER
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  content   String?
+  isRead    Boolean          @default(false)
+  linkUrl   String?
+  createdAt DateTime         @default(now())
+  
+  actorId   String?
+  postId    String?
+  listingId String?
+
+  user      User             @relation("NotificationsReceived", fields: [userId], references: [id])
+  actor     User?            @relation("NotificationsSent", fields: [actorId], references: [id])
 }

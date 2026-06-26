@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { TransactionsService } from '../transactions/transactions.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Stripe v22 CJS types aren't easily importable — use require + any for the instance
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -9,7 +11,12 @@ const Stripe = require('stripe');
 export class PaymentsService {
     private stripe: any;
 
-    constructor(private prisma: PrismaService) {
+    constructor(
+        private prisma: PrismaService,
+        @Inject(forwardRef(() => TransactionsService))
+        private transactionsService: TransactionsService,
+        private notificationsService: NotificationsService
+    ) {
         this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
             apiVersion: '2026-05-27.dahlia',
         });
@@ -225,7 +232,6 @@ export class PaymentsService {
                     })
                 ]);
 
-                // Also ensure a chat message exists so the Chat UI can attach the listing context
                 let conversation = await this.prisma.conversation.findFirst({
                     where: {
                         AND: [
@@ -234,6 +240,21 @@ export class PaymentsService {
                         ]
                     }
                 });
+
+                const buyer = await this.prisma.user.findUnique({ where: { id: transaction.buyerId } });
+                const listing = await this.prisma.listing.findUnique({ where: { id: transaction.listingId } });
+
+                if (buyer && listing) {
+                    await this.notificationsService.createNotification({
+                        userId: transaction.sellerId,
+                        type: 'PURCHASE',
+                        title: 'New Reservation',
+                        content: `${buyer.name || buyer.username || 'A student'} paid and reserved your item: ${listing.title}`,
+                        actorId: buyer.id,
+                        listingId: listing.id,
+                        linkUrl: `/purchase-history`
+                    });
+                }
 
                 if (!conversation) {
                     conversation = await this.prisma.conversation.create({

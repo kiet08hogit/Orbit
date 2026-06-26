@@ -3,6 +3,7 @@ import { TransactionsService } from './transactions.service';
 import { PrismaService } from '../../database/prisma.service';
 import { ChatGateway } from '../chat/chat.gateway';
 import { PaymentsService } from '../payments/payments.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 
 describe('TransactionsService', () => {
@@ -46,12 +47,20 @@ describe('TransactionsService', () => {
       createConnectAccount: jest.fn(),
     };
 
+    // Mock Notifications Service
+    const mockNotificationsService = {
+      createNotification: jest.fn(),
+      getUnreadCount: jest.fn(),
+      markAsRead: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TransactionsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ChatGateway, useValue: mockChatGateway },
         { provide: PaymentsService, useValue: mockPaymentsService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
       ],
     }).compile();
 

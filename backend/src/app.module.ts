@@ -20,7 +20,7 @@ import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { APP_GUARD } from '@nestjs/core';
 import { ReportsModule } from './modules/reports/reports.module';
 import { PaymentsModule } from './modules/payments/payments.module';
-
+import { NotificationsModule } from './modules/notifications/notifications.module';
 @Module({
     imports: [
         ServeStaticModule.forRoot({
@@ -40,6 +40,9 @@ import { PaymentsModule } from './modules/payments/payments.module';
         PostsModule,
         TransactionsModule,
         ReportsModule,
+        JobsModule,
+        PaymentsModule,
+        NotificationsModule,
         CacheModule.registerAsync({
             isGlobal: true,
             imports: [ConfigModule],
