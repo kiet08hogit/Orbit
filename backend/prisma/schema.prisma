@@ -222,7 +222,8 @@ model ListingView {
 }
 
 enum ListingCategory {
-  HOUSING
+  DORM
+  SUBLEASE
   CLOTHES
   SCHOOL
   LEISURE

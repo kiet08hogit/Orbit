@@ -111,7 +111,8 @@ export default function AddProductPage() {
   const categories = [
     "SCHOOL",
     "CLOTHES",
-    "HOUSING",
+    "DORM",
+    "SUBLEASE",
     "LEISURE",
     "ACCESSORIES",
     "OTHER",

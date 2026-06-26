@@ -46,7 +46,8 @@ const getImageUrl = (url?: string) => {
 };
 
 const CATEGORIES = [
-  { id: "HOUSING", label: "DORM" },
+  { id: "DORM", label: "DORM" },
+  { id: "SUBLEASE", label: "SUBLEASE" },
   { id: "CLOTHES", label: "CLOTHES" },
   { id: "SCHOOL", label: "SCHOOL" },
   { id: "LEISURE", label: "LEISURE" },
@@ -57,12 +58,19 @@ const CATEGORIES = [
 
 const getCategoryHeroInfo = (category: string | null) => {
   switch (category) {
-    case "HOUSING":
+    case "DORM":
       return {
         image: "/dorm.avif",
         objectPosition: "object-[50%_18%]",
-        title: "Housing & Furniture",
+        title: "Dorm Essentials",
         description: "Move in and settle with all the essentials.",
+      };
+    case "SUBLEASE":
+      return {
+        image: "/sublease.jpg",
+        objectPosition: "object-center",
+        title: "Subleases",
+        description: "Find a spot or sublet yours.",
       };
     case "CLOTHES":
       return {

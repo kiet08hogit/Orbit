@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
 const CATEGORIES = [
-  { id: "HOUSING", label: "Dorm/Sublease" },
+  { id: "DORM", label: "Dorm" },
+  { id: "SUBLEASE", label: "Sublease" },
   { id: "CLOTHES", label: "Clothing" },
   { id: "SCHOOL", label: "School" },
   { id: "LEISURE", label: "Leisure" },

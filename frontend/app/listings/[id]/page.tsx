@@ -78,7 +78,8 @@ const getImageUrl = (url?: string) => {
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
-  HOUSING: "Dorm",
+  DORM: "Dorm",
+  SUBLEASE: "Sublease",
   CLOTHES: "Clothes",
   SCHOOL: "School",
   LEISURE: "Leisure",

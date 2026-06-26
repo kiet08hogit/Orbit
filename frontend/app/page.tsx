@@ -265,7 +265,7 @@ export default function Home() {
               </p>
             </Link>
             <Link
-              href="/listings?category=HOUSING"
+              href="/listings?category=SUBLEASE"
               className="flex flex-col items-center text-center group cursor-pointer"
             >
               <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 shadow-sm border border-[#333] dark:border-[#e6e5e0] relative">
@@ -290,7 +290,7 @@ export default function Home() {
             Shop by Category
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            <Link href="/listings?category=HOUSING" className="group block">
+            <Link href="/listings?category=DORM" className="group block">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden mb-3 bg-[#1a1a1a] border border-[#333] dark:bg-white dark:border-[#e6e5e0] relative">
                 <Image
                   src="/dorm.jpg"
