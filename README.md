@@ -1,4 +1,5 @@
-# Orbit 🔵
+# <img width="50" height="50" alt="Orbit_logo" src="https://github.com/user-attachments/assets/cdc7c95f-4867-45cf-9288-f3d07af498f9" /> Orbit 
+
 
 **Orbit** is a verified marketplace exclusively for university students. It provides a safe, trusted platform to buy, sell, and swap items with other verified student profiles using their university email addresses.
 
