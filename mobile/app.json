@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Orbit",
+    "slug": "orbit",
+    "version": "0.1.0",
+    "scheme": "orbit",
+    "orientation": "portrait",
+    "icon": "./assets/images/orbit-logo-solid.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/images/orbit-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0a0a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.orbit.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/orbit-logo.png",
+        "backgroundColor": "#0a0a0a"
+      },
+      "package": "com.orbit.mobile"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/images/orbit-logo-solid.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Orbit needs access to your photos so you can upload listing images.",
+          "cameraPermission": "Orbit needs camera access to capture listing photos."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "http://127.0.0.1:3000",
+      "clerkPublishableKey": ""
+    }
+  }
+}
