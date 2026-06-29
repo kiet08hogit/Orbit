@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,6 +28,7 @@ import { Backlight } from "@/components/ui/backlight";
 
 interface Seller {
   id: string;
+  clerkUserId?: string;
   name?: string;
   username?: string;
   avatarUrl?: string;
@@ -368,7 +370,7 @@ export default function SwipePage() {
                           <p className="text-sm font-medium text-muted-foreground line-clamp-3 mb-5 leading-relaxed">
                             {activeListing.description}
                           </p>
-                          <div className="flex items-center gap-3 pt-4 border-t border-border">
+                          <Link href={`/profile/${activeListing.seller?.clerkUserId || activeListing.seller?.id}`} className="flex items-center gap-3 pt-4 border-t border-border hover:opacity-80 transition-opacity cursor-pointer">
                             <Avatar className="h-10 w-10 border border-border shadow-sm">
                               <AvatarImage
                                 src={activeListing.seller?.avatarUrl}
@@ -387,7 +389,7 @@ export default function SwipePage() {
                                 <MapPin className="h-3 w-3" /> UIC Verified
                               </span>
                             </div>
-                          </div>
+                          </Link>
                         </div>
                       </div>
                     </Backlight>

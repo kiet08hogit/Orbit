@@ -22,6 +22,8 @@ import {
   Trash2,
   DollarSign,
   CheckCircle2,
+  BadgeCheck,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -35,6 +37,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const getImageUrl = (url?: string) => {
   if (!url) return "";
@@ -63,6 +72,26 @@ export default function ProfilePage() {
     classYear: "",
     university: "",
   });
+
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+
+  const [reviewsData, setReviewsData] = useState<any>(null);
+
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+  const [followersList, setFollowersList] = useState<any[]>([]);
+  const [followingList, setFollowingList] = useState<any[]>([]);
+  const [isLoadingFollowData, setIsLoadingFollowData] = useState(false);
+
+  const [hasChatted, setHasChatted] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+
 
   const [isStripeLinked, setIsStripeLinked] = useState(false);
   const [isLoadingStripe, setIsLoadingStripe] = useState(false);
@@ -101,6 +130,15 @@ export default function ProfilePage() {
         setIsFollowing(res.data.isFollowing || false);
         setFollowersCount(res.data._count?.followers || 0);
         setFollowingCount(res.data._count?.following || 0);
+        setHasChatted(res.data.hasChatted || false);
+
+        // Fetch reviews
+        try {
+          const reviewsRes = await axios.get(`http://127.0.0.1:3000/reviews/user/${res.data.id}`);
+          setReviewsData(reviewsRes.data);
+        } catch (e) {
+          console.error("Failed to load reviews");
+        }
 
         // Fetch Stripe status if own profile
         if (currentUserId === res.data.clerkUserId) {
@@ -142,6 +180,32 @@ export default function ProfilePage() {
     } catch (err) {
       console.error(err);
       setIsLoadingStripe(false);
+    }
+  };
+
+  const handleRemoveFollower = async (followerId: string) => {
+    try {
+      const token = await getToken();
+      await axios.delete(`http://127.0.0.1:3000/users/${followerId}/follower`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFollowersList(prev => prev.filter(u => u.id !== followerId));
+      setFollowersCount(prev => prev - 1);
+    } catch (err) {
+      console.error("Failed to remove follower", err);
+    }
+  };
+
+  const handleUnfollow = async (targetId: string) => {
+    try {
+      const token = await getToken();
+      await axios.post(`http://127.0.0.1:3000/users/${targetId}/follow`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFollowingList(prev => prev.filter(u => u.id !== targetId));
+      setFollowingCount(prev => prev - 1);
+    } catch (err) {
+      console.error("Failed to unfollow user", err);
     }
   };
 
@@ -203,13 +267,112 @@ export default function ProfilePage() {
         },
       );
 
-      setUserProfile({ ...userProfile, ...formData, avatarUrl });
+      setUserProfile((prev: any) => ({ ...prev, ...formData }));
       setIsEditing(false);
+      toast.success("Profile updated successfully");
     } catch (err) {
-      console.error("Failed to save profile", err);
-      alert("Failed to save profile.");
+      console.error(err);
+      toast.error("Failed to update profile");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (reviewRating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+    setIsSubmittingReview(true);
+    try {
+      const token = await getToken();
+      await axios.post(
+        "http://127.0.0.1:3000/reviews",
+        {
+          revieweeId: userProfile.id,
+          rating: reviewRating,
+          comment: reviewComment,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Review submitted successfully!");
+      setShowReviewModal(false);
+      setReviewRating(0);
+      setReviewComment("");
+      
+      // Refresh reviews
+      const reviewsRes = await axios.get(`http://127.0.0.1:3000/reviews/user/${userProfile.id}`);
+      setReviewsData(reviewsRes.data);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to submit review");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const fetchFollowData = async (type: 'followers' | 'following') => {
+    if (!userProfile?.id && !userId) return;
+    setIsLoadingFollowData(true);
+    try {
+      const token = await getToken();
+      const res = await axios.get(`http://127.0.0.1:3000/users/${userProfile?.id || userId}/${type}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (type === 'followers') setFollowersList(res.data);
+      else setFollowingList(res.data);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to load ${type}`);
+    } finally {
+      setIsLoadingFollowData(false);
+    }
+  };
+
+  const handleOpenFollowers = () => {
+    setShowFollowers(true);
+    if (followersList.length === 0) fetchFollowData('followers');
+  };
+
+  const handleOpenFollowing = () => {
+    setShowFollowing(true);
+    if (followingList.length === 0) fetchFollowData('following');
+  };
+
+  const handleSendVerification = async () => {
+    try {
+      setIsVerifying(true);
+      const token = await getToken();
+      await axios.post(
+        `http://127.0.0.1:3000/users/verify-edu/send`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCodeSent(true);
+      toast.success("Verification code sent to your email.");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to send code. Make sure your account email is a .edu email.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    try {
+      setIsVerifying(true);
+      const token = await getToken();
+      await axios.post(
+        `http://127.0.0.1:3000/users/verify-edu/verify`,
+        { code: verificationCode },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Email verified successfully!");
+      setUserProfile((prev: any) => ({ ...prev, isEduVerified: true }));
+      setCodeSent(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to verify code.");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -257,6 +420,7 @@ export default function ProfilePage() {
     year: "numeric",
   });
   const listingsCount = userProfile._count?.listings || 0;
+  const isOwnProfile = currentUserId === userProfile.clerkUserId;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background dark:bg-card py-8 px-4 sm:px-6 font-sans relative overflow-hidden">
@@ -299,7 +463,7 @@ export default function ProfilePage() {
               >
                 {avatarPreview || userProfile.avatarUrl ? (
                   <img
-                    src={avatarPreview || userProfile.avatarUrl}
+                    src={avatarPreview || userProfile.avatarUrl || undefined}
                     alt="Avatar"
                     className="h-full w-full object-cover"
                   />
@@ -398,6 +562,7 @@ export default function ProfilePage() {
                           </SelectContent>
                         </Select>
                       </div>
+
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -411,25 +576,81 @@ export default function ProfilePage() {
                         rows={2}
                       />
                     </div>
+                    {/* Edu Verification Section */}
+                    <div className="pt-4 border-t border-border space-y-3">
+                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        .edu Email Verification
+                        {userProfile?.isEduVerified && (
+                          <BadgeCheck className="h-5 w-5 text-blue-500" />
+                        )}
+                      </h3>
+                      {userProfile?.isEduVerified ? (
+                        <p className="text-sm text-green-600 font-medium bg-green-500/10 p-3 rounded-lg border border-green-500/20 inline-block">
+                          Your account is fully verified.
+                        </p>
+                      ) : (
+                        <div className="space-y-4 max-w-[400px]">
+                          <p className="text-[12px] text-muted-foreground">
+                            Verify your student or staff status to unlock the verified
+                            badge on your profile. We will send a code to your registered account email.
+                          </p>
+                          {!codeSent ? (
+                            <Button
+                              onClick={handleSendVerification}
+                              disabled={isVerifying}
+                              className="w-full sm:w-auto text-xs h-8"
+                            >
+                              {isVerifying ? (
+                                <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                              ) : null}
+                              Send Code
+                            </Button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Enter 6-digit code"
+                                value={verificationCode}
+                                onChange={(e) => setVerificationCode(e.target.value)}
+                                className="bg-secondary h-8 text-xs max-w-[150px]"
+                                maxLength={6}
+                              />
+                              <Button
+                                onClick={handleVerifyCode}
+                                disabled={isVerifying || verificationCode.length !== 6}
+                                className="h-8 text-xs"
+                              >
+                                {isVerifying ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  "Verify"
+                                )}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <>
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
                       <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <h1 className="text-2xl font-black tracking-tight text-foreground">
-                            {userProfile.name || "Anonymous User"}
-                          </h1>
-                          <div
-                            className="flex items-center justify-center h-4 w-4 rounded-full bg-blue-500 text-primary-foreground shadow-sm"
-                            title="Verified UIC Student"
-                          >
-                            <Shield className="h-2.5 w-2.5" />
-                          </div>
-                        </div>
-                        <p className="text-muted-foreground text-[13px] font-bold mb-3">
-                          @{userProfile.username || userProfile.id.slice(0, 8)}
+                        <h1 className="text-3xl font-black text-foreground flex items-center gap-2">
+                          {userProfile?.name || "Orbit User"}
+                          {userProfile?.isEduVerified && (
+                            <BadgeCheck className="h-6 w-6 text-blue-500 shrink-0" />
+                          )}
+                        </h1>
+                        <p className="text-lg text-muted-foreground font-medium">
+                          @{userProfile?.username || "username"}
                         </p>
+                        {reviewsData && reviewsData.totalCount > 0 && (
+                          <div className="flex items-center gap-1 mt-1 text-sm font-medium text-amber-500">
+                            <Star className="h-4 w-4 fill-current" />
+                            <span>{reviewsData.averageRating.toFixed(1)}</span>
+                            <span className="text-muted-foreground ml-1">({reviewsData.totalCount} reviews)</span>
+                          </div>
+                        )}
 
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 mb-3">
                           {userProfile.major && (
@@ -450,6 +671,7 @@ export default function ProfilePage() {
                               {userProfile.classYear}
                             </div>
                           )}
+
                           <div className="flex items-center gap-1 bg-secondary text-muted-foreground px-2.5 py-1 font-bold text-[11px] rounded-full">
                             <Calendar className="h-3 w-3" />
                             Joined {joinDate}
@@ -498,11 +720,21 @@ export default function ProfilePage() {
                               {isFollowLoading ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : isFollowing ? (
-                                "Unfollow"
+                                "Followed"
                               ) : (
                                 "Follow"
                               )}
                             </Button>
+                            {hasChatted && (
+                              <Button
+                                variant="outline"
+                                className="rounded-full h-8 font-bold text-[13px] text-amber-500 hover:text-amber-600 hover:bg-amber-50 border-amber-200 transition-all flex gap-1.5"
+                                onClick={() => setShowReviewModal(true)}
+                              >
+                                <Star className="h-3.5 w-3.5" />
+                                Leave a Review
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               className="rounded-full h-8 font-bold text-[13px] text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all flex gap-1.5"
@@ -606,7 +838,9 @@ export default function ProfilePage() {
                     <Star className="h-3.5 w-3.5" /> Rating
                   </span>
                   <span className="text-lg font-black text-foreground">
-                    New
+                    {reviewsData && reviewsData.totalCount > 0
+                      ? reviewsData.averageRating.toFixed(1)
+                      : "New"}
                   </span>
                 </div>
                 <div className="flex flex-col items-center md:items-start gap-0.5">
@@ -617,22 +851,22 @@ export default function ProfilePage() {
                     {listingsCount}
                   </span>
                 </div>
-                <div className="flex flex-col items-center md:items-start gap-0.5">
+                <button onClick={handleOpenFollowers} className="flex flex-col items-center md:items-start gap-0.5 hover:opacity-70 transition-opacity">
                   <span className="text-[12px] font-bold text-muted-foreground flex items-center gap-1.5">
                     <Heart className="h-3.5 w-3.5" /> Followers
                   </span>
                   <span className="text-lg font-black text-foreground">
                     {followersCount}
                   </span>
-                </div>
-                <div className="flex flex-col items-center md:items-start gap-0.5">
+                </button>
+                <button onClick={handleOpenFollowing} className="flex flex-col items-center md:items-start gap-0.5 hover:opacity-70 transition-opacity">
                   <span className="text-[12px] font-bold text-muted-foreground flex items-center gap-1.5">
                     <Heart className="h-3.5 w-3.5" /> Following
                   </span>
                   <span className="text-lg font-black text-foreground">
                     {followingCount}
                   </span>
-                </div>
+                </button>
               </div>
 
               {/* Stripe Connection Section */}
@@ -760,21 +994,216 @@ export default function ProfilePage() {
                 ))}
               </div>
             ) : (
-              <div className="bg-card rounded-[2rem] border border-border p-12 flex flex-col items-center justify-center text-center shadow-sm">
-                <div className="h-16 w-16 bg-secondary rounded-full flex items-center justify-center mb-4 border border-border">
-                  <Tag className="h-8 w-8 text-zinc-300" />
-                </div>
-                <h3 className="text-lg font-black text-foreground mb-1">
-                  No active listings
+              <div className="flex flex-col items-center justify-center p-12 bg-card rounded-[18px] border border-border border-dashed">
+                <Tag className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <h3 className="text-base font-bold text-foreground">
+                  No listings yet
                 </h3>
-                <p className="text-muted-foreground text-sm font-medium">
-                  This student doesn't have any items for sale right now.
+                <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
+                  When {userProfile.name?.split(" ")[0] || "this user"} posts
+                  items for sale, they will appear here.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* User's Reviews Section */}
+          <div className="flex flex-col gap-4 mt-8">
+            <h2 className="text-lg font-black tracking-tight text-foreground px-2">
+              Reviews ({reviewsData?.totalCount || 0})
+            </h2>
+            {reviewsData && reviewsData.reviews && reviewsData.reviews.length > 0 ? (
+              <div className="flex flex-col gap-4">
+                {reviewsData.reviews.map((review: any) => (
+                  <div key={review.id} className="bg-card rounded-2xl p-5 border border-border shadow-sm flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      {review.reviewer.avatarUrl ? (
+                        <img
+                          src={getImageUrl(review.reviewer.avatarUrl)}
+                          alt="Reviewer"
+                          className="h-10 w-10 rounded-full object-cover bg-secondary"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 flex items-center justify-center text-zinc-400 text-lg font-bold bg-secondary rounded-full shrink-0">
+                          {(review.reviewer.name || review.reviewer.username || "U").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">{review.reviewer.name || review.reviewer.username}</h4>
+                        <div className="flex items-center gap-1 text-amber-500">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className={`h-3 w-3 ${i < review.rating ? "fill-current" : "text-muted-foreground/30"}`} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-muted-foreground">{review.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 bg-card rounded-[18px] border border-border border-dashed">
+                <Star className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <h3 className="text-base font-bold text-foreground">
+                  No reviews yet
+                </h3>
+                <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
+                  {userProfile.name?.split(" ")[0] || "This user"} hasn't received any reviews.
                 </p>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Followers Dialog */}
+      <Dialog open={showFollowers} onOpenChange={setShowFollowers}>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md max-h-[80vh] flex flex-col p-0 overflow-hidden bg-background">
+          <DialogHeader className="p-4 border-b border-border">
+            <DialogTitle className="text-center font-bold">Followers</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto p-4 flex-1">
+            {isLoadingFollowData ? (
+              <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : followersList.length === 0 ? (
+              <p className="text-center text-muted-foreground text-sm py-8">No followers yet.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {followersList.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between gap-3 hover:bg-secondary/50 p-2 rounded-xl transition-colors">
+                    <Link href={`/profile/${user.clerkUserId || user.id}`} onClick={() => setShowFollowers(false)} className="flex items-center gap-3 flex-1">
+                      {user.avatarUrl ? (
+                        <img src={getImageUrl(user.avatarUrl)} alt={user.name} className="h-10 w-10 rounded-full object-cover bg-secondary shrink-0" />
+                      ) : (
+                        <div className="h-10 w-10 flex items-center justify-center text-zinc-400 text-lg font-bold bg-secondary rounded-full shrink-0">
+                          {(user.name || user.username || "U").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-bold text-foreground">{user.name || user.username}</span>
+                          {user.isEduVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500" />}
+                        </div>
+                        <span className="text-xs text-muted-foreground">@{user.username}</span>
+                      </div>
+                    </Link>
+                    {isOwnProfile && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 text-xs font-bold px-4 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleRemoveFollower(user.id);
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Following Dialog */}
+      <Dialog open={showFollowing} onOpenChange={setShowFollowing}>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md max-h-[80vh] flex flex-col p-0 overflow-hidden bg-background">
+          <DialogHeader className="p-4 border-b border-border">
+            <DialogTitle className="text-center font-bold">Following</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto p-4 flex-1">
+            {isLoadingFollowData ? (
+              <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : followingList.length === 0 ? (
+              <p className="text-center text-muted-foreground text-sm py-8">Not following anyone yet.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {followingList.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between gap-3 hover:bg-secondary/50 p-2 rounded-xl transition-colors">
+                    <Link href={`/profile/${user.clerkUserId || user.id}`} onClick={() => setShowFollowing(false)} className="flex items-center gap-3 flex-1">
+                      {user.avatarUrl ? (
+                        <img src={getImageUrl(user.avatarUrl)} alt={user.name} className="h-10 w-10 rounded-full object-cover bg-secondary shrink-0" />
+                      ) : (
+                        <div className="h-10 w-10 flex items-center justify-center text-zinc-400 text-lg font-bold bg-secondary rounded-full shrink-0">
+                          {(user.name || user.username || "U").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-bold text-foreground">{user.name || user.username}</span>
+                          {user.isEduVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-500" />}
+                        </div>
+                        <span className="text-xs text-muted-foreground">@{user.username}</span>
+                      </div>
+                    </Link>
+                    {isOwnProfile && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs font-bold px-4 hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleUnfollow(user.id);
+                        }}
+                      >
+                        Following
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Leave Review Dialog */}
+      <Dialog open={showReviewModal} onOpenChange={setShowReviewModal}>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-background rounded-3xl overflow-hidden border-border p-0">
+          <DialogHeader className="p-6 pb-4">
+            <DialogTitle className="text-xl font-bold text-center">Leave a Review</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 pt-0 flex flex-col gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Rating</span>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="p-1 hover:scale-110 transition-transform focus:outline-none"
+                  >
+                    <Star
+                      className={`h-8 w-8 ${star <= reviewRating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Comment (Optional)</span>
+              <Textarea
+                placeholder="Share your experience..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="resize-none h-24 rounded-xl bg-secondary/50 border-transparent focus-visible:ring-1"
+              />
+            </div>
+            <Button
+              className="w-full rounded-xl h-11 font-bold"
+              onClick={handleSubmitReview}
+              disabled={isSubmittingReview || reviewRating === 0}
+            >
+              {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Review"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -24,6 +24,7 @@ model User {
   stripeAccountId     String?              @unique
   stripeAccountLinked Boolean              @default(false)
   university          String?
+  isEduVerified       Boolean              @default(false)
   conversationMembers ConversationMember[]
   interactions        Interaction[]
   listings            Listing[]
@@ -42,6 +43,10 @@ model User {
 
   notificationsReceived Notification[]     @relation("NotificationsReceived")
   notificationsSent     Notification[]     @relation("NotificationsSent")
+
+  reviewsGiven          Review[]           @relation("ReviewsGiven")
+  reviewsReceived       Review[]           @relation("ReviewsReceived")
+  verificationCodes     VerificationCode[]
 
   // Notification Preferences
   emailNotifications  Boolean @default(true)
@@ -250,6 +255,31 @@ enum PostType {
 enum InteractionType {
   LIKE
   SKIP
+}
+
+
+
+model Review {
+  id            String   @id @default(uuid())
+  reviewerId    String
+  revieweeId    String
+  rating        Int
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  reviewer      User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee      User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+}
+
+model VerificationCode {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 enum PaymentMethod {

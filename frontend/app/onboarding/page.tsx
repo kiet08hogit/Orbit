@@ -57,8 +57,9 @@ export default function OnboardingPage() {
     "Junior",
     "Senior",
     "Graduate",
-    "Faculty/Staff",
   ];
+
+
 
   useEffect(() => {
     if (user?.primaryEmailAddress?.emailAddress) {
@@ -277,6 +278,8 @@ export default function OnboardingPage() {
                   className="w-full rounded-xl py-6 text-base font-medium bg-secondary border-border focus-visible:ring-primary/50"
                 />
               </div>
+
+
 
               {/* Class Year */}
               <div className="space-y-2 md:col-span-2">

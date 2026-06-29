@@ -13,30 +13,35 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, BadgeCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+
+
   useEffect(() => {
     const fetchSettings = async () => {
+      if (!userId) return;
       try {
         const token = await getToken();
-        if (!token) return;
         const res = await axios.get(`http://127.0.0.1:3000/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setSettings(res.data);
       } catch (err) {
-        console.error("Failed to load settings");
+        console.error(err);
+        toast.error("Failed to load settings");
       } finally {
         setLoading(false);
       }
     };
     fetchSettings();
-  }, [getToken]);
+  }, [getToken, userId]);
 
   const updateSetting = async (key: string, value: any) => {
     if (!settings) return;

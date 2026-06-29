@@ -13,8 +13,11 @@ import {
   MoreVertical,
   MessageSquare,
   AlertTriangle,
+  BadgeCheck,
+  Star,
 } from "lucide-react";
 import axios from "axios";
+import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -41,6 +44,8 @@ interface UserPreview {
   username: string | null;
   avatarUrl: string | null;
   clerkUserId: string;
+  isEduVerified?: boolean;
+  reviewsReceived?: { rating: number }[];
 }
 
 interface Message {
@@ -919,19 +924,48 @@ export default function ChatPage() {
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <Avatar className="h-10 w-10 border border-border">
-                  {otherActiveMember?.avatarUrl && (
-                    <AvatarImage src={otherActiveMember.avatarUrl} />
-                  )}
-                  <AvatarFallback className="bg-secondary text-muted-foreground font-bold">
-                    {otherActiveInitial}
-                  </AvatarFallback>
-                </Avatar>
+                <Link 
+                  href={`/profile/${otherActiveMember?.clerkUserId || otherActiveMember?.id}`}
+                  className="flex items-center gap-3 hover:bg-secondary/50 p-1.5 -ml-1.5 rounded-xl transition-colors cursor-pointer"
+                >
+                  <Avatar className="h-10 w-10 border border-border">
+                    {otherActiveMember?.avatarUrl && (
+                      <AvatarImage src={otherActiveMember.avatarUrl} />
+                    )}
+                    <AvatarFallback className="bg-secondary text-muted-foreground font-bold">
+                      {otherActiveInitial}
+                    </AvatarFallback>
+                  </Avatar>
 
-                <div className="flex items-center gap-2">
-                  <h2 className="font-semibold text-foreground text-[15px]">
-                    {otherActiveName}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5">
+                        <h2 className="font-semibold text-foreground text-[15px]">
+                          {otherActiveName}
+                        </h2>
+                        {otherActiveMember?.isEduVerified && (
+                          <div title="Verified .edu Email">
+                            <BadgeCheck className="h-4 w-4 text-blue-500" />
+                          </div>
+                        )}
+                      </div>
+                      {otherActiveMember?.reviewsReceived && otherActiveMember.reviewsReceived.length > 0 && (
+                        <div className="flex items-center gap-0.5 text-amber-500 mt-0.5">
+                          <Star className="h-3 w-3 fill-current" />
+                          <span className="text-xs font-bold">
+                            {(
+                              otherActiveMember.reviewsReceived.reduce((sum: number, r: any) => sum + r.rating, 0) /
+                              otherActiveMember.reviewsReceived.length
+                            ).toFixed(1)}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-1 font-normal">
+                            ({otherActiveMember.reviewsReceived.length})
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Link>
 
                   {/* Verification Dashboard Button (Seller) */}
                   <div className="flex items-center gap-2 ml-2 md:ml-4 md:border-l md:border-border md:pl-4">
@@ -957,7 +991,6 @@ export default function ChatPage() {
                     </div>
                   )}
                 </div>
-              </div>
 
               <div className="flex items-center gap-2 shrink-0">
                 {meetupError && (
@@ -1046,9 +1079,11 @@ export default function ChatPage() {
                           <div className="w-8 shrink-0 flex flex-col justify-end">
                             {showAvatar && (
                               <Avatar className="h-8 w-8 border border-border">
-                                <AvatarImage
-                                  src={msg.sender?.avatarUrl || ""}
-                                />
+                                {msg.sender?.avatarUrl && (
+                                  <AvatarImage
+                                    src={msg.sender.avatarUrl}
+                                  />
+                                )}
                                 <AvatarFallback className="bg-secondary text-muted-foreground text-xs font-bold">
                                   {msg.sender?.name?.[0]?.toUpperCase() || "U"}
                                 </AvatarFallback>

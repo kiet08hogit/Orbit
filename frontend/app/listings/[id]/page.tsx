@@ -578,31 +578,32 @@ export default function ListingDetailPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-3 mb-1.5"
             >
-              <Avatar className="h-10 w-10 border border-border">
-                {listing.seller?.avatarUrl && (
-                  <AvatarImage
-                    src={listing.seller.avatarUrl}
-                    alt={sellerName}
-                  />
-                )}
-                <AvatarFallback className="font-bold text-sm text-muted-foreground bg-secondary">
-                  {sellerInitial}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm">
-                  Listed by{" "}
-                  <span className="font-bold text-foreground">
-                    {sellerName}
-                  </span>
-                </p>
-                <div className="flex items-center gap-1 text-emerald-600 text-[11px] font-bold mt-0.5">
-                  <CheckCircle2 className="h-3 w-3" />
-                  UIC Verified
+              <Link href={`/profile/${listing.seller?.clerkUserId || listing.seller?.id}`} className="flex items-center gap-3 mb-1.5 hover:opacity-80 transition-opacity">
+                <Avatar className="h-10 w-10 border border-border">
+                  {listing.seller?.avatarUrl && (
+                    <AvatarImage
+                      src={listing.seller.avatarUrl}
+                      alt={sellerName}
+                    />
+                  )}
+                  <AvatarFallback className="font-bold text-sm text-muted-foreground bg-secondary">
+                    {sellerInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm">
+                    Listed by{" "}
+                    <span className="font-bold text-foreground">
+                      {sellerName}
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-1 text-emerald-600 text-[11px] font-bold mt-0.5">
+                    <CheckCircle2 className="h-3 w-3" />
+                    UIC Verified
+                  </div>
                 </div>
-              </div>
+              </Link>
             </motion.div>
 
             <p className="text-xs text-muted-foreground mb-5">
