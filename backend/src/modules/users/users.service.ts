@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Resend } from 'resend';
 
 @Injectable()
 export class UsersService {
@@ -71,6 +72,7 @@ export class UsersService {
         if (!user) return null;
 
         let isFollowing = false;
+        let hasChatted = false;
         if (currentUserId) {
             const follower = await this.prisma.user.findFirst({
                 where: { OR: [{ id: currentUserId }, { clerkUserId: currentUserId }] },
@@ -81,10 +83,20 @@ export class UsersService {
                     where: { id: user.id, followers: { some: { id: follower.id } } }
                 });
                 isFollowing = !!link;
+
+                const chat = await this.prisma.conversation.findFirst({
+                    where: {
+                        AND: [
+                            { members: { some: { userId: follower.id } } },
+                            { members: { some: { userId: user.id } } }
+                        ]
+                    }
+                });
+                hasChatted = !!chat;
             }
         }
 
-        return { ...user, isFollowing };
+        return { ...user, isFollowing, hasChatted };
     }
 
     async toggleFollow(targetId: string, currentUserId: string) {
@@ -143,9 +155,139 @@ export class UsersService {
         });
     }
 
+    async getFollowers(id: string) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                OR: [{ id }, { clerkUserId: id }]
+            },
+            include: {
+                followers: {
+                    select: { id: true, clerkUserId: true, name: true, username: true, avatarUrl: true, isEduVerified: true }
+                }
+            }
+        });
+        if (!user) throw new NotFoundException('User not found');
+        return user.followers;
+    }
+
+    async getFollowing(id: string) {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                OR: [{ id }, { clerkUserId: id }]
+            },
+            include: {
+                following: {
+                    select: { id: true, clerkUserId: true, name: true, username: true, avatarUrl: true, isEduVerified: true }
+                }
+            }
+        });
+        if (!user) throw new NotFoundException('User not found');
+        return user.following;
+    }
+
+    async removeFollower(followerId: string, currentUserId: string) {
+        const currentUser = await this.prisma.user.findUnique({
+            where: { clerkUserId: currentUserId }
+        });
+        
+        if (!currentUser) throw new NotFoundException('Current user not found');
+
+        // Verify the follower exists
+        const follower = await this.prisma.user.findFirst({
+            where: {
+                OR: [{ id: followerId }, { clerkUserId: followerId }]
+            }
+        });
+
+        if (!follower) throw new NotFoundException('Follower not found');
+
+        // Disconnect the follower from current user's followers list
+        await this.prisma.user.update({
+            where: { id: currentUser.id },
+            data: {
+                followers: {
+                    disconnect: { id: follower.id }
+                }
+            }
+        });
+
+        return { success: true };
+    }
+
     async deleteUserByClerkId(clerkUserId: string) {
         return this.prisma.user.delete({
             where: { clerkUserId },
         });
+    }
+
+    async sendEduVerification(clerkUserId: string) {
+        const user = await this.prisma.user.findUnique({ where: { clerkUserId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        const email = user.email;
+        if (!email || !email.endsWith('.edu')) {
+            throw new BadRequestException('Your account email must be a valid .edu email address to verify.');
+        }
+
+        // Generate 6-digit code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        await this.prisma.verificationCode.create({
+            data: {
+                userId: user.id,
+                code,
+                expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 mins
+            }
+        });
+
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        try {
+            await resend.emails.send({
+                from: 'Orbit <onboarding@resend.dev>',
+                to: email,
+                subject: 'Verify your .edu email for Orbit',
+                html: `
+                    <h2>Welcome to Orbit!</h2>
+                    <p>Your verification code is: <strong>${code}</strong></p>
+                    <p>This code will expire in 15 minutes.</p>
+                `
+            });
+            console.log(`[EDU VERIFICATION] Sent email to ${email} successfully.`);
+        } catch (error) {
+            console.error('[EDU VERIFICATION] Failed to send email via Resend:', error);
+            throw new BadRequestException('Failed to send verification email. Please ensure your email is correct and try again.');
+        }
+        
+        return { message: 'Verification code sent!' };
+    }
+
+    async verifyEduCode(clerkUserId: string, code: string) {
+        const user = await this.prisma.user.findUnique({ where: { clerkUserId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        const verificationRecord = await this.prisma.verificationCode.findFirst({
+            where: {
+                userId: user.id,
+                code,
+                expiresAt: { gt: new Date() } // Not expired
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (!verificationRecord) {
+            throw new BadRequestException('Invalid or expired verification code.');
+        }
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { isEduVerified: true }
+        });
+
+        // Delete used code
+        await this.prisma.verificationCode.deleteMany({
+            where: { userId: user.id }
+        });
+
+        return { verified: true };
     }
 }

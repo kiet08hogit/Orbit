@@ -1,8 +1,7 @@
-import { Controller, Get, Patch, UseGuards, Param, Body, NotFoundException, ConflictException, UseInterceptors, Query, Post } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { Controller, Get, Patch, UseGuards, Param, Body, NotFoundException, ConflictException, Query, Post, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
-import { CurrentUser} from '../../common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthUser } from '../../common/types/auth-user.type';
 
 @Controller('users')
@@ -25,7 +24,6 @@ export class UsersController {
         try {
             return await this.usersService.updateUser(clerkUser.clerkUserId, updateData);
         } catch (error: any) {
-            // Prisma error code for Unique Constraint Violation
             if (error.code === 'P2002') {
                 throw new ConflictException('Username is already taken.');
             }
@@ -44,10 +42,22 @@ export class UsersController {
     @UseGuards(ClerkAuthGuard)
     async getUser(@Param('id') id: string, @CurrentUser() clerkUser: AuthUser) {
         const user = await this.usersService.getUserById(id, clerkUser?.clerkUserId);
-        if (!user){
+        if (!user) {
             throw new NotFoundException("User not found");
         }
         return user;
+    }
+
+    @Get(':id/followers')
+    @UseGuards(ClerkAuthGuard)
+    async getFollowers(@Param('id') id: string) {
+        return this.usersService.getFollowers(id);
+    }
+
+    @Get(':id/following')
+    @UseGuards(ClerkAuthGuard)
+    async getFollowing(@Param('id') id: string) {
+        return this.usersService.getFollowing(id);
     }
 
     @Post(':id/follow')
@@ -58,5 +68,23 @@ export class UsersController {
         return result;
     }
 
+    @Delete(':id/follower')
+    @UseGuards(ClerkAuthGuard)
+    async removeFollower(@Param('id') id: string, @CurrentUser() clerkUser: AuthUser) {
+        const result = await this.usersService.removeFollower(id, clerkUser.clerkUserId);
+        if (!result) throw new NotFoundException("Follower not found");
+        return result;
+    }
 
+    @Post('verify-edu/send')
+    @UseGuards(ClerkAuthGuard)
+    async sendEduVerification(@CurrentUser() clerkUser: AuthUser) {
+        return this.usersService.sendEduVerification(clerkUser.clerkUserId);
+    }
+
+    @Post('verify-edu/verify')
+    @UseGuards(ClerkAuthGuard)
+    async verifyEduCode(@CurrentUser() clerkUser: AuthUser, @Body('code') code: string) {
+        return this.usersService.verifyEduCode(clerkUser.clerkUserId, code);
+    }
 }

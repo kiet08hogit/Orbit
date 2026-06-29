@@ -11,6 +11,7 @@ import { useAuth } from "@clerk/nextjs";
 import { io, Socket } from "socket.io-client";
 import { toast } from "sonner";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export function MiniChatWidget() {
   const { getToken, userId } = useAuth();
@@ -203,9 +204,15 @@ export function MiniChatWidget() {
                 ) : (
                   <MessageSquare className="h-5 w-5 ml-1 shrink-0" />
                 )}
-                <h3 className="font-bold text-sm truncate">
-                  {activeConversation ? activeOtherMember?.name || activeOtherMember?.username || "Chat" : "Messages"}
-                </h3>
+                {activeConversation ? (
+                  <Link href={`/profile/${activeOtherMember?.clerkUserId || activeOtherMember?.id}`} className="hover:opacity-80 transition-opacity">
+                    <h3 className="font-bold text-sm truncate">
+                      {activeOtherMember?.name || activeOtherMember?.username || "Chat"}
+                    </h3>
+                  </Link>
+                ) : (
+                  <h3 className="font-bold text-sm truncate">Messages</h3>
+                )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {activeConversation && (

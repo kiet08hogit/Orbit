@@ -70,7 +70,14 @@ export class ChatService {
             members: {
             include: {
                 user: {
-                select: { id: true, name: true, avatarUrl: true, clerkUserId: true }
+                select: { 
+                  id: true, 
+                  name: true, 
+                  avatarUrl: true, 
+                  clerkUserId: true,
+                  isEduVerified: true,
+                  reviewsReceived: { select: { rating: true } }
+                }
                 }
             }
             },

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
-import { Loader2, Tag, Flame, Eye, ChevronRight, Heart } from "lucide-react";
+import { Loader2, Tag, Flame, Eye, ChevronRight, Heart, BadgeCheck, Star } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 
@@ -14,6 +14,8 @@ interface Seller {
   avatarUrl?: string;
   email?: string;
   university?: string;
+  isEduVerified?: boolean;
+  reviewsReceived?: any[];
 }
 
 interface Listing {
@@ -270,13 +272,34 @@ function ListingCard({ listing }: { listing: Listing }) {
             {listing.title}
           </h3>
 
-          {listing.seller?.university && (
-            <div className="mt-auto pt-2 text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-t border-border/50">
+          <div className="mt-auto pt-2 text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between border-t border-border/50">
+            {listing.seller?.university ? (
               <span className="truncate flex items-center gap-1.5">
                 🎓 {listing.seller.university}
               </span>
+            ) : (
+              <span />
+            )}
+            
+            <div className="flex items-center gap-2">
+              {listing.seller?.reviewsReceived && listing.seller.reviewsReceived.length > 0 && (
+                <div className="flex items-center gap-0.5 text-amber-500">
+                  <Star className="h-3 w-3 fill-current" />
+                  <span>
+                    {(
+                      listing.seller.reviewsReceived.reduce((sum: number, r: any) => sum + r.rating, 0) /
+                      listing.seller.reviewsReceived.length
+                    ).toFixed(1)}
+                  </span>
+                </div>
+              )}
+              {listing.seller?.isEduVerified && (
+                <div title="Verified .edu Email">
+                  <BadgeCheck className="h-4 w-4 text-blue-500" />
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </motion.div>
     </Link>

@@ -45,6 +45,7 @@
     "pg": "^8.21.0",
     "raw-body": "^3.0.2",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.16.0",
     "rxjs": "^7.8.2",
     "socket.io": "^4.8.3",
     "stripe": "^22.2.0",

@@ -83,7 +83,16 @@ export class ListingsService {
             orderBy: { createdAt: 'desc' },
             include: {
                 images: true,
-                seller: { select: { id: true, email: true, university: true } },
+                seller: { 
+                    select: { 
+                        id: true, 
+                        email: true, 
+                        university: true, 
+                        isEduVerified: true, 
+                        username: true,
+                        reviewsReceived: { select: { rating: true } }
+                    } 
+                },
             },
         });
     }
