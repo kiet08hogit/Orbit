@@ -24,6 +24,14 @@ export class ListingsService {
             });
         }
 
+        const imageUrls: string[] = [];
+        if (files && files.length > 0) {
+            for (const file of files) {
+                const imageUrl = await this.storageService.saveFile(file);
+                imageUrls.push(imageUrl);
+            }
+        }
+
         const listing = await this.prisma.listing.create({
             data: {
                 title: data.title,
@@ -39,6 +47,9 @@ export class ListingsService {
                 material: data.material,
                 status: ListingStatus.ACTIVE,
                 sellerId: dbuser.id,
+                images: {
+                    create: imageUrls.map(url => ({ url }))
+                }
             },
         });
 
@@ -50,18 +61,6 @@ export class ListingsService {
             await this.prisma.$executeRaw`UPDATE "Listing" SET embedding = ${embeddingString}::vector WHERE id = ${listing.id}`;
         } catch (error) {
             console.error("Failed to save AI embedding for listing", error);
-        }
-
-        if (files && files.length > 0) {
-            for (const file of files) {
-                const imageUrl = await this.storageService.saveFile(file);
-                await this.prisma.listingImage.create({
-                    data: {
-                        url: imageUrl,
-                        listingId: listing.id
-                    }
-                });
-            }
         }
 
         return listing;

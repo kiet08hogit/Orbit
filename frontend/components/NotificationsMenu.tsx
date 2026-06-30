@@ -24,6 +24,7 @@ type NotificationType =
   | "COMMENT"
   | "PURCHASE"
   | "OFFER"
+  | "WARNING"
   | "ALL";
 
 interface Notification {
@@ -35,9 +36,11 @@ interface Notification {
   linkUrl: string | null;
   createdAt: string;
   actor: {
+    id: string;
     name: string | null;
     username: string | null;
     avatarUrl: string | null;
+    isFollowedByMe?: boolean;
   } | null;
 }
 
@@ -47,6 +50,7 @@ export function NotificationsMenu() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState<NotificationType>("ALL");
   const [isLoading, setIsLoading] = useState(false);
+  const [expandedNotifs, setExpandedNotifs] = useState<Record<string, boolean>>({});
 
   const fetchNotifications = async (currentFilter: NotificationType) => {
     try {
@@ -156,8 +160,41 @@ export function NotificationsMenu() {
     }
   };
 
+  const handleFollow = async (e: React.MouseEvent, targetId: string) => {
+    e.stopPropagation();
+
+    // Optimistic UI update
+    setNotifications(prev => prev.map(notif => 
+      notif.actor?.id === targetId 
+        ? { ...notif, actor: { ...notif.actor, isFollowedByMe: true } }
+        : notif
+    ));
+
+    try {
+      const token = await getToken();
+      await axios.post(
+        `http://127.0.0.1:3000/users/${targetId}/follow`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Followed successfully!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to follow user");
+      // Revert optimistic update
+      setNotifications(prev => prev.map(notif => 
+        notif.actor?.id === targetId 
+          ? { ...notif, actor: { ...notif.actor, isFollowedByMe: false } }
+          : notif
+      ));
+    }
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => {
+      if (open && unreadCount > 0) {
+        markAllAsRead();
+      }
+    }}>
       <DropdownMenuTrigger className="relative flex items-center justify-center h-[32px] w-[32px] rounded-full hover:bg-secondary focus:outline-none">
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
@@ -209,43 +246,83 @@ export function NotificationsMenu() {
                   className={`p-3 flex gap-3 cursor-pointer hover:bg-secondary/50 transition-colors border-b border-border last:border-0 ${!notif.isRead ? "bg-[#3252DF]/5" : ""}`}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={notif.actor?.avatarUrl || undefined} />
-                    <AvatarFallback>
-                      {(notif.actor?.name ||
-                        notif.actor?.username ||
-                        "U")[0].toUpperCase()}
-                    </AvatarFallback>
+                    {notif.type === "WARNING" ? (
+                      <AvatarFallback className="bg-red-500 text-white font-bold">OA</AvatarFallback>
+                    ) : (
+                      <>
+                        <AvatarImage src={notif.actor?.avatarUrl || undefined} />
+                        <AvatarFallback>
+                          {(notif.actor?.name ||
+                            notif.actor?.username ||
+                            "U")[0].toUpperCase()}
+                        </AvatarFallback>
+                      </>
+                    )}
                   </Avatar>
                   <div className="flex flex-col min-w-0 flex-1">
                     <p className="text-[12px] font-medium leading-tight">
-                      <span className="font-bold">
-                        {notif.actor?.name ||
-                          notif.actor?.username ||
-                          "Someone"}
-                      </span>{" "}
-                      <span className="text-muted-foreground">
-                        {notif.title === "New Follower"
-                          ? "started following you"
-                          : notif.title === "New Like"
-                            ? "liked your post"
-                            : notif.title === "New Comment"
-                              ? "commented on your post"
-                              : notif.title === "New Reservation"
-                                ? "purchased an item"
-                                : ""}
-                      </span>
+                      {notif.type === "WARNING" ? (
+                        <>
+                          <span className="font-bold">Orbit Admin</span>{" "}
+                          <span className="text-muted-foreground">sent you a warning:</span>{" "}
+                          <span className="font-bold text-red-500">{notif.title}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-bold">
+                            {notif.actor?.name ||
+                              notif.actor?.username ||
+                              "Someone"}
+                          </span>{" "}
+                          <span className="text-muted-foreground">
+                            {notif.title === "New Follower"
+                              ? "started following you"
+                              : notif.title === "New Like"
+                                ? "liked your post"
+                                : notif.title === "New Comment"
+                                  ? "commented on your post"
+                                  : notif.title === "New Reservation"
+                                    ? "purchased an item"
+                                    : ""}
+                          </span>
+                        </>
+                      )}
                     </p>
-                    {notif.content && notif.type === "COMMENT" && (
-                      <p className="text-[11px] text-muted-foreground truncate mt-0.5">
-                        {notif.content
-                          .split('commented: "')[1]
-                          ?.replace('"', "") || notif.content}
+                    {(notif.type === "WARNING" || notif.type === "COMMENT") && notif.content && (
+                      <p 
+                        className={`text-[11px] text-muted-foreground mt-0.5 ${!expandedNotifs[notif.id] ? "truncate" : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedNotifs(prev => ({ ...prev, [notif.id]: !prev[notif.id] }));
+                        }}
+                      >
+                        {notif.type === "COMMENT" 
+                          ? (notif.content.split('commented: "')[1]?.replace('"', "") || notif.content)
+                          : notif.content}
                       </p>
                     )}
                     <span className="text-[10px] text-muted-foreground mt-1">
-                      {new Date(notif.createdAt).toLocaleDateString()}
+                      {new Date(notif.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
+                  {notif.type === "FOLLOW" && notif.actor?.id && (
+                    <div className="flex items-center shrink-0 ml-2">
+                      <Button
+                        variant={notif.actor.isFollowedByMe ? "outline" : "secondary"}
+                        size="sm"
+                        className={`h-7 text-[11px] px-3 font-bold rounded-full ${!notif.actor.isFollowedByMe ? "hover:bg-primary hover:text-primary-foreground" : ""}`}
+                        onClick={(e) => {
+                          if (!notif.actor!.isFollowedByMe) {
+                             handleFollow(e, notif.actor!.id);
+                          } else {
+                             e.stopPropagation();
+                          }
+                        }}
+                      >
+                        {notif.actor.isFollowedByMe ? "Following" : "Follow"}
+                      </Button>
+                    </div>
+                  )}
                   {!notif.isRead && (
                     <div className="h-2 w-2 rounded-full bg-[#3252DF] shrink-0 mt-1" />
                   )}

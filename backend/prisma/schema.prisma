@@ -60,6 +60,10 @@ model User {
   
   // Content Preferences
   profanityFilter     Boolean @default(true)
+  
+  // Admin
+  role                Role    @default(USER)
+  isBanned            Boolean @default(false)
 }
 
 model Listing {
@@ -322,6 +326,7 @@ enum NotificationType {
   COMMENT
   PURCHASE
   OFFER
+  WARNING
 }
 
 model Notification {
@@ -340,4 +345,9 @@ model Notification {
 
   user      User             @relation("NotificationsReceived", fields: [userId], references: [id])
   actor     User?            @relation("NotificationsSent", fields: [actorId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
 }
