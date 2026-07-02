@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateListingDto } from './create-listing.dto';
 import { ListingStatus, InteractionType, ListingCategory } from '@prisma/client';
@@ -15,6 +15,11 @@ export class ListingsService {
         private aiService: AiService,
         private chatGateway: ChatGateway
     ) { }
+
+    async suggestListingDetails(file: any) {
+        if (!file) throw new BadRequestException('Image file is required');
+        return this.aiService.generateListingSuggestion(file.buffer, file.mimetype);
+    }
 
     async create(clerkUserId: string, email: string, data: CreateListingDto, files?: any[]) {
         let dbuser = await this.prisma.user.findUnique({ where: { clerkUserId } });

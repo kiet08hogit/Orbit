@@ -171,14 +171,18 @@ model ConversationMember {
 model Message {
   id             String       @id @default(uuid())
   content        String
+  imageUrls      String[]     @default([])
   conversationId String
   senderId       String
   isRead         Boolean      @default(false)
   createdAt      DateTime     @default(now())
   listingId      String?
+  replyToId      String?
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   listing        Listing?     @relation(fields: [listingId], references: [id])
   sender         User         @relation(fields: [senderId], references: [id])
+  replyTo        Message?     @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies        Message[]    @relation("MessageReplies")
 }
 
 model Transaction {
