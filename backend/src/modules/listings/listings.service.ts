@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateListingDto } from './create-listing.dto';
 import { ListingStatus, InteractionType, ListingCategory } from '@prisma/client';
@@ -16,12 +16,25 @@ export class ListingsService {
         private chatGateway: ChatGateway
     ) { }
 
+    async suggestListingDetails(file: any) {
+        if (!file) throw new BadRequestException('Image file is required');
+        return this.aiService.generateListingSuggestion(file.buffer, file.mimetype);
+    }
+
     async create(clerkUserId: string, email: string, data: CreateListingDto, files?: any[]) {
         let dbuser = await this.prisma.user.findUnique({ where: { clerkUserId } });
         if (!dbuser) {
             dbuser = await this.prisma.user.create({
                 data: { clerkUserId, email }
             });
+        }
+
+        const imageUrls: string[] = [];
+        if (files && files.length > 0) {
+            for (const file of files) {
+                const imageUrl = await this.storageService.saveFile(file);
+                imageUrls.push(imageUrl);
+            }
         }
 
         const listing = await this.prisma.listing.create({
@@ -39,6 +52,9 @@ export class ListingsService {
                 material: data.material,
                 status: ListingStatus.ACTIVE,
                 sellerId: dbuser.id,
+                images: {
+                    create: imageUrls.map(url => ({ url }))
+                }
             },
         });
 
@@ -50,18 +66,6 @@ export class ListingsService {
             await this.prisma.$executeRaw`UPDATE "Listing" SET embedding = ${embeddingString}::vector WHERE id = ${listing.id}`;
         } catch (error) {
             console.error("Failed to save AI embedding for listing", error);
-        }
-
-        if (files && files.length > 0) {
-            for (const file of files) {
-                const imageUrl = await this.storageService.saveFile(file);
-                await this.prisma.listingImage.create({
-                    data: {
-                        url: imageUrl,
-                        listingId: listing.id
-                    }
-                });
-            }
         }
 
         return listing;
