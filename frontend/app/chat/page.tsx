@@ -21,8 +21,10 @@ import {
   Reply,
   X,
   MoreHorizontal,
+  ExternalLink,
 } from "lucide-react";
 import axios from "axios";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,6 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const getImageUrl = (url?: string) => {
   if (!url) return "";
@@ -115,6 +118,8 @@ export default function ChatPage() {
   
   const [replyingToMessage, setReplyingToMessage] = useState<Message | null>(null);
   const [showSharedMedia, setShowSharedMedia] = useState(false);
+  const [sharedFilter, setSharedFilter] = useState<'media' | 'links'>('media');
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   const [contextListing, setContextListing] = useState<any | null>(null);
 
@@ -1265,12 +1270,19 @@ export default function ChatPage() {
                                 {msg.imageUrls && msg.imageUrls.length > 0 && (
                                   <div className="flex flex-wrap gap-2 mb-2">
                                     {msg.imageUrls.map((url, idx) => (
-                                      <img 
+                                      <button 
                                         key={idx} 
-                                        src={url.startsWith('blob:') ? url : getImageUrl(url)} 
-                                        className="rounded-md max-w-[200px] max-h-[200px] object-cover" 
-                                        alt="Attachment" 
-                                      />
+                                        onClick={() => setEnlargedImage(url.startsWith('blob:') ? url : getImageUrl(url))} 
+                                        className="w-[200px] rounded-md overflow-hidden bg-secondary border-0 p-0 cursor-pointer hover:opacity-90 transition-opacity"
+                                      >
+                                        <AspectRatio ratio={1}>
+                                          <img 
+                                            src={url.startsWith('blob:') ? url : getImageUrl(url)} 
+                                            alt="Attachment" 
+                                            className="w-full h-full object-cover" 
+                                          />
+                                        </AspectRatio>
+                                      </button>
                                     ))}
                                   </div>
                                 )}
@@ -1280,14 +1292,10 @@ export default function ChatPage() {
                             
                             {/* Message Actions */}
                             <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-full shrink-0"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
+                              <DropdownMenuTrigger 
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-full shrink-0 flex items-center justify-center hover:bg-accent hover:text-accent-foreground"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align={isMine ? "end" : "start"} className="w-32 rounded-xl">
                                 {msg.content && (
@@ -1585,7 +1593,7 @@ export default function ChatPage() {
         open={showBuyerMeetupModal}
         onOpenChange={setShowBuyerMeetupModal}
       >
-        <DialogContent className="sm:max-w-sm rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card [&>button]:hidden">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-sm rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card [&>button]:hidden">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-center mb-1">
               Meetup Code
@@ -1631,7 +1639,7 @@ export default function ChatPage() {
         open={showMeetupProposalModal}
         onOpenChange={setShowMeetupProposalModal}
       >
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card">
           <DialogHeader>
             <DialogTitle className="text-xl font-black mb-1">
               Propose a Meetup
@@ -1693,7 +1701,7 @@ export default function ChatPage() {
         open={isVerificationBoardOpen}
         onOpenChange={setIsVerificationBoardOpen}
       >
-        <DialogContent className="sm:max-w-2xl rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-card max-h-[85vh] flex flex-col">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-2xl rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-card max-h-[85vh] flex flex-col">
           <DialogHeader className="shrink-0 mb-4">
             <DialogTitle className="text-2xl font-black">
               Verify Meetups
@@ -1882,7 +1890,7 @@ export default function ChatPage() {
         open={isBuyerVerificationBoardOpen}
         onOpenChange={setIsBuyerVerificationBoardOpen}
       >
-        <DialogContent className="sm:max-w-2xl rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-card max-h-[85vh] flex flex-col">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-2xl rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-card max-h-[85vh] flex flex-col">
           <DialogHeader className="shrink-0 mb-4">
             <DialogTitle className="text-2xl font-black">
               My Purchases
@@ -2002,36 +2010,101 @@ export default function ChatPage() {
 
       {/* Shared Media Dialog */}
       <Dialog open={showSharedMedia} onOpenChange={setShowSharedMedia}>
-        <DialogContent className="sm:max-w-xl rounded-3xl p-0 overflow-hidden border-0 bg-card/95 backdrop-blur-xl shadow-2xl">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-xl rounded-3xl p-0 overflow-hidden border-0 bg-card/95 backdrop-blur-xl shadow-2xl">
+          <DialogDescription className="hidden">Shared Media</DialogDescription>
           <div className="flex flex-col h-[70vh]">
             <div className="p-4 border-b border-border/50 shrink-0 bg-secondary/30">
-              <h2 className="text-xl font-black text-foreground">Details</h2>
+              <h2 className="text-xl font-black text-foreground">Shared Details</h2>
+              <div className="flex items-center gap-2 mt-4 bg-secondary/50 p-1 rounded-lg w-full max-w-sm">
+                <button 
+                  onClick={() => setSharedFilter('media')}
+                  className={`flex-1 py-1.5 flex items-center justify-center gap-2 text-sm font-medium rounded-md transition-colors ${sharedFilter === 'media' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <ImageIcon className="h-4 w-4" /> Media
+                </button>
+                <button 
+                  onClick={() => setSharedFilter('links')}
+                  className={`flex-1 py-1.5 flex items-center justify-center gap-2 text-sm font-medium rounded-md transition-colors ${sharedFilter === 'links' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <ExternalLink className="h-4 w-4" /> Links
+                </button>
+              </div>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-              <h3 className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wider">Shared Photos</h3>
-              {messages.flatMap(m => m.imageUrls || []).length > 0 ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {messages.flatMap(m => m.imageUrls || []).reverse().map((url, idx) => (
-                    <a key={idx} href={url.startsWith('blob:') ? url : getImageUrl(url)} target="_blank" rel="noopener noreferrer" className="aspect-square rounded-xl overflow-hidden hover:opacity-80 transition-opacity bg-secondary">
-                      <img 
-                        src={url.startsWith('blob:') ? url : getImageUrl(url)} 
-                        alt="Shared media" 
-                        className="w-full h-full object-cover"
-                      />
-                    </a>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-                  <ImageIcon className="h-10 w-10 mb-2 opacity-50" />
-                  <p className="text-sm font-medium">No media shared yet</p>
-                </div>
+              {sharedFilter === 'media' && (
+                <>
+                  <h3 className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wider">Shared Photos</h3>
+                  {messages.flatMap(m => m.imageUrls || []).length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {messages.flatMap(m => m.imageUrls || []).reverse().map((url, idx) => (
+                        <button 
+                          key={idx} 
+                          onClick={() => setEnlargedImage(url.startsWith('blob:') ? url : getImageUrl(url))} 
+                          className="aspect-square rounded-xl overflow-hidden hover:opacity-80 transition-opacity bg-secondary cursor-pointer border-0 p-0"
+                        >
+                          <img 
+                            src={url.startsWith('blob:') ? url : getImageUrl(url)} 
+                            alt="Shared media" 
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                      <p>No photos shared yet</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {sharedFilter === 'links' && (
+                <>
+                  <h3 className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wider">Shared Links</h3>
+                  {messages.flatMap(m => m.content?.match(/(https?:\/\/[^\s]+)/g) || []).length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      {messages.flatMap(m => {
+                        const links = (m.content?.match(/(https?:\/\/[^\s]+)/g) || []);
+                        return links.map(link => ({ link, senderId: m.senderId }));
+                      }).map((item, i) => (
+                        <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline bg-secondary/30 p-4 rounded-xl truncate block">
+                          {item.link}
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                      <p>No links shared yet</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
         </DialogContent>
       </Dialog>
+      {/* Enlarged Image Overlay */}
+      {enlargedImage && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-200"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img 
+            src={enlargedImage} 
+            alt="Enlarged shared media" 
+            className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent clicking the image from closing it
+          />
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

@@ -754,7 +754,7 @@ export default function ListingDetailPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-center mb-1">
               Report Listing
@@ -808,7 +808,7 @@ export default function ListingDetailPage() {
 
       {/* Payment Method Modal */}
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card">
           <DialogHeader>
             <DialogTitle className="text-xl font-black">
               Choose Payment Method

@@ -106,14 +106,14 @@ describe('ListingsService', () => {
           price: 1000,
           status: ListingStatus.ACTIVE,
           sellerId: mockUser.id,
+          images: {
+            create: [{ url: '/uploads/img.jpg' }]
+          }
         })
       });
       expect(aiService.generateEmbedding).toHaveBeenCalled();
       expect(prisma.$executeRaw).toHaveBeenCalled();
       expect(storageService.saveFile).toHaveBeenCalledWith(files[0]);
-      expect(prisma.listingImage.create).toHaveBeenCalledWith({
-        data: { url: '/uploads/img.jpg', listingId: mockListing.id }
-      });
     });
   });
 

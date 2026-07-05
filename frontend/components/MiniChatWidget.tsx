@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { MessageSquare, X, Send, ArrowLeft, Loader2, ExternalLink, Image as ImageIcon, MoreHorizontal, Copy, Reply, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,9 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import { io, Socket } from "socket.io-client";
@@ -46,6 +49,8 @@ export function MiniChatWidget() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [showSharedMedia, setShowSharedMedia] = useState(false);
+  const [sharedFilter, setSharedFilter] = useState<'media' | 'links'>('media');
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   // Check if we are on the full chat page
 
@@ -159,7 +164,7 @@ export function MiniChatWidget() {
     setIsLoading(true);
     try {
       const token = await getToken();
-      const res = await axios.get("http://127.0.0.1:3000/chat/conversations", {
+      const res = await axios.get("http://127.0.0.1:3000/chat/inbox", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setConversations(res.data);
@@ -175,10 +180,11 @@ export function MiniChatWidget() {
     setIsLoading(true);
     try {
       const token = await getToken();
-      const res = await axios.get(`http://127.0.0.1:3000/chat/conversation/${conversationId}/messages`, {
+      const res = await axios.get(`http://127.0.0.1:3000/chat/inbox/${conversationId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMessages(res.data.reverse());
+      // The API returns an array directly, not an object with a messages property (or it might be an object, check structure)
+      setMessages(Array.isArray(res.data) ? res.data.reverse() : res.data.messages?.reverse() || []);
       
       if (socket) {
         socket.emit("mark_read", { conversationId });
@@ -278,12 +284,58 @@ export function MiniChatWidget() {
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {/* Shared Media Dialog */}
       <Dialog open={showSharedMedia} onOpenChange={setShowSharedMedia}>
-        <DialogContent className="sm:max-w-[400px]">
-          <h2 className="font-bold text-lg">Shared Media</h2>
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            {messages.filter(m => m.imageUrls?.length > 0).flatMap(m => m.imageUrls).map((url, i) => (
-              <img key={i} src={url.startsWith('http') ? url : `http://127.0.0.1:3000${url}`} className="aspect-square object-cover rounded-md" alt="Shared" />
-            ))}
+        <DialogContent aria-describedby={undefined} className="sm:max-w-[400px] bg-card text-card-foreground">
+          <DialogDescription className="hidden">Shared Media</DialogDescription>
+          <h2 className="font-bold text-xl text-foreground">Shared Details</h2>
+          
+          <div className="flex items-center gap-2 mt-2 bg-secondary/50 p-1 rounded-lg">
+            <button 
+              onClick={() => setSharedFilter('media')}
+              className={`flex-1 py-1.5 flex items-center justify-center gap-2 text-sm font-medium rounded-md transition-colors ${sharedFilter === 'media' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <ImageIcon className="h-4 w-4" /> Media
+            </button>
+            <button 
+              onClick={() => setSharedFilter('links')}
+              className={`flex-1 py-1.5 flex items-center justify-center gap-2 text-sm font-medium rounded-md transition-colors ${sharedFilter === 'links' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <ExternalLink className="h-4 w-4" /> Links
+            </button>
+          </div>
+
+          <div className="mt-4 min-h-[200px] max-h-[400px] overflow-y-auto custom-scrollbar">
+            {sharedFilter === 'media' && (
+              <div className="grid grid-cols-3 gap-2">
+                {messages.filter(m => m.imageUrls?.length > 0).flatMap(m => m.imageUrls).map((url, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => setEnlargedImage(url.startsWith('http') ? url : `http://127.0.0.1:3000${url}`)} 
+                    className="aspect-square rounded-md overflow-hidden bg-secondary hover:opacity-80 transition-opacity block border-0 p-0 cursor-pointer"
+                  >
+                    <img src={url.startsWith('http') ? url : `http://127.0.0.1:3000${url}`} className="w-full h-full object-cover" alt="Shared" />
+                  </button>
+                ))}
+                {messages.filter(m => m.imageUrls?.length > 0).length === 0 && (
+                  <div className="col-span-3 text-center text-muted-foreground text-sm py-8">No media shared yet</div>
+                )}
+              </div>
+            )}
+            
+            {sharedFilter === 'links' && (
+              <div className="flex flex-col gap-3">
+                {messages.flatMap(m => {
+                  const links = (m.content?.match(/(https?:\/\/[^\s]+)/g) || []);
+                  return links.map((link: string) => ({ link, senderId: m.senderId }));
+                }).map((item, i) => (
+                  <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline bg-secondary/30 p-3 rounded-lg truncate block">
+                    {item.link}
+                  </a>
+                ))}
+                {messages.flatMap(m => m.content?.match(/(https?:\/\/[^\s]+)/g) || []).length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-8">No links shared yet</div>
+                )}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -311,17 +363,21 @@ export function MiniChatWidget() {
                   <MessageSquare className="h-5 w-5 ml-1 shrink-0" />
                 )}
                 {activeConversation ? (
-                  <div className="flex items-center gap-1.5 cursor-pointer hover:bg-primary-foreground/10 p-1 rounded-md transition-colors min-w-0" onClick={() => setShowSharedMedia(true)}>
-                    <Avatar className="h-6 w-6 border border-primary-foreground/20 shrink-0">
-                      <AvatarImage src={activeOtherMember?.avatarUrl} />
-                      <AvatarFallback className="bg-secondary text-secondary-foreground text-[10px]">
-                        {activeOtherMember?.name?.[0] || activeOtherMember?.username?.[0] || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <h3 className="font-bold text-sm truncate">
-                      {activeOtherMember?.name || activeOtherMember?.username || "Chat"}
-                    </h3>
-                    <ChevronRight className="h-3 w-3 shrink-0 opacity-70" />
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Link href={`/profile/${activeOtherMember?.id || activeOtherMember?.clerkUserId}`} onClick={() => setIsOpen(false)}>
+                      <Avatar className="h-6 w-6 border border-primary-foreground/20 shrink-0 hover:opacity-80 transition-opacity">
+                        <AvatarImage src={activeOtherMember?.avatarUrl} />
+                        <AvatarFallback className="bg-secondary text-secondary-foreground text-[10px]">
+                          {activeOtherMember?.name?.[0] || activeOtherMember?.username?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
+                    <div className="flex items-center gap-1.5 cursor-pointer hover:bg-primary-foreground/10 p-1 rounded-md transition-colors min-w-0" onClick={() => setShowSharedMedia(true)}>
+                      <h3 className="font-bold text-sm truncate">
+                        {activeOtherMember?.name || activeOtherMember?.username || "Chat"}
+                      </h3>
+                      <ChevronRight className="h-3 w-3 shrink-0 opacity-70" />
+                    </div>
                   </div>
                 ) : (
                   <h3 className="font-bold text-sm truncate">Messages</h3>
@@ -446,7 +502,15 @@ export function MiniChatWidget() {
                                 {msg.imageUrls && msg.imageUrls.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-1">
                                     {msg.imageUrls.map((url: string, i: number) => (
-                                      <img key={i} src={url.startsWith('blob:') ? url : `http://127.0.0.1:3000${url}`} alt="Attached" className="max-w-[120px] max-h-[120px] rounded-md object-cover" />
+                                      <button 
+                                        key={i}
+                                        onClick={() => setEnlargedImage(url.startsWith('blob:') ? url : `http://127.0.0.1:3000${url}`)}
+                                        className="w-[120px] rounded-md overflow-hidden bg-secondary border-0 p-0 cursor-pointer"
+                                      >
+                                        <AspectRatio ratio={1}>
+                                          <img src={url.startsWith('blob:') ? url : `http://127.0.0.1:3000${url}`} alt="Attached" className="w-full h-full object-cover" />
+                                        </AspectRatio>
+                                      </button>
                                     ))}
                                   </div>
                                 )}
@@ -456,10 +520,10 @@ export function MiniChatWidget() {
                             
                             {/* Actions Dropdown */}
                             <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 rounded-full shrink-0">
-                                  <MoreHorizontal className="h-3 w-3" />
-                                </Button>
+                              <DropdownMenuTrigger 
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 rounded-full shrink-0 flex items-center justify-center hover:bg-accent hover:text-accent-foreground"
+                              >
+                                <MoreHorizontal className="h-3 w-3" />
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align={isMe ? "end" : "start"} className="w-28 rounded-xl text-xs">
                                 {msg.content && (
@@ -578,6 +642,27 @@ export function MiniChatWidget() {
           </div>
         )}
       </Button>
+      {/* Enlarged Image Overlay */}
+      {enlargedImage && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-200"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img 
+            src={enlargedImage} 
+            alt="Enlarged shared media" 
+            className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent clicking the image from closing it
+          />
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
