@@ -2,7 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class StorageService {
@@ -46,6 +47,30 @@ export class StorageService {
     } catch (error) {
       console.error('Error uploading to S3:', error);
       throw new InternalServerErrorException('Failed to upload file to S3');
+    }
+  }
+
+  async getPresignedUrl(fileUrl: string): Promise<string> {
+    try {
+      if (!fileUrl.includes('s3.amazonaws.com') && !fileUrl.includes('s3.')) return fileUrl;
+
+      // Extract just the filename (key) from the S3 URL
+      const urlParts = fileUrl.split('/');
+      const key = urlParts[urlParts.length - 1];
+      const bucketName = this.getBucketName();
+      const s3Client = this.getS3Client();
+
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: key,
+      });
+
+      // Url expires in 3600 seconds (1 hour)
+      const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+      return signedUrl;
+    } catch (error) {
+      console.error('Error generating presigned URL:', error);
+      return fileUrl; // Fallback to original URL on error
     }
   }
 

@@ -15,8 +15,16 @@ import {
   AlertTriangle,
   BadgeCheck,
   Star,
+  Image as ImageIcon,
+  ChevronRight,
+  Copy,
+  Reply,
+  X,
+  MoreHorizontal,
+  ExternalLink,
 } from "lucide-react";
 import axios from "axios";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,12 +32,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const getImageUrl = (url?: string) => {
   if (!url) return "";
@@ -56,12 +71,18 @@ interface Message {
   createdAt: string;
   sender?: UserPreview;
   isRead?: boolean;
+  imageUrls?: string[];
   listingId?: string | null;
   listing?: {
     id: string;
     title: string;
     price: number;
     images?: { url: string }[];
+  } | null;
+  replyToId?: string | null;
+  replyTo?: {
+    sender: { name: string | null; username: string | null };
+    content: string;
   } | null;
 }
 
@@ -91,6 +112,14 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshInbox, setRefreshInbox] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  
+  const [replyingToMessage, setReplyingToMessage] = useState<Message | null>(null);
+  const [showSharedMedia, setShowSharedMedia] = useState(false);
+  const [sharedFilter, setSharedFilter] = useState<'media' | 'links'>('media');
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   const [contextListing, setContextListing] = useState<any | null>(null);
 
@@ -142,7 +171,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, selectedImages]);
 
   // Fetch listing context and pre-fill meetup
   useEffect(() => {
@@ -370,12 +399,26 @@ export default function ChatPage() {
       setAiSuggestion(null); // clear suggestion if action taken
     };
 
+    const onMessageImagesUploaded = (updatedMessage: Message) => {
+      setMessages((prev) => {
+        const idx = prev.findIndex(m => m.id.startsWith('temp-'));
+        if (idx !== -1) {
+          const newMsgs = [...prev];
+          newMsgs[idx] = updatedMessage;
+          return newMsgs;
+        }
+        return [...prev, updatedMessage];
+      });
+      setRefreshInbox((r) => r + 1);
+    };
+
     socket.on("receive_message", onReceiveMessage);
     socket.on("messages_read", onMessagesRead);
     socket.on("meetup_code_created", onMeetupCodeCreated);
     socket.on("meetup_confirmed", onMeetupConfirmed);
     socket.on("ai_meetup_suggestion", onAiMeetupSuggestion);
     socket.on("meetup_update", onMeetupUpdate);
+    socket.on("message_images_uploaded", onMessageImagesUploaded);
 
     return () => {
       socket.off("receive_message", onReceiveMessage);
@@ -384,6 +427,7 @@ export default function ChatPage() {
       socket.off("meetup_confirmed", onMeetupConfirmed);
       socket.off("ai_meetup_suggestion", onAiMeetupSuggestion);
       socket.off("meetup_update", onMeetupUpdate);
+      socket.off("message_images_uploaded", onMessageImagesUploaded);
     };
   }, [socket, activeConversationId]);
 
@@ -757,16 +801,30 @@ export default function ChatPage() {
     }
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      if (files.length + selectedImages.length > 5) {
+        alert("You can only upload up to 5 images at a time.");
+        return;
+      }
+      setSelectedImages((prev) => [...prev, ...files]);
+    }
+  };
+
+  const removeSelectedImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConversationId || !socket) return;
+    if (!activeConversationId) return;
+    if (!newMessage.trim() && selectedImages.length === 0) return;
 
-    const listingId = searchParams?.get("listingId");
-    const meetupLocation = searchParams?.get("meetupLocation");
-    let attachListingId = undefined;
-
-    // Only attach if it hasn't been sent yet in this conversation (unless it's a meetup request)
-    if (listingId && contextListing) {
+    let attachListingId: string | undefined = undefined;
+    if (contextListing?.id) {
+      const listingId = contextListing.id;
+      const meetupLocation = searchParams?.get("meetupLocation");
       const hasListing = meetupLocation
         ? false
         : messages.some((m) => m.listingId === listingId);
@@ -775,16 +833,72 @@ export default function ChatPage() {
       }
     }
 
-    socket.emit("send_message", {
-      conversationId: activeConversationId,
-      content: newMessage,
-      listingId: attachListingId,
-    });
+    if (selectedImages.length > 0) {
+      setIsUploadingImages(true);
+      try {
+        const formData = new FormData();
+        selectedImages.forEach((img) => formData.append("images", img));
+        if (newMessage.trim()) {
+            formData.append("content", newMessage);
+        }
+        if (replyingToMessage) {
+            formData.append("replyToId", replyingToMessage.id);
+        }
+        
+        // Optimistically add to UI with local blobs
+        const optimisticMessage: Message = {
+            id: 'temp-' + Date.now(),
+            content: newMessage,
+            conversationId: activeConversationId,
+            senderId: clerkUser?.id || '',
+            createdAt: new Date().toISOString(),
+            imageUrls: selectedImages.map(f => URL.createObjectURL(f)),
+            replyToId: replyingToMessage?.id || null,
+            replyTo: replyingToMessage ? {
+              sender: { name: replyingToMessage.sender?.name || null, username: replyingToMessage.sender?.username || null },
+              content: replyingToMessage.content
+            } : null,
+            sender: {
+                id: clerkUser?.id || '',
+                name: clerkUser?.fullName || null,
+                username: clerkUser?.username || null,
+                avatarUrl: clerkUser?.imageUrl || null,
+                clerkUserId: clerkUser?.id || '',
+            }
+        };
+        setMessages(prev => [...prev, optimisticMessage]);
+
+        const token = await getToken();
+        await axios.post(
+          `http://localhost:3000/chat/message/${activeConversationId}/images`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } catch (err) {
+        console.error("Failed to upload images", err);
+        alert("Failed to upload images. Please try again.");
+      } finally {
+        setIsUploadingImages(false);
+        setSelectedImages([]);
+      }
+    } else {
+      socket?.emit("send_message", {
+        conversationId: activeConversationId,
+        content: newMessage,
+        listingId: attachListingId,
+        replyToId: replyingToMessage?.id,
+      });
+    }
 
     setNewMessage("");
+    setReplyingToMessage(null);
 
-    // If we attached it, clear from URL and state
-    if (attachListingId) {
+    if (attachListingId && selectedImages.length === 0) {
       setContextListing(null);
       router.replace(`/chat?id=${activeConversationId}`);
     }
@@ -924,20 +1038,25 @@ export default function ChatPage() {
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <Link 
-                  href={`/profile/${otherActiveMember?.clerkUserId || otherActiveMember?.id}`}
-                  className="flex items-center gap-3 hover:bg-secondary/50 p-1.5 -ml-1.5 rounded-xl transition-colors cursor-pointer"
-                >
-                  <Avatar className="h-10 w-10 border border-border">
-                    {otherActiveMember?.avatarUrl && (
-                      <AvatarImage src={otherActiveMember.avatarUrl} />
-                    )}
-                    <AvatarFallback className="bg-secondary text-muted-foreground font-bold">
-                      {otherActiveInitial}
-                    </AvatarFallback>
-                  </Avatar>
+                <div className="flex items-center gap-3">
+                  <Link 
+                    href={`/profile/${otherActiveMember?.clerkUserId || otherActiveMember?.id}`}
+                    className="hover:opacity-80 transition-opacity"
+                  >
+                    <Avatar className="h-10 w-10 border border-border">
+                      {otherActiveMember?.avatarUrl && (
+                        <AvatarImage src={otherActiveMember.avatarUrl} />
+                      )}
+                      <AvatarFallback className="bg-secondary text-muted-foreground font-bold">
+                        {otherActiveInitial}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
 
-                  <div className="flex items-center gap-2">
+                  <div 
+                    className="flex items-center gap-2 cursor-pointer hover:bg-secondary/50 p-1.5 -ml-1.5 rounded-xl transition-colors"
+                    onClick={() => setShowSharedMedia(true)}
+                  >
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1.5">
                         <h2 className="font-semibold text-foreground text-[15px]">
@@ -964,8 +1083,9 @@ export default function ChatPage() {
                         </div>
                       )}
                     </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground ml-1" />
                   </div>
-                </Link>
+                </div>
 
                   {/* Verification Dashboard Button (Seller) */}
                   <div className="flex items-center gap-2 ml-2 md:ml-4 md:border-l md:border-border md:pl-4">
@@ -1093,53 +1213,109 @@ export default function ChatPage() {
                         )}
 
                         <div
-                          className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}
+                          className={`flex flex-col group ${isMine ? "items-end" : "items-start"}`}
                         >
-                          <div
-                            className={`px-4 py-2.5 text-[15px] leading-[1.35] max-w-[100%] break-words ${
-                              isMine
-                                ? "bg-primary text-primary-foreground rounded-[22px]"
-                                : "bg-secondary text-foreground rounded-[22px]"
-                            }`}
-                          >
-                            {/* Embedded Listing Snippet */}
-                            {msg.listing && (
+                          <div className={`flex items-center gap-2 ${isMine ? "flex-row-reverse" : "flex-row"}`}>
+                            <div className="flex flex-col max-w-[100%]">
+                              {msg.replyTo && (
+                                <div className={`flex flex-col text-xs bg-black/5 dark:bg-white/5 rounded-xl px-3 py-2 mb-1 border-l-2 ${isMine ? "border-primary" : "border-muted-foreground"} overflow-hidden opacity-80 cursor-pointer`}>
+                                  <span className="font-bold">{msg.replyTo.sender.name || msg.replyTo.sender.username}</span>
+                                  <span className="line-clamp-1">{msg.replyTo.content || "Images"}</span>
+                                </div>
+                              )}
                               <div
-                                className={`mb-2 p-2 rounded-2xl flex items-center gap-3 border ${isMine ? "bg-card/10 border-white/20" : "bg-card border-border shadow-sm"}`}
-                                onClick={() =>
-                                  router.push(`/listings/${msg.listing?.id}`)
-                                }
-                                style={{ cursor: "pointer" }}
+                                className={`px-4 py-2.5 text-[15px] leading-[1.35] max-w-[100%] break-words ${
+                                  isMine
+                                    ? "bg-primary text-primary-foreground rounded-[22px]"
+                                    : "bg-secondary text-foreground rounded-[22px]"
+                                }`}
                               >
-                                <div className="h-12 w-12 rounded-lg bg-secondary overflow-hidden shrink-0">
-                                  {msg.listing.images &&
-                                  msg.listing.images.length > 0 ? (
-                                    <img
-                                      src={getImageUrl(
-                                        msg.listing.images[0].url,
+                                {/* Embedded Listing Snippet */}
+                                {msg.listing && (
+                                  <div
+                                    className={`mb-2 p-2 rounded-2xl flex items-center gap-3 border ${isMine ? "bg-card/10 border-white/20" : "bg-card border-border shadow-sm"}`}
+                                    onClick={() =>
+                                      router.push(`/listings/${msg.listing?.id}`)
+                                    }
+                                    style={{ cursor: "pointer" }}
+                                  >
+                                    <div className="h-12 w-12 rounded-lg bg-secondary overflow-hidden shrink-0">
+                                      {msg.listing.images &&
+                                      msg.listing.images.length > 0 ? (
+                                        <img
+                                          src={getImageUrl(
+                                            msg.listing.images[0].url,
+                                          )}
+                                          alt="listing"
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="h-full w-full bg-zinc-300" />
                                       )}
-                                      alt="listing"
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="h-full w-full bg-zinc-300" />
-                                  )}
-                                </div>
-                                <div className="flex flex-col">
-                                  <span
-                                    className={`text-xs font-bold line-clamp-1 ${isMine ? "text-primary-foreground" : "text-foreground"}`}
-                                  >
-                                    {msg.listing.title}
-                                  </span>
-                                  <span
-                                    className={`text-sm font-black ${isMine ? "text-primary-foreground/90" : "text-primary"}`}
-                                  >
-                                    ${msg.listing.price}
-                                  </span>
-                                </div>
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span
+                                        className={`text-xs font-bold line-clamp-1 ${isMine ? "text-primary-foreground" : "text-foreground"}`}
+                                      >
+                                        {msg.listing.title}
+                                      </span>
+                                      <span
+                                        className={`text-sm font-black ${isMine ? "text-primary-foreground/90" : "text-primary"}`}
+                                      >
+                                        ${msg.listing.price}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {msg.imageUrls && msg.imageUrls.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 mb-2">
+                                    {msg.imageUrls.map((url, idx) => (
+                                      <button 
+                                        key={idx} 
+                                        onClick={() => setEnlargedImage(url.startsWith('blob:') ? url : getImageUrl(url))} 
+                                        className="w-[200px] rounded-md overflow-hidden bg-secondary border-0 p-0 cursor-pointer hover:opacity-90 transition-opacity"
+                                      >
+                                        <AspectRatio ratio={1}>
+                                          <img 
+                                            src={url.startsWith('blob:') ? url : getImageUrl(url)} 
+                                            alt="Attachment" 
+                                            className="w-full h-full object-cover" 
+                                          />
+                                        </AspectRatio>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                {msg.content}
                               </div>
-                            )}
-                            {msg.content}
+                            </div>
+                            
+                            {/* Message Actions */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger 
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-full shrink-0 flex items-center justify-center hover:bg-accent hover:text-accent-foreground"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align={isMine ? "end" : "start"} className="w-32 rounded-xl">
+                                {msg.content && (
+                                  <DropdownMenuItem 
+                                    className="cursor-pointer gap-2"
+                                    onClick={() => navigator.clipboard.writeText(msg.content)}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                    Copy
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem 
+                                  className="cursor-pointer gap-2"
+                                  onClick={() => setReplyingToMessage(msg)}
+                                >
+                                  <Reply className="h-4 w-4" />
+                                  Reply
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                           <span className="text-[10px] text-muted-foreground font-medium mt-1 px-1">
                             {new Date(msg.createdAt).toLocaleTimeString([], {
@@ -1312,6 +1488,46 @@ export default function ChatPage() {
                 </div>
               </div>
             )}
+            
+            {/* Replying To Prefix */}
+            {replyingToMessage && (
+              <div className="px-4 py-2 bg-secondary border-t border-border flex items-center justify-between shadow-inner shrink-0">
+                <div className="flex flex-col flex-1 min-w-0 border-l-2 border-primary pl-3 py-1">
+                  <span className="text-xs font-bold text-foreground">
+                    Replying to {replyingToMessage.sender?.name || replyingToMessage.sender?.username || 'User'}
+                  </span>
+                  <span className="text-xs text-muted-foreground line-clamp-1">
+                    {replyingToMessage.content || "Images"}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 ml-2 rounded-full"
+                  onClick={() => setReplyingToMessage(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Selected Images Preview */}
+            {selectedImages.length > 0 && (
+              <div className="flex gap-2 p-2 px-4 bg-secondary overflow-x-auto">
+                {selectedImages.map((img, idx) => (
+                  <div key={idx} className="relative h-16 w-16 shrink-0 rounded-md overflow-hidden">
+                    <img src={URL.createObjectURL(img)} className="h-full w-full object-cover" alt="Selected" />
+                    <button
+                      type="button"
+                      onClick={() => removeSelectedImage(idx)}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full h-4 w-4 flex items-center justify-center text-[10px]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Chat Input */}
             <div className="p-4 bg-card border-t border-black/5 shrink-0 pb-safe">
@@ -1334,19 +1550,36 @@ export default function ChatPage() {
                         </span>
                       </Button>
                     )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary shrink-0 mr-1"
+                  >
+                    <ImageIcon className="h-5 w-5" />
+                  </Button>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                  />
                   <Input
                     placeholder="Message..."
                     className="flex-1 bg-transparent border-transparent focus-visible:ring-0 text-[15px] h-[40px] px-2 shadow-sm placeholder:text-muted-foreground"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                   />
-                  {newMessage.trim() && (
+                  {(newMessage.trim() || selectedImages.length > 0) && (
                     <button
                       type="submit"
-                      disabled={!newMessage.trim()}
+                      disabled={isUploadingImages || (!newMessage.trim() && selectedImages.length === 0)}
                       className="text-[#0095f6] font-semibold text-[15px] ml-2 hover:text-foreground transition-colors"
                     >
-                      Send
+                      {isUploadingImages ? <Loader2 className="h-5 w-5 animate-spin" /> : "Send"}
                     </button>
                   )}
                 </div>
@@ -1360,7 +1593,7 @@ export default function ChatPage() {
         open={showBuyerMeetupModal}
         onOpenChange={setShowBuyerMeetupModal}
       >
-        <DialogContent className="sm:max-w-sm rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card [&>button]:hidden">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-sm rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card [&>button]:hidden">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-center mb-1">
               Meetup Code
@@ -1406,7 +1639,7 @@ export default function ChatPage() {
         open={showMeetupProposalModal}
         onOpenChange={setShowMeetupProposalModal}
       >
-        <DialogContent className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md rounded-2xl p-6 shadow-2xl border-0 overflow-hidden bg-card">
           <DialogHeader>
             <DialogTitle className="text-xl font-black mb-1">
               Propose a Meetup
@@ -1468,7 +1701,7 @@ export default function ChatPage() {
         open={isVerificationBoardOpen}
         onOpenChange={setIsVerificationBoardOpen}
       >
-        <DialogContent className="sm:max-w-2xl rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-card max-h-[85vh] flex flex-col">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-2xl rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-card max-h-[85vh] flex flex-col">
           <DialogHeader className="shrink-0 mb-4">
             <DialogTitle className="text-2xl font-black">
               Verify Meetups
@@ -1657,7 +1890,7 @@ export default function ChatPage() {
         open={isBuyerVerificationBoardOpen}
         onOpenChange={setIsBuyerVerificationBoardOpen}
       >
-        <DialogContent className="sm:max-w-2xl rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-card max-h-[85vh] flex flex-col">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-2xl rounded-3xl p-6 shadow-2xl border-0 overflow-hidden bg-card max-h-[85vh] flex flex-col">
           <DialogHeader className="shrink-0 mb-4">
             <DialogTitle className="text-2xl font-black">
               My Purchases
@@ -1774,6 +2007,104 @@ export default function ChatPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Shared Media Dialog */}
+      <Dialog open={showSharedMedia} onOpenChange={setShowSharedMedia}>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-xl rounded-3xl p-0 overflow-hidden border-0 bg-card/95 backdrop-blur-xl shadow-2xl">
+          <DialogDescription className="hidden">Shared Media</DialogDescription>
+          <div className="flex flex-col h-[70vh]">
+            <div className="p-4 border-b border-border/50 shrink-0 bg-secondary/30">
+              <h2 className="text-xl font-black text-foreground">Shared Details</h2>
+              <div className="flex items-center gap-2 mt-4 bg-secondary/50 p-1 rounded-lg w-full max-w-sm">
+                <button 
+                  onClick={() => setSharedFilter('media')}
+                  className={`flex-1 py-1.5 flex items-center justify-center gap-2 text-sm font-medium rounded-md transition-colors ${sharedFilter === 'media' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <ImageIcon className="h-4 w-4" /> Media
+                </button>
+                <button 
+                  onClick={() => setSharedFilter('links')}
+                  className={`flex-1 py-1.5 flex items-center justify-center gap-2 text-sm font-medium rounded-md transition-colors ${sharedFilter === 'links' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  <ExternalLink className="h-4 w-4" /> Links
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              {sharedFilter === 'media' && (
+                <>
+                  <h3 className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wider">Shared Photos</h3>
+                  {messages.flatMap(m => m.imageUrls || []).length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                      {messages.flatMap(m => m.imageUrls || []).reverse().map((url, idx) => (
+                        <button 
+                          key={idx} 
+                          onClick={() => setEnlargedImage(url.startsWith('blob:') ? url : getImageUrl(url))} 
+                          className="aspect-square rounded-xl overflow-hidden hover:opacity-80 transition-opacity bg-secondary cursor-pointer border-0 p-0"
+                        >
+                          <img 
+                            src={url.startsWith('blob:') ? url : getImageUrl(url)} 
+                            alt="Shared media" 
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                      <p>No photos shared yet</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {sharedFilter === 'links' && (
+                <>
+                  <h3 className="text-sm font-bold text-muted-foreground mb-4 uppercase tracking-wider">Shared Links</h3>
+                  {messages.flatMap(m => m.content?.match(/(https?:\/\/[^\s]+)/g) || []).length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      {messages.flatMap(m => {
+                        const links = (m.content?.match(/(https?:\/\/[^\s]+)/g) || []);
+                        return links.map(link => ({ link, senderId: m.senderId }));
+                      }).map((item, i) => (
+                        <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline bg-secondary/30 p-4 rounded-xl truncate block">
+                          {item.link}
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                      <p>No links shared yet</p>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Enlarged Image Overlay */}
+      {enlargedImage && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-200"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img 
+            src={enlargedImage} 
+            alt="Enlarged shared media" 
+            className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent clicking the image from closing it
+          />
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

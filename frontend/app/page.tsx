@@ -238,6 +238,7 @@ export default function Home() {
                   src="/Goods.jpg"
                   alt="Goods"
                   fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -255,6 +256,7 @@ export default function Home() {
                   src="/Services.png"
                   alt="Service"
                   fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -273,6 +275,7 @@ export default function Home() {
                   src="/sublease.jpg"
                   alt="Sublease"
                   fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -296,6 +299,7 @@ export default function Home() {
                   src="/dorm.jpg"
                   alt="Dorm"
                   fill
+                  sizes="(max-width: 768px) 50vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -308,6 +312,7 @@ export default function Home() {
                   src="/school%20supplies.jpg"
                   alt="School Supplies"
                   fill
+                  sizes="(max-width: 768px) 50vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -322,6 +327,7 @@ export default function Home() {
                   src="/electronics.jpg"
                   alt="Electronics"
                   fill
+                  sizes="(max-width: 768px) 50vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -334,6 +340,7 @@ export default function Home() {
                   src="/clothing.jpg"
                   alt="Clothing"
                   fill
+                  sizes="(max-width: 768px) 50vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -346,6 +353,7 @@ export default function Home() {
                   src="/rave.JPG"
                   alt="Event Tickets"
                   fill
+                  sizes="(max-width: 768px) 50vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -360,6 +368,7 @@ export default function Home() {
                   src="/accessories.jpg"
                   alt="Accessories"
                   fill
+                  sizes="(max-width: 768px) 50vw, 33vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -380,6 +389,7 @@ export default function Home() {
                   src="/UIC.webp"
                   alt="UIC"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -398,6 +408,7 @@ export default function Home() {
                   src="/UIUC.jpg"
                   alt="UIUC"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               </div>
@@ -453,6 +464,27 @@ export default function Home() {
                 <circle cx="4" cy="4" r="2" />
               </svg>
               Nguyen Tuan Kiet Ho
+            </Link>
+            <Link
+              href="https://www.linkedin.com/in/cmkhoa/"
+              className="text-muted-foreground hover:text-foreground transition-colors text-[14px] font-normal inline-flex items-center gap-1"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                <rect width="4" height="12" x="2" y="9" />
+                <circle cx="4" cy="4" r="2" />
+              </svg>
+              Minh Khoa Cao
             </Link>
           </div>
 

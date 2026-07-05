@@ -22,6 +22,9 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { S3PresignInterceptor } from './common/interceptors/s3-presign.interceptor';
 @Module({
     imports: [
         ServeStaticModule.forRoot({
@@ -45,6 +48,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
         PaymentsModule,
         NotificationsModule,
         ReviewsModule,
+        AdminModule,
         CacheModule.registerAsync({
             isGlobal: true,
             imports: [ConfigModule],
@@ -95,6 +99,10 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
         {
             provide: APP_GUARD,
             useClass: ThrottlerGuard,
+        },
+        {
+            provide: APP_INTERCEPTOR,
+            useClass: S3PresignInterceptor,
         },
     ],
 })

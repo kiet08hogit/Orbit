@@ -1,11 +1,24 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { MessageSquare, X, Send, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
+import { createPortal } from "react-dom";
+import { MessageSquare, X, Send, ArrowLeft, Loader2, ExternalLink, Image as ImageIcon, MoreHorizontal, Copy, Reply, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 import { io, Socket } from "socket.io-client";
@@ -28,6 +41,16 @@ export function MiniChatWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // New States
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [replyingToMessage, setReplyingToMessage] = useState<any | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [showSharedMedia, setShowSharedMedia] = useState(false);
+  const [sharedFilter, setSharedFilter] = useState<'media' | 'links'>('media');
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   // Check if we are on the full chat page
 
@@ -81,12 +104,29 @@ export function MiniChatWidget() {
           ) {
             const senderName =
               msg.sender?.name || msg.sender?.username || "Someone";
-            toast(`New message from ${senderName}`, {
-              description:
-                msg.content.length > 40
-                  ? msg.content.substring(0, 40) + "..."
-                  : msg.content,
-              duration: 5000,
+              
+            toast.custom((t) => (
+              <div
+                onClick={() => {
+                  toast.dismiss(t);
+                  setIsOpen(true);
+                  loadConversation(msg.conversationId);
+                }}
+                className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl shadow-lg cursor-pointer hover:bg-secondary/50 transition-colors w-[320px] pointer-events-auto"
+              >
+                <Avatar className="h-10 w-10 shrink-0 border border-border">
+                  <AvatarImage src={msg.sender?.avatarUrl} />
+                  <AvatarFallback className="bg-secondary text-secondary-foreground font-bold">{senderName[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-bold text-sm text-foreground truncate">{senderName}</span>
+                  <span className="text-xs text-muted-foreground truncate">
+                    {msg.content || (msg.imageUrls && msg.imageUrls.length > 0 ? "Sent an image" : "New message")}
+                  </span>
+                </div>
+              </div>
+            ), {
+              duration: 4000,
             });
           }
         });
@@ -101,19 +141,31 @@ export function MiniChatWidget() {
       };
 
       initSocket();
-
-      return () => {
-        newSocket?.disconnect();
-      };
     }
-  }, [userId, activeConversation, isOpen]);
+
+    return () => {
+      if (newSocket) newSocket.disconnect();
+    };
+  }, [userId, getToken, isOpen, activeConversation]);
+
+  // Handle custom event to open minichat from external pop-up notification
+  useEffect(() => {
+    const handleOpenMiniChat = (e: any) => {
+      if (e.detail?.conversationId) {
+        setIsOpen(true);
+        loadConversation(e.detail.conversationId);
+      }
+    };
+    window.addEventListener('open-minichat', handleOpenMiniChat);
+    return () => window.removeEventListener('open-minichat', handleOpenMiniChat);
+  }, []);
 
   const loadInbox = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const token = await getToken();
-      const res = await axios.get(`http://127.0.0.1:3000/chat/inbox`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await axios.get("http://127.0.0.1:3000/chat/inbox", {
+        headers: { Authorization: `Bearer ${token}` }
       });
       setConversations(res.data);
     } catch (err) {
@@ -123,22 +175,20 @@ export function MiniChatWidget() {
     }
   };
 
-  const loadConversation = async (convId: string) => {
+  const loadConversation = async (conversationId: string) => {
+    setActiveConversation(conversationId);
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setActiveConversation(convId);
       const token = await getToken();
-      const res = await axios.get(
-        `http://127.0.0.1:3000/chat/inbox/${convId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      // The API returns an array directly, not an object with a messages property
-      setMessages(Array.isArray(res.data) ? res.data : res.data.messages || []);
-
-      // Notify backend to mark as read and manually refresh unread count
-      socket?.emit("mark_read", { conversationId: convId });
+      const res = await axios.get(`http://127.0.0.1:3000/chat/inbox/${conversationId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // The API returns an array directly, not an object with a messages property (or it might be an object, check structure)
+      setMessages(Array.isArray(res.data) ? res.data.reverse() : res.data.messages?.reverse() || []);
+      
+      if (socket) {
+        socket.emit("mark_read", { conversationId });
+      }
       
       const unreadRes = await axios.get(`http://127.0.0.1:3000/chat/unread-count`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -162,16 +212,66 @@ export function MiniChatWidget() {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConversation || !socket) return;
+    if (!activeConversation || !socket) return;
+    if (!newMessage.trim() && selectedImages.length === 0) return;
 
-    socket.emit("send_message", {
-      conversationId: activeConversation,
-      content: newMessage,
-    });
+    if (selectedImages.length > 0) {
+      setIsUploadingImages(true);
+      try {
+        const token = await getToken();
+        const formData = new FormData();
+        selectedImages.forEach((img) => formData.append("images", img));
+        if (newMessage.trim()) {
+            formData.append("content", newMessage);
+        }
+        if (replyingToMessage) {
+            formData.append("replyToId", replyingToMessage.id);
+        }
+        
+        await axios.post(
+          `http://127.0.0.1:3000/chat/message/${activeConversation}/images`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        setSelectedImages([]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsUploadingImages(false);
+      }
+    } else {
+      socket.emit("send_message", {
+        conversationId: activeConversation,
+        content: newMessage,
+        replyToId: replyingToMessage?.id,
+      });
+    }
 
     setNewMessage("");
+    setReplyingToMessage(null);
+  };
+  
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      if (selectedImages.length + filesArray.length > 5) {
+        alert("Maximum 5 images allowed");
+        return;
+      }
+      setSelectedImages((prev) => [...prev, ...filesArray]);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+  
+  const removeSelectedImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   if (!userId || pathname?.startsWith("/chat")) return null;
@@ -182,6 +282,64 @@ export function MiniChatWidget() {
   
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+      {/* Shared Media Dialog */}
+      <Dialog open={showSharedMedia} onOpenChange={setShowSharedMedia}>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-[400px] bg-card text-card-foreground">
+          <DialogDescription className="hidden">Shared Media</DialogDescription>
+          <h2 className="font-bold text-xl text-foreground">Shared Details</h2>
+          
+          <div className="flex items-center gap-2 mt-2 bg-secondary/50 p-1 rounded-lg">
+            <button 
+              onClick={() => setSharedFilter('media')}
+              className={`flex-1 py-1.5 flex items-center justify-center gap-2 text-sm font-medium rounded-md transition-colors ${sharedFilter === 'media' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <ImageIcon className="h-4 w-4" /> Media
+            </button>
+            <button 
+              onClick={() => setSharedFilter('links')}
+              className={`flex-1 py-1.5 flex items-center justify-center gap-2 text-sm font-medium rounded-md transition-colors ${sharedFilter === 'links' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <ExternalLink className="h-4 w-4" /> Links
+            </button>
+          </div>
+
+          <div className="mt-4 min-h-[200px] max-h-[400px] overflow-y-auto custom-scrollbar">
+            {sharedFilter === 'media' && (
+              <div className="grid grid-cols-3 gap-2">
+                {messages.filter(m => m.imageUrls?.length > 0).flatMap(m => m.imageUrls).map((url, i) => (
+                  <button 
+                    key={i} 
+                    onClick={() => setEnlargedImage(url.startsWith('http') ? url : `http://127.0.0.1:3000${url}`)} 
+                    className="aspect-square rounded-md overflow-hidden bg-secondary hover:opacity-80 transition-opacity block border-0 p-0 cursor-pointer"
+                  >
+                    <img src={url.startsWith('http') ? url : `http://127.0.0.1:3000${url}`} className="w-full h-full object-cover" alt="Shared" />
+                  </button>
+                ))}
+                {messages.filter(m => m.imageUrls?.length > 0).length === 0 && (
+                  <div className="col-span-3 text-center text-muted-foreground text-sm py-8">No media shared yet</div>
+                )}
+              </div>
+            )}
+            
+            {sharedFilter === 'links' && (
+              <div className="flex flex-col gap-3">
+                {messages.flatMap(m => {
+                  const links = (m.content?.match(/(https?:\/\/[^\s]+)/g) || []);
+                  return links.map((link: string) => ({ link, senderId: m.senderId }));
+                }).map((item, i) => (
+                  <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline bg-secondary/30 p-3 rounded-lg truncate block">
+                    {item.link}
+                  </a>
+                ))}
+                {messages.flatMap(m => m.content?.match(/(https?:\/\/[^\s]+)/g) || []).length === 0 && (
+                  <div className="text-center text-muted-foreground text-sm py-8">No links shared yet</div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Chat Window */}
       {isOpen && (
         <div className="bg-card border border-border shadow-2xl rounded-2xl w-[380px] h-[550px] mb-4 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
@@ -205,11 +363,22 @@ export function MiniChatWidget() {
                   <MessageSquare className="h-5 w-5 ml-1 shrink-0" />
                 )}
                 {activeConversation ? (
-                  <Link href={`/profile/${activeOtherMember?.clerkUserId || activeOtherMember?.id}`} className="hover:opacity-80 transition-opacity">
-                    <h3 className="font-bold text-sm truncate">
-                      {activeOtherMember?.name || activeOtherMember?.username || "Chat"}
-                    </h3>
-                  </Link>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Link href={`/profile/${activeOtherMember?.id || activeOtherMember?.clerkUserId}`} onClick={() => setIsOpen(false)}>
+                      <Avatar className="h-6 w-6 border border-primary-foreground/20 shrink-0 hover:opacity-80 transition-opacity">
+                        <AvatarImage src={activeOtherMember?.avatarUrl} />
+                        <AvatarFallback className="bg-secondary text-secondary-foreground text-[10px]">
+                          {activeOtherMember?.name?.[0] || activeOtherMember?.username?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
+                    <div className="flex items-center gap-1.5 cursor-pointer hover:bg-primary-foreground/10 p-1 rounded-md transition-colors min-w-0" onClick={() => setShowSharedMedia(true)}>
+                      <h3 className="font-bold text-sm truncate">
+                        {activeOtherMember?.name || activeOtherMember?.username || "Chat"}
+                      </h3>
+                      <ChevronRight className="h-3 w-3 shrink-0 opacity-70" />
+                    </div>
+                  </div>
                 ) : (
                   <h3 className="font-bold text-sm truncate">Messages</h3>
                 )}
@@ -319,10 +488,54 @@ export function MiniChatWidget() {
                               </div>
                             </div>
                           )}
-                          <div
-                            className={`max-w-[85%] rounded-2xl px-3 py-2 text-[13px] ${isMe ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-foreground rounded-bl-sm"}`}
-                          >
-                            {msg.content}
+                          <div className={`flex items-center gap-1 group ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                            <div className="flex flex-col max-w-[85%]">
+                              {msg.replyTo && (
+                                <div className={`flex flex-col text-[10px] bg-black/5 dark:bg-white/5 rounded-xl px-2 py-1 mb-1 border-l-2 ${isMe ? "border-primary" : "border-muted-foreground"} overflow-hidden opacity-80 cursor-pointer`}>
+                                  <span className="font-bold">{msg.replyTo.sender.name || msg.replyTo.sender.username}</span>
+                                  <span className="line-clamp-1">{msg.replyTo.content || "Images"}</span>
+                                </div>
+                              )}
+                              <div
+                                className={`rounded-2xl px-3 py-2 text-[13px] break-words ${isMe ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-secondary text-foreground rounded-bl-sm"}`}
+                              >
+                                {msg.imageUrls && msg.imageUrls.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-1">
+                                    {msg.imageUrls.map((url: string, i: number) => (
+                                      <button 
+                                        key={i}
+                                        onClick={() => setEnlargedImage(url.startsWith('blob:') ? url : `http://127.0.0.1:3000${url}`)}
+                                        className="w-[120px] rounded-md overflow-hidden bg-secondary border-0 p-0 cursor-pointer"
+                                      >
+                                        <AspectRatio ratio={1}>
+                                          <img src={url.startsWith('blob:') ? url : `http://127.0.0.1:3000${url}`} alt="Attached" className="w-full h-full object-cover" />
+                                        </AspectRatio>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                {msg.content}
+                              </div>
+                            </div>
+                            
+                            {/* Actions Dropdown */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger 
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 rounded-full shrink-0 flex items-center justify-center hover:bg-accent hover:text-accent-foreground"
+                              >
+                                <MoreHorizontal className="h-3 w-3" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align={isMe ? "end" : "start"} className="w-28 rounded-xl text-xs">
+                                {msg.content && (
+                                  <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => navigator.clipboard.writeText(msg.content)}>
+                                    <Copy className="h-3 w-3" /> Copy
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem className="cursor-pointer gap-2" onClick={() => setReplyingToMessage(msg)}>
+                                  <Reply className="h-3 w-3" /> Reply
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                           {isMe && msg.isRead && (
                             <span className="text-[10px] text-emerald-500 font-bold tracking-wide mr-1 mt-0.5">
@@ -335,23 +548,74 @@ export function MiniChatWidget() {
                     <div ref={messagesEndRef} />
                   </div>
                 </div>
-                <div className="p-2 bg-card border-t border-border shrink-0">
-                  <form onSubmit={handleSendMessage} className="flex gap-2">
-                    <Input
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type a message..."
-                      className="flex-1 h-9 bg-secondary border-none text-[13px] rounded-full px-4"
-                    />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      disabled={!newMessage.trim()}
-                      className="h-9 w-9 rounded-full bg-primary shrink-0"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </form>
+                <div className="flex flex-col bg-card border-t border-border shrink-0">
+                  {/* Replying To Prefix */}
+                  {replyingToMessage && (
+                    <div className="px-3 py-1.5 bg-secondary border-b border-border flex items-center justify-between shadow-inner">
+                      <div className="flex flex-col flex-1 min-w-0 border-l-2 border-primary pl-2 py-0.5">
+                        <span className="text-[10px] font-bold text-foreground">
+                          Replying to {replyingToMessage.sender?.name || replyingToMessage.sender?.username || 'User'}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground line-clamp-1">
+                          {replyingToMessage.content || "Images"}
+                        </span>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-5 w-5 ml-2 rounded-full shrink-0" onClick={() => setReplyingToMessage(null)}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Selected Images Preview */}
+                  {selectedImages.length > 0 && (
+                    <div className="flex gap-2 p-2 bg-secondary overflow-x-auto">
+                      {selectedImages.map((img, idx) => (
+                        <div key={idx} className="relative h-12 w-12 shrink-0 rounded-md overflow-hidden">
+                          <img src={URL.createObjectURL(img)} className="h-full w-full object-cover" alt="Selected" />
+                          <button type="button" onClick={() => removeSelectedImage(idx)} className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full h-3 w-3 flex items-center justify-center text-[8px]">
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="p-2">
+                    <form onSubmit={handleSendMessage} className="flex gap-1 items-center">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full text-muted-foreground shrink-0"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                      </Button>
+                      
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type a message..."
+                        className="flex-1 h-8 bg-secondary border-none text-[12px] rounded-full px-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      />
+                      <Button
+                        type="submit"
+                        size="icon"
+                        disabled={isUploadingImages || (!newMessage.trim() && selectedImages.length === 0)}
+                        className="h-8 w-8 rounded-full bg-primary shrink-0 transition-transform active:scale-95"
+                      >
+                        {isUploadingImages ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                      </Button>
+                    </form>
+                  </div>
                 </div>
               </>
             )}
@@ -378,6 +642,27 @@ export function MiniChatWidget() {
           </div>
         )}
       </Button>
+      {/* Enlarged Image Overlay */}
+      {enlargedImage && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 animate-in fade-in duration-200"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors"
+            onClick={() => setEnlargedImage(null)}
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img 
+            src={enlargedImage} 
+            alt="Enlarged shared media" 
+            className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl"
+            onClick={(e) => e.stopPropagation()} // Prevent clicking the image from closing it
+          />
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

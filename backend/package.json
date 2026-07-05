@@ -15,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1062.0",
+    "@aws-sdk/s3-request-presigner": "^3.1079.0",
     "@azure/storage-blob": "^12.31.0",
     "@clerk/backend": "^3.4.11",
     "@google/generative-ai": "^0.24.1",

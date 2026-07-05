@@ -1,11 +1,15 @@
 import { Injectable,NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { time } from 'console';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class ChatService {
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        @InjectQueue('upload-queue') private uploadQueue: Queue
+    ) { }
 
     async getOrCreateConversation(currentclerkUserId: string, otherClerkId: string) {
             const currentUser = await this.prisma.user.findUnique({
@@ -126,7 +130,7 @@ export class ChatService {
         });
     }
 
-    async createMessage(clerkUserId: string, conversationId: string, content: string, listingId?: string) {
+    async createMessage(clerkUserId: string, conversationId: string, content: string, listingId?: string, replyToId?: string) {
         const dbUser = await this.prisma.user.findUnique({
             where: { clerkUserId },
         });
@@ -138,6 +142,7 @@ export class ChatService {
                 conversationId,
                 senderId: dbUser.id,
                 ...(listingId && { listingId }),
+                ...(replyToId && { replyToId }),
             },
             include: {
                 sender: {
@@ -150,6 +155,9 @@ export class ChatService {
                         price: true,
                         images: { take: 1 }
                     }
+                },
+                replyTo: {
+                    include: { sender: { select: { name: true, username: true } } }
                 }
             }
         });
@@ -162,6 +170,62 @@ export class ChatService {
         const conversation = await this.prisma.conversation.findUnique({
             where: { id: conversationId },
             include: { members: { include: { user: true } } }
+        });
+
+        return { savedMessage, conversation };
+    }
+
+    async createMessageWithImages(
+        clerkUserId: string,
+        conversationId: string,
+        files: any[],
+        content: string = '',
+        replyToId?: string
+    ) {
+        const sender = await this.prisma.user.findUnique({
+            where: { clerkUserId },
+        });
+
+        if (!sender) {
+            throw new NotFoundException('User not found');
+        }
+
+        const conversation = await this.prisma.conversation.findUnique({
+            where: { id: conversationId },
+            include: { members: { include: { user: true } } },
+        });
+
+        if (!conversation) {
+            throw new NotFoundException('Conversation not found');
+        }
+
+        // Create the pending message
+        const savedMessage = await this.prisma.message.create({
+            data: {
+                content,
+                conversationId,
+                senderId: sender.id,
+                ...(replyToId && { replyToId }),
+            },
+            include: {
+                sender: true,
+                replyTo: {
+                    include: { sender: { select: { name: true, username: true } } }
+                }
+            },
+        });
+
+        // Convert files to base64 for BullMQ
+        const filesData = files.map(f => ({
+            originalname: f.originalname,
+            mimetype: f.mimetype,
+            base64: f.buffer.toString('base64'),
+        }));
+
+        // Enqueue the job
+        await this.uploadQueue.add('upload-images', {
+            messageId: savedMessage.id,
+            filesData,
         });
 
         return { savedMessage, conversation };

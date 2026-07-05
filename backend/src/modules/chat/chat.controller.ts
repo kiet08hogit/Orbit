@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, UseGuards, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ChatService } from './chat.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -42,14 +43,28 @@ export class ChatController {
 
 
 
-    // @Post('message/:conversationId')
-    // @UseGuards(ClerkAuthGuard)
-    // async sendMessage(
-    //     @CurrentUser() currentUser: any,
-    //     @Param('conversationId') conversationId: string,
-    //     @Body('content') content: string,
-    // ) {
-        // return this.chatService.sendMessage(conversationId, currentUser.id, content);
-    // }
-
+    @Post('message/:conversationId/images')
+    @UseGuards(ClerkAuthGuard)
+    @UseInterceptors(FilesInterceptor('images', 5))
+    async sendImageMessage(
+        @CurrentUser() currentUser: AuthUser,
+        @Param('conversationId') conversationId: string,
+        @UploadedFiles() files: any[],
+        @Body('content') content?: string,
+        @Body('replyToId') replyToId?: string,
+    ) {
+        if (!files || files.length === 0) {
+            throw new BadRequestException('Images required');
+        }
+        
+        const { savedMessage, conversation } = await this.chatService.createMessageWithImages(
+            currentUser.clerkUserId,
+            conversationId,
+            files,
+            content || '',
+            replyToId
+        );
+        
+        return savedMessage;
+    }
 }

@@ -56,9 +56,11 @@ export function ChatBadge({ initialCount }: { initialCount: number }) {
     };
 
     socket.on("receive_message", onReceiveMessage);
+    socket.on("messages_read", onReceiveMessage); // when we read messages on another device or tab
 
     return () => {
       socket.off("receive_message", onReceiveMessage);
+      socket.off("messages_read", onReceiveMessage);
     };
   }, [socket]);
 

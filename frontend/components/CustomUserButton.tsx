@@ -9,13 +9,40 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, ListOrdered, Settings } from "lucide-react";
+import { LogOut, User, ListOrdered, Settings, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 export function CustomUserButton() {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const { signOut } = useClerk();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkRole() {
+      if (!user) return;
+      const token = await getToken();
+      if (!token) return;
+      
+      try {
+        const res = await fetch("http://localhost:3000/users/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const dbUser = await res.json();
+          if (dbUser.role === "ADMIN") {
+            setIsAdmin(true);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user role", error);
+      }
+    }
+    checkRole();
+  }, [user, getToken]);
 
   if (!user) return null;
 
@@ -73,6 +100,16 @@ export function CustomUserButton() {
           <Settings className="mr-2 h-4 w-4" />
           <span className="font-medium">Settings</span>
         </DropdownMenuItem>
+
+        {isAdmin && (
+          <DropdownMenuItem 
+            className="cursor-pointer py-2.5 px-3 focus:bg-secondary text-primary"
+            onClick={() => router.push(`/admin`)}
+          >
+            <Shield className="mr-2 h-4 w-4" />
+            <span className="font-medium">Admin Dashboard</span>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuSeparator className="bg-border" />
         <DropdownMenuItem

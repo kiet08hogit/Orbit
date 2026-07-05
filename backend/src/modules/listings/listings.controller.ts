@@ -1,4 +1,4 @@
-import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException, UseInterceptors, UploadedFiles, Delete, Put } from '@nestjs/common';
+import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException, UseInterceptors, UploadedFiles, Delete, Put, BadRequestException } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ListingsService } from './listings.service';
@@ -11,6 +11,16 @@ import { InteractionType, ListingCategory } from '@prisma/client';
 @Controller('listings')
 export class ListingsController {
     constructor(private readonly listingsService: ListingsService){}
+
+    @Post('ai-suggest')
+    @UseGuards(ClerkAuthGuard)
+    @UseInterceptors(FilesInterceptor('image', 1))
+    async suggestListingDetails(@UploadedFiles() files: any[]) {
+        if (!files || files.length === 0) {
+            throw new BadRequestException('Image required');
+        }
+        return this.listingsService.suggestListingDetails(files[0]);
+    }
 
     @Post()
     @UseGuards(ClerkAuthGuard)

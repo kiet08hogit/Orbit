@@ -27,7 +27,7 @@ export class NotificationsService {
       data,
       include: {
         actor: {
-          select: { name: true, username: true, avatarUrl: true }
+          select: { id: true, name: true, username: true, avatarUrl: true }
         }
       }
     });
@@ -43,8 +43,13 @@ export class NotificationsService {
   }
 
   async getUserNotifications(clerkUserId: string, filter?: string) {
-    const user = await this.prisma.user.findUnique({ where: { clerkUserId } });
+    const user = await this.prisma.user.findUnique({ 
+      where: { clerkUserId },
+      include: { following: { select: { id: true } } }
+    });
     if (!user) throw new NotFoundException('User not found');
+    
+    const followingIds = new Set(user.following.map(f => f.id));
 
     const whereClause: any = { userId: user.id };
     
@@ -52,13 +57,26 @@ export class NotificationsService {
       whereClause.type = filter as NotificationType;
     }
 
-    return this.prisma.notification.findMany({
+    const notifications = await this.prisma.notification.findMany({
       where: whereClause,
       orderBy: { createdAt: 'desc' },
       take: 50,
       include: {
-        actor: { select: { name: true, username: true, avatarUrl: true } }
+        actor: { select: { id: true, name: true, username: true, avatarUrl: true } }
       }
+    });
+
+    return notifications.map(notif => {
+      if (notif.actor) {
+        return {
+          ...notif,
+          actor: {
+            ...notif.actor,
+            isFollowedByMe: followingIds.has(notif.actor.id)
+          }
+        };
+      }
+      return notif;
     });
   }
 

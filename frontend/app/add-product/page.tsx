@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Tag,
@@ -47,6 +48,7 @@ export default function AddProductPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const [error, setError] = useState("");
   const [images, setImages] = useState<ImagePreview[]>([]);
 
@@ -203,6 +205,45 @@ export default function AddProductPage() {
     }
   };
 
+  const handleAutoFill = async () => {
+    if (images.length === 0) return;
+    
+    setIsAiLoading(true);
+    try {
+      const token = await getToken();
+      const formDataToSend = new FormData();
+      formDataToSend.append("image", images[0].file);
+
+      const res = await axios.post("http://localhost:3000/listings/ai-suggest", formDataToSend, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const suggestion = res.data;
+      if (suggestion) {
+        setFormData((prev) => ({
+          ...prev,
+          title: suggestion.title || prev.title,
+          description: suggestion.description || prev.description,
+          price: suggestion.price || prev.price,
+          category: suggestion.category || prev.category,
+          colors: suggestion.colors || prev.colors,
+          size: suggestion.size || prev.size,
+          material: suggestion.material || prev.material,
+          brand: suggestion.brand || prev.brand,
+        }));
+        toast.success("AI auto-filled your listing!");
+      }
+    } catch (err) {
+      console.error("AI Auto-Fill failed", err);
+      toast.error("Failed to generate AI suggestions.");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background dark:bg-card py-10 px-4 sm:px-6 font-sans">
       <motion.div
@@ -263,6 +304,7 @@ export default function AddProductPage() {
 
               {/* Previews */}
               {images.length > 0 && (
+                <>
                 <div className="flex gap-3 mt-4 overflow-x-auto pb-2 hide-scrollbar">
                   <AnimatePresence mode="popLayout">
                     {images.map((img, idx) => (
@@ -296,6 +338,20 @@ export default function AddProductPage() {
                     ))}
                   </AnimatePresence>
                 </div>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full border-dashed border-[#0066cc] text-[#0066cc] hover:bg-[#0066cc]/10 bg-blue-50/50"
+                  onClick={handleAutoFill}
+                  disabled={isAiLoading}
+                >
+                  {isAiLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing Image...</>
+                  ) : (
+                    <>✨ Auto-Fill with AI</>
+                  )}
+                </Button>
+              </>
               )}
               <p className="text-[11px] text-muted-foreground font-medium">
                 ({images.length}/{MAX_IMAGES}) uploaded. First image will be the
