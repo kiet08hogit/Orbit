@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -10,46 +11,60 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
 import { Send } from 'lucide-react-native';
 import { palette, radius, spacing, type } from '@/theme';
-import { Screen, AppHeader, Input, Avatar } from '@/components/ui';
-import { useMessages } from '@/hooks/useConversations';
-import { mockUser } from '@/data/mock';
+import { AppHeader, Input, Avatar } from '@/components/ui';
+import { chatApi, getImageUrl } from '@/lib/api';
 import { formatRelative } from '@/lib/format';
 import { getSocket } from '@/lib/socket';
-import type { Message } from '@/lib/types';
+import type { Message, User } from '@/lib/types';
 
 export default function Thread() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
-  const id = conversationId || 'c1';
-  const { data, appendLocal } = useMessages(id);
+  const id = conversationId || '';
+  const { user } = useUser();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [other, setOther] = useState<User | undefined>();
   const [draft, setDraft] = useState('');
   const listRef = useRef<FlatList<Message>>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await chatApi.messages(id);
+      setMessages(data);
+      const someoneElse = data.find((m) => m.sender && m.sender.clerkUserId !== user?.id)?.sender;
+      if (someoneElse) setOther(someoneElse);
+    } catch {
+      // leave empty state
+    } finally {
+      setLoading(false);
+    }
+  }, [id, user?.id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
     const onMessage = (msg: Message) => {
-      if (msg.conversationId === id) appendLocal(msg);
+      if (msg.conversationId !== id) return;
+      setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+      socket.emit('mark_read', { conversationId: id });
     };
-    socket.on('message', onMessage);
+    socket.on('receive_message', onMessage);
+    socket.emit('mark_read', { conversationId: id });
     return () => {
-      socket.off('message', onMessage);
+      socket.off('receive_message', onMessage);
     };
-  }, [id, appendLocal]);
+  }, [id]);
 
   const send = () => {
     const content = draft.trim();
     if (!content) return;
-    const msg: Message = {
-      id: `local-${Date.now()}`,
-      conversationId: id,
-      sender: mockUser,
-      content,
-      createdAt: new Date().toISOString(),
-      read: false,
-    };
-    appendLocal(msg);
     setDraft('');
     getSocket()?.emit('send_message', { conversationId: id, content });
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
@@ -61,16 +76,22 @@ export default function Thread() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <AppHeader back title="Conversation" />
-      <FlatList
-        ref={listRef}
-        data={data}
-        keyExtractor={(m) => m.id}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => <Bubble message={item} />}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-      />
+        <AppHeader back title={other?.name ?? other?.username ?? 'Conversation'} />
+        {loading ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator color={palette.foreground} />
+          </View>
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(m) => m.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => <Bubble message={item} myClerkId={user?.id} />}
+            ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
+            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+          />
+        )}
 
         <View style={styles.composer}>
           <Input
@@ -95,19 +116,30 @@ export default function Thread() {
   );
 }
 
-function Bubble({ message }: { message: Message }) {
-  const mine = message.sender.id === mockUser.id;
+function Bubble({ message, myClerkId }: { message: Message; myClerkId?: string }) {
+  const mine = message.sender?.clerkUserId === myClerkId;
   return (
     <View style={[styles.bubbleRow, mine ? styles.bubbleRowRight : styles.bubbleRowLeft]}>
-      {!mine ? <Avatar name={message.sender.name} size={28} /> : null}
-      <View
-        style={[
-          styles.bubble,
-          mine ? styles.bubbleMine : styles.bubbleTheirs,
-        ]}
-      >
+      {!mine ? (
+        <Avatar
+          name={message.sender?.name ?? '?'}
+          uri={getImageUrl(message.sender?.avatarUrl) || undefined}
+          size={28}
+        />
+      ) : null}
+      <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}>
+        {message.replyTo ? (
+          <View style={styles.replyPreview}>
+            <Text
+              style={[type.caption, { color: mine ? `${palette.background}aa` : palette.muted }]}
+              numberOfLines={1}
+            >
+              ↩ {message.replyTo.content}
+            </Text>
+          </View>
+        ) : null}
         <Text style={[type.body, { color: mine ? palette.background : palette.foreground }]}>
-          {message.content}
+          {message.content || (message.imageUrls?.length ? '📷 Photo' : '')}
         </Text>
         <Text
           style={[
@@ -145,6 +177,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     borderWidth: 1,
     borderColor: palette.hairline,
+  },
+  replyPreview: {
+    borderLeftWidth: 2,
+    borderLeftColor: palette.accent,
+    paddingLeft: spacing.xs,
+    marginBottom: 4,
   },
   composer: {
     flexDirection: 'row',

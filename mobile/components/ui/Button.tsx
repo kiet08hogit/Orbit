@@ -10,7 +10,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { palette, radius, spacing, type } from '@/theme';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
+type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'destructive';
 type Size = 'md' | 'lg';
 
 interface Props {
@@ -87,14 +87,18 @@ export function Button({
 
 const variants = {
   primary: {
-    container: { backgroundColor: palette.accent },
-    text: { color: palette.onAccent },
+    container: { backgroundColor: palette.primary },
+    text: { color: palette.primaryForeground },
   },
   secondary: {
+    container: { backgroundColor: palette.secondary },
+    text: { color: palette.secondaryForeground },
+  },
+  outline: {
     container: {
-      backgroundColor: 'transparent',
+      backgroundColor: palette.background,
       borderWidth: 1,
-      borderColor: palette.hairlineStrong,
+      borderColor: palette.border,
     },
     text: { color: palette.foreground },
   },
@@ -102,11 +106,15 @@ const variants = {
     container: { backgroundColor: 'transparent' },
     text: { color: palette.foreground },
   },
-  destructive: {
-    container: { backgroundColor: palette.error },
-    text: { color: palette.onAccent },
+  link: {
+    container: { backgroundColor: 'transparent' },
+    text: { color: palette.primary, textDecorationLine: 'underline' as const },
   },
-} as const satisfies Record<Variant, { container: ViewStyle; text: { color: string } }>;
+  destructive: {
+    container: { backgroundColor: palette.destructive },
+    text: { color: palette.destructiveForeground },
+  },
+} as const satisfies Record<Variant, { container: ViewStyle; text: { color: string; textDecorationLine?: 'underline' } }>;
 
 const sizes = {
   md: {

@@ -1,76 +1,101 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ChevronRight, ExternalLink, LogOut, Settings, Wallet } from 'lucide-react-native';
-import { useAuth, useUser } from '@clerk/clerk-expo';
+import React, { useCallback, useState } from 'react';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import {
+  Bell,
+  Check,
+  ChevronRight,
+  Clock,
+  Heart,
+  LogOut,
+  Settings,
+  Shield,
+  Tag,
+  Wallet,
+} from 'lucide-react-native';
+import { useAuth } from '@clerk/clerk-expo';
 import { palette, spacing, type } from '@/theme';
 import { Screen, Avatar, Card, Button, Divider } from '@/components/ui';
-import { mockUser, mockListings } from '@/data/mock';
 import { ListingCard } from '@/components/ListingCard';
-import { clerkPublishableKey } from '@/lib/auth';
-
-const CLERK_ENABLED = !!clerkPublishableKey;
-
-interface Identity {
-  name: string;
-  email: string;
-  avatarUri?: string;
-  signOut: () => Promise<void>;
-}
-
-function useClerkIdentity(): Identity {
-  const { user } = useUser();
-  const { signOut } = useAuth();
-  return {
-    name: user?.fullName ?? mockUser.name ?? 'You',
-    email: user?.primaryEmailAddress?.emailAddress ?? '',
-    avatarUri: user?.imageUrl ?? undefined,
-    signOut: async () => {
-      try { await signOut(); } catch {}
-    },
-  };
-}
-
-function useMockIdentity(): Identity {
-  return {
-    name: mockUser.name ?? 'You',
-    email: 'demo@orbit.app',
-    avatarUri: undefined,
-    signOut: async () => {},
-  };
-}
-
-const useIdentity = CLERK_ENABLED ? useClerkIdentity : useMockIdentity;
+import { listingsApi, paymentsApi, reviewsApi, usersApi, getImageUrl } from '@/lib/api';
+import { disconnectSocket } from '@/lib/socket';
+import type { Listing, ReviewsResponse, User } from '@/lib/types';
 
 export default function ProfileTab() {
   const router = useRouter();
-  const identity = useIdentity();
-  const { name: displayName, email: displayEmail, avatarUri } = identity;
-  const myListings = mockListings.slice(0, 3);
+  const { signOut } = useAuth();
+  const [me, setMe] = useState<User | null>(null);
+  const [myListings, setMyListings] = useState<Listing[]>([]);
+  const [reviews, setReviews] = useState<ReviewsResponse | null>(null);
+  const [stripeLinked, setStripeLinked] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      usersApi
+        .me()
+        .then((user) => {
+          setMe(user);
+          if (user.id) {
+            reviewsApi.forUser(user.id).then(setReviews).catch(() => {});
+          }
+        })
+        .catch(() => {});
+      listingsApi.myListings().then(setMyListings).catch(() => {});
+      paymentsApi
+        .connectStatus()
+        .then((s) => setStripeLinked(s.linked))
+        .catch(() => {});
+    }, []),
+  );
+
+  const startStripeConnect = async () => {
+    setConnecting(true);
+    try {
+      const { url } = await paymentsApi.startConnect();
+      await Linking.openURL(url);
+    } catch (e) {
+      Alert.alert('Could not open Stripe', e instanceof Error ? e.message : 'Try again.');
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const soldCount = myListings.filter((l) => l.status === 'SOLD').length;
+  const displayName = me?.name ?? me?.username ?? 'You';
 
   return (
     <Screen scroll padded={false}>
       {/* Identity card */}
       <View style={styles.idWrap}>
         <View style={styles.idRow}>
-          <Avatar name={displayName} uri={avatarUri} size={64} />
+          <Avatar name={displayName} uri={getImageUrl(me?.avatarUrl) || undefined} size={64} />
           <View style={{ flex: 1, marginLeft: spacing.base }}>
             <Text style={[type.captionUpper, { color: palette.muted }]}>YOUR ORBIT</Text>
             <Text style={[type.displayMd, { color: palette.foreground, marginTop: 2 }]}>
               {displayName}
             </Text>
-            {displayEmail ? (
-              <Text style={[type.mono, { color: palette.muted, marginTop: 2 }]}>
-                {displayEmail}
-              </Text>
-            ) : null}
+            <Text style={[type.mono, { color: palette.muted, marginTop: 2 }]}>
+              {me?.username ? `@${me.username}` : me?.email ?? ''}
+            </Text>
           </View>
+          {me?.clerkUserId ? (
+            <Pressable
+              onPress={() => router.push(`/profile/${me.clerkUserId}` as any)}
+              hitSlop={8}
+            >
+              <Text style={[type.button, { color: palette.accent }]}>View public</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <View style={styles.statsRow}>
-          <Stat label="LISTED" value="12" />
-          <Stat label="SOLD" value="7" />
-          <Stat label="RATING" value="4.9" />
+          <Stat label="LISTED" value={String(myListings.length)} />
+          <Stat label="SOLD" value={String(soldCount)} />
+          <Stat
+            label="RATING"
+            value={reviews && reviews.totalCount > 0 ? reviews.averageRating.toFixed(1) : '—'}
+          />
         </View>
       </View>
 
@@ -79,61 +104,113 @@ export default function ProfileTab() {
         <Text style={[type.captionUpper, styles.sectionLabel]}>PAYMENTS</Text>
         <Card padded>
           <View style={styles.payRow}>
-            <Wallet color={palette.accent} size={20} strokeWidth={1.6} />
+            {stripeLinked ? (
+              <Check color={palette.success} size={20} strokeWidth={1.8} />
+            ) : (
+              <Wallet color={palette.accent} size={20} strokeWidth={1.6} />
+            )}
             <View style={{ flex: 1, marginLeft: spacing.sm }}>
               <Text style={[type.bodyStrong, { color: palette.foreground }]}>
-                Connect Stripe to accept protected payments
+                {stripeLinked
+                  ? 'Stripe connected — protected payments enabled'
+                  : 'Connect Stripe to accept protected payments'}
               </Text>
               <Text style={[type.bodySm, { color: palette.body, marginTop: 2 }]}>
                 Buyers pay through Orbit; funds release once they confirm pickup.
               </Text>
             </View>
           </View>
-          <Button
-            label="Set up payouts"
-            variant="secondary"
-            onPress={() => router.push('/profile/payments' as any)}
-            style={{ marginTop: spacing.base }}
-            iconRight={<ExternalLink color={palette.foreground} size={14} strokeWidth={1.6} />}
-          />
+          {!stripeLinked ? (
+            <Button
+              label={connecting ? 'Opening Stripe…' : 'Set up payouts'}
+              variant="secondary"
+              loading={connecting}
+              onPress={startStripeConnect}
+              style={{ marginTop: spacing.base }}
+            />
+          ) : null}
         </Card>
       </View>
 
       {/* My listings */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[type.captionUpper, styles.sectionLabel]}>YOUR LISTINGS</Text>
-          <Pressable onPress={() => router.push('/listings')} hitSlop={8}>
-            <Text style={[type.button, { color: palette.body }]}>See all</Text>
-          </Pressable>
+      {myListings.length > 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[type.captionUpper, styles.sectionLabel]}>YOUR LISTINGS</Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.sm }}
+          >
+            {myListings.map((l) => (
+              <View key={l.id} style={{ width: 180 }}>
+                <ListingCard listing={l} />
+              </View>
+            ))}
+          </ScrollView>
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.base }}
-        >
-          {myListings.map((l) => (
-            <View key={l.id} style={{ width: 180 }}>
-              <ListingCard listing={l} />
-            </View>
-          ))}
-        </ScrollView>
+      ) : null}
+
+      {/* Activity */}
+      <View style={styles.section}>
+        <Text style={[type.captionUpper, styles.sectionLabel]}>ACTIVITY</Text>
+        <Card padded={false}>
+          <Row
+            icon={<Heart color={palette.body} size={18} strokeWidth={1.6} />}
+            label="Wishlist"
+            onPress={() => router.push('/wishlist' as any)}
+          />
+          <Divider strength="soft" />
+          <Row
+            icon={<Tag color={palette.body} size={18} strokeWidth={1.6} />}
+            label="Offers"
+            onPress={() => router.push('/offers' as any)}
+          />
+          <Divider strength="soft" />
+          <Row
+            icon={<Clock color={palette.body} size={18} strokeWidth={1.6} />}
+            label="Purchase history"
+            onPress={() => router.push('/purchase-history' as any)}
+          />
+          <Divider strength="soft" />
+          <Row
+            icon={<Bell color={palette.body} size={18} strokeWidth={1.6} />}
+            label="Notifications"
+            onPress={() => router.push('/notifications' as any)}
+          />
+        </Card>
       </View>
 
       {/* Settings rows */}
       <View style={styles.section}>
         <Text style={[type.captionUpper, styles.sectionLabel]}>SETTINGS</Text>
         <Card padded={false}>
-          <Row icon={<Settings color={palette.body} size={18} strokeWidth={1.6} />} label="Preferences" onPress={() => {}} />
-          <Divider strength="soft" />
-          <Row icon={<Wallet color={palette.body} size={18} strokeWidth={1.6} />} label="Payment methods" onPress={() => {}} />
+          <Row
+            icon={<Settings color={palette.body} size={18} strokeWidth={1.6} />}
+            label="Preferences"
+            onPress={() => router.push('/settings' as any)}
+          />
+          {me?.role === 'ADMIN' ? (
+            <>
+              <Divider strength="soft" />
+              <Row
+                icon={<Shield color={palette.body} size={18} strokeWidth={1.6} />}
+                label="Admin dashboard"
+                onPress={() => router.push('/admin' as any)}
+              />
+            </>
+          ) : null}
           <Divider strength="soft" />
           <Row
             icon={<LogOut color={palette.error} size={18} strokeWidth={1.6} />}
             label="Sign out"
             destructive
             onPress={async () => {
-              await identity.signOut();
+              try {
+                disconnectSocket();
+                await signOut();
+              } catch {}
               router.replace('/');
             }}
           />
@@ -205,9 +282,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: spacing.sm,
-    marginRight: -spacing.base,
-    paddingRight: spacing.base,
   },
   sectionLabel: { color: palette.muted, marginBottom: spacing.sm },
   payRow: { flexDirection: 'row', alignItems: 'flex-start' },

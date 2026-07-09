@@ -16,6 +16,8 @@ export default function PurchaseHistoryPage() {
   const [activeFilter, setActiveFilter] = useState("All");
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState({ buying: [], selling: [] });
+  const [offers, setOffers] = useState({ sent: [], received: [] });
+  const [activeActionOffer, setActiveActionOffer] = useState<string | null>(null);
 
   const filters = ["All", "Completed", "Cancelled", "Reserved"];
 
@@ -24,15 +26,18 @@ export default function PurchaseHistoryPage() {
       try {
         const token = await getToken();
         if (!token) return;
-        const res = await axios.get(
-          `http://127.0.0.1:3000/transactions/history`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
-        setHistory(res.data);
+        const [historyRes, offersSentRes, offersReceivedRes] = await Promise.all([
+          axios.get(`http://127.0.0.1:3000/transactions/history`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`http://127.0.0.1:3000/offers/me/sent`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`http://127.0.0.1:3000/offers/me/received`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        setHistory(historyRes.data);
+        setOffers({
+          sent: offersSentRes.data,
+          received: offersReceivedRes.data,
+        });
       } catch (error) {
-        console.error("Failed to fetch history", error);
+        console.error("Failed to fetch data", error);
       } finally {
         setLoading(false);
       }
@@ -50,6 +55,12 @@ export default function PurchaseHistoryPage() {
     } else if (type === "selling") {
       title = "No sales history yet.";
       description = "Once you finalize a sale, it will be recorded here.";
+    } else if (type === "offers-sent") {
+      title = "No offers sent.";
+      description = "When you make an offer on an item, it will appear here.";
+    } else if (type === "offers-received") {
+      title = "No offers received.";
+      description = "When someone makes an offer on your listings, it will appear here.";
     }
 
     return (
@@ -137,6 +148,126 @@ export default function PurchaseHistoryPage() {
     );
   };
 
+  const handleOfferAction = async (offerId: string, action: 'accept' | 'reject' | 'cancel') => {
+    setActiveActionOffer(offerId);
+    try {
+      const token = await getToken();
+      if (action === 'cancel') {
+        await axios.delete(`http://127.0.0.1:3000/offers/${offerId}`, { headers: { Authorization: `Bearer ${token}` } });
+      } else {
+        await axios.patch(`http://127.0.0.1:3000/offers/${offerId}/${action}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      }
+      
+      // Refresh offers
+      const [offersSentRes, offersReceivedRes] = await Promise.all([
+        axios.get(`http://127.0.0.1:3000/offers/me/sent`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`http://127.0.0.1:3000/offers/me/received`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      setOffers({
+        sent: offersSentRes.data,
+        received: offersReceivedRes.data,
+      });
+    } catch (error) {
+      console.error(`Failed to ${action} offer`, error);
+    } finally {
+      setActiveActionOffer(null);
+    }
+  };
+
+  const renderOffers = (offersList: any[], type: 'sent' | 'received') => {
+    if (offersList.length === 0) return renderEmptyState(`offers-${type}`);
+
+    return (
+      <div className="space-y-4">
+        {offersList.map((offer) => (
+          <div
+            key={offer.id}
+            className="p-4 border border-border rounded-xl flex flex-col md:flex-row items-start gap-4"
+          >
+            <div className="flex gap-4 w-full md:w-auto">
+              <Link href={`/listings/${offer.listingId}`} className="w-20 h-20 bg-secondary rounded-lg overflow-hidden shrink-0 block hover:opacity-80 transition-opacity">
+                {offer.listing.images?.[0]?.url && (
+                  <img
+                    src={offer.listing.images[0].url}
+                    alt={offer.listing.title}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </Link>
+              <div className="flex-1 md:hidden">
+                <Link href={`/listings/${offer.listingId}`} className="hover:underline">
+                  <h3 className="font-bold text-foreground line-clamp-1">{offer.listing.title}</h3>
+                </Link>
+                <span className="font-bold text-foreground text-lg">${offer.price}</span>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full flex flex-col md:flex-row justify-between gap-4">
+              <div>
+                <Link href={`/listings/${offer.listingId}`} className="hidden md:block hover:underline">
+                  <h3 className="font-bold text-foreground">{offer.listing.title}</h3>
+                </Link>
+                <div className="flex items-center gap-2 mt-1 mb-2">
+                  <span className="font-bold text-foreground md:text-lg hidden md:block">
+                    Offer: ${offer.price}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    offer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                    offer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {offer.status}
+                  </span>
+                </div>
+                {type === 'received' && (
+                  <p className="text-sm text-muted-foreground">
+                    From: <Link href={`/profile/${offer.buyer.id}`} className="font-medium hover:underline">{offer.buyer.name || offer.buyer.username}</Link>
+                  </p>
+                )}
+              </div>
+
+              {offer.status === 'PENDING' && (
+                <div className="flex gap-2 self-start mt-2 md:mt-0 w-full md:w-auto">
+                  {type === 'received' ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 md:flex-none border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => handleOfferAction(offer.id, 'reject')}
+                        disabled={activeActionOffer === offer.id}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleOfferAction(offer.id, 'accept')}
+                        disabled={activeActionOffer === offer.id}
+                      >
+                        {activeActionOffer === offer.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Accept"}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full md:w-auto text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => handleOfferAction(offer.id, 'cancel')}
+                      disabled={activeActionOffer === offer.id}
+                    >
+                      Cancel Offer
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#F8F7F4] dark:bg-background pt-10 px-4 pb-20">
       <div className="max-w-[800px] mx-auto">
@@ -149,10 +280,10 @@ export default function PurchaseHistoryPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">
-                Purchase History
+                Transactions & Offers
               </h1>
               <p className="text-sm text-muted-foreground font-medium mt-1">
-                Review your completed, reserved, and cancelled orders.
+                Review your completed orders, active reservations, and offers.
               </p>
             </div>
             <div className="relative w-full md:w-64">
@@ -172,18 +303,30 @@ export default function PurchaseHistoryPage() {
             className="w-full"
             onValueChange={setActiveTab}
           >
-            <TabsList className="w-full justify-start border-b border-border rounded-none h-auto p-0 bg-transparent gap-8">
+            <TabsList className="w-full justify-start border-b border-border rounded-none h-auto p-0 bg-transparent gap-6 overflow-x-auto scrollbar-hide">
               <TabsTrigger
                 value="buying"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-bold"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-bold whitespace-nowrap"
               >
                 Buying History
               </TabsTrigger>
               <TabsTrigger
                 value="selling"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-bold text-muted-foreground data-[state=active]:text-foreground"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-bold text-muted-foreground data-[state=active]:text-foreground whitespace-nowrap"
               >
                 Selling History
+              </TabsTrigger>
+              <TabsTrigger
+                value="offers-sent"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-bold text-muted-foreground data-[state=active]:text-foreground whitespace-nowrap"
+              >
+                Offers Sent
+              </TabsTrigger>
+              <TabsTrigger
+                value="offers-received"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 pb-3 font-bold text-muted-foreground data-[state=active]:text-foreground whitespace-nowrap"
+              >
+                Offers Received
               </TabsTrigger>
             </TabsList>
 
@@ -221,6 +364,14 @@ export default function PurchaseHistoryPage() {
 
                 <TabsContent value="selling" className="mt-0 outline-none">
                   {renderTransactions(history.selling)}
+                </TabsContent>
+
+                <TabsContent value="offers-sent" className="mt-0 outline-none">
+                  {renderOffers(offers.sent, 'sent')}
+                </TabsContent>
+
+                <TabsContent value="offers-received" className="mt-0 outline-none">
+                  {renderOffers(offers.received, 'received')}
                 </TabsContent>
               </>
             )}

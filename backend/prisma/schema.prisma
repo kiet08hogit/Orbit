@@ -41,6 +41,8 @@ model User {
   followers           User[]               @relation("UserFollows")
   following           User[]               @relation("UserFollows")
 
+  offersMade          Offer[]              @relation("OffersMade")
+
   notificationsReceived Notification[]     @relation("NotificationsReceived")
   notificationsSent     Notification[]     @relation("NotificationsSent")
 
@@ -91,6 +93,7 @@ model Listing {
   messages                Message[]
   reports                 Report[]
   transactions            Transaction[]
+  offers                  Offer[]
 }
 
 model ListingImage {
@@ -324,6 +327,13 @@ enum MeetupStatus {
   CANCELLED
 }
 
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
 enum NotificationType {
   FOLLOW
   LIKE
@@ -354,4 +364,18 @@ model Notification {
 enum Role {
   USER
   ADMIN
+  MODERATOR
+}
+
+model Offer {
+  id          String      @id @default(uuid())
+  price       Float
+  status      OfferStatus @default(PENDING)
+  buyerId     String
+  listingId   String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  buyer       User        @relation("OffersMade", fields: [buyerId], references: [id])
+  listing     Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
 }

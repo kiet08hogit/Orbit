@@ -103,7 +103,17 @@ export class PaymentsService {
             throw new BadRequestException('Seller has not connected their bank account yet');
         }
 
-        const amountCents = Math.round(listing.price * 100);
+        // Check for an accepted offer
+        const acceptedOffer = await this.prisma.offer.findFirst({
+            where: {
+                listingId: listing.id,
+                buyerId: buyer.id,
+                status: 'ACCEPTED'
+            }
+        });
+
+        const finalPrice = acceptedOffer ? acceptedOffer.price : listing.price;
+        const amountCents = Math.round(finalPrice * 100);
 
         const paymentIntent = await this.stripe.paymentIntents.create({
             amount: amountCents,

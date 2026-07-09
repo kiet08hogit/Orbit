@@ -107,6 +107,10 @@ export default function ListingDetailPage() {
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isReserving, setIsReserving] = useState(false);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [offerPrice, setOfferPrice] = useState("");
+  const [isSubmittingOffer, setIsSubmittingOffer] = useState(false);
+  const [existingOffer, setExistingOffer] = useState<any>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -147,6 +151,16 @@ export default function ListingDetailPage() {
             (item: any) => item.id === params.id,
           );
           setIsWishlisted(isLiked);
+          // Fetch user's existing offer
+          try {
+            const offersRes = await axios.get(`http://127.0.0.1:3000/offers/me/sent`, { headers });
+            const offer = offersRes.data.find((o: any) => o.listingId === params.id && o.status !== 'CANCELLED');
+            if (offer) {
+              setExistingOffer(offer);
+            }
+          } catch (err) {
+            console.error("Failed to fetch existing offer", err);
+          }
         }
       } catch (err: any) {
         setError(err.message || "Failed to fetch listing");
@@ -245,6 +259,45 @@ export default function ListingDetailPage() {
     } finally {
       setIsReserving(false);
       setShowPaymentModal(false);
+    }
+  };
+
+  const handleMakeOffer = async () => {
+    if (!listing || !offerPrice || isNaN(Number(offerPrice)) || Number(offerPrice) <= 0) {
+      toast.error("Please enter a valid offer price");
+      return;
+    }
+    if (Number(offerPrice) >= listing.price) {
+      toast.error("Offer must be less than the asking price");
+      return;
+    }
+
+    setIsSubmittingOffer(true);
+    try {
+      const token = await getToken();
+      const res = await axios.post(`http://127.0.0.1:3000/offers`, {
+        listingId: listing.id,
+        price: Number(offerPrice)
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success("Offer submitted successfully! The seller has been notified.");
+      setExistingOffer(res.data);
+      setShowOfferModal(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to submit offer");
+    } finally {
+      setIsSubmittingOffer(false);
+    }
+  };
+
+  const handleCancelOffer = async () => {
+    if (!existingOffer) return;
+    try {
+      const token = await getToken();
+      await axios.delete(`http://127.0.0.1:3000/offers/${existingOffer.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success("Offer cancelled.");
+      setExistingOffer(null);
+    } catch (err: any) {
+      toast.error("Failed to cancel offer");
     }
   };
 
@@ -669,6 +722,46 @@ export default function ListingDetailPage() {
                     {isReserving ? "Reserving..." : "Reserve Your Order"}
                   </Button>
 
+                  {existingOffer ? (
+                    <div className="bg-secondary/50 p-4 rounded-xl border border-border mt-3 mb-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-semibold">Your Offer: ${existingOffer.price}</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                          existingOffer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                          existingOffer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {existingOffer.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        {existingOffer.status === 'PENDING' ? "Waiting for the seller to respond." :
+                         existingOffer.status === 'ACCEPTED' ? "Your offer was accepted! You can now reserve your order at this price." :
+                         "Your offer was rejected."}
+                      </p>
+                      {existingOffer.status === 'PENDING' && (
+                        <Button variant="ghost" size="sm" onClick={handleCancelOffer} className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 w-full">
+                          Cancel Offer
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <Button
+                      size="lg"
+                      onClick={() => {
+                        if (!isSignedIn) {
+                          router.push("/sign-in");
+                          return;
+                        }
+                        setShowOfferModal(true);
+                      }}
+                      variant="outline"
+                      className="w-full font-bold h-11 rounded-lg border-primary text-primary hover:bg-primary/5 text-sm mt-3 mb-3"
+                    >
+                      Make an Offer
+                    </Button>
+                  )}
+
                   <div className="grid grid-cols-2 gap-3">
                     <Button
                       size="lg"
@@ -854,6 +947,42 @@ export default function ListingDetailPage() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Make Offer Modal */}
+      <Dialog open={showOfferModal} onOpenChange={setShowOfferModal}>
+        <DialogContent aria-describedby={undefined} className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Make an Offer</DialogTitle>
+            <DialogDescription>
+              Propose a price to the seller. If accepted, you can reserve the item at that price.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-bold text-foreground mb-2 block">Your Offer ($)</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">$</span>
+              <input
+                type="number"
+                value={offerPrice}
+                onChange={(e) => setOfferPrice(e.target.value)}
+                placeholder={listing.price.toString()}
+                className="flex h-12 w-full rounded-md border border-input bg-transparent px-8 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowOfferModal(false)}>Cancel</Button>
+            <Button 
+              onClick={handleMakeOffer} 
+              disabled={isSubmittingOffer || !offerPrice}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {isSubmittingOffer ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Submit Offer
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

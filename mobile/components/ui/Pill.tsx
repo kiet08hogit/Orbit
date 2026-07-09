@@ -4,42 +4,60 @@ import { palette, radius, spacing, type } from '@/theme';
 
 interface Props {
   label: string;
-  tone?: 'neutral' | 'accent' | 'category';
+  tone?: 'neutral' | 'accent' | 'category' | 'nav';
   color?: string;
   selected?: boolean;
   onPress?: () => void;
   dot?: boolean;
 }
 
+/**
+ * shadcn Badge / ClientNav pill — selected nav pills use bg-primary (Cursor Orange).
+ */
 export function Pill({ label, tone = 'neutral', color, selected, onPress, dot }: Props) {
   const isCategory = tone === 'category';
-  const isAccent = tone === 'accent';
-  const tint = isCategory && color ? color : isAccent ? palette.accent : palette.glassStrong;
+  const isNav = tone === 'nav';
+  const tint = isCategory && color ? color : palette.primary;
 
-  const baseStyle: ViewStyle = {
-    backgroundColor: selected
-      ? palette.foreground
-      : isCategory
-        ? `${tint}22`
-        : palette.glass,
-    borderColor: selected
-      ? palette.foreground
-      : isCategory
-        ? `${tint}55`
-        : palette.hairlineStrong,
-  };
+  let baseStyle: ViewStyle;
+  let textColor: string;
+
+  if (selected && isNav) {
+    baseStyle = {
+      backgroundColor: palette.primary,
+      borderColor: palette.primary,
+    };
+    textColor = palette.primaryForeground;
+  } else if (selected) {
+    baseStyle = {
+      backgroundColor: palette.primary,
+      borderColor: palette.primary,
+    };
+    textColor = palette.primaryForeground;
+  } else if (isNav) {
+    baseStyle = {
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+    };
+    textColor = palette.mutedForeground;
+  } else if (isCategory) {
+    baseStyle = {
+      backgroundColor: `${tint}22`,
+      borderColor: `${tint}55`,
+    };
+    textColor = tint;
+  } else {
+    baseStyle = {
+      backgroundColor: palette.glass,
+      borderColor: palette.hairlineStrong,
+    };
+    textColor = palette.body;
+  }
 
   const content = (
     <>
       {dot ? <View style={[styles.dot, { backgroundColor: tint }]} /> : null}
-      <Text
-        style={[
-          type.captionUpper,
-          {
-            color: selected ? palette.background : isCategory ? tint : palette.body,
-          },
-        ]}
-      >
+      <Text style={[isNav ? type.body : type.captionUpper, { color: textColor, fontSize: isNav ? 13 : undefined }]}>
         {label}
       </Text>
     </>
@@ -65,8 +83,8 @@ const styles = StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.base,
+    paddingVertical: 8,
     borderRadius: radius.pill,
     borderWidth: 1,
     alignSelf: 'flex-start',

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text } from 'react-native';
 import { Tabs } from 'expo-router';
-import { Compass, Heart, MessageCircle, Sparkles, User } from 'lucide-react-native';
+import { Home, MessageCircle, Sparkles, User, Users } from 'lucide-react-native';
 import { palette, spacing, type } from '@/theme';
 
 function TabBarLabel({ label, focused }: { label: string; focused: boolean }) {
@@ -30,23 +30,33 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="listings"
+        name="home"
         options={{
-          title: 'BROWSE',
+          title: 'HOME',
           tabBarIcon: ({ color, focused }) => (
-            <Compass color={focused ? palette.foreground : color} size={20} strokeWidth={1.6} />
+            <Home color={focused ? palette.foreground : color} size={20} strokeWidth={1.6} />
           ),
-          tabBarLabel: ({ focused }) => <TabBarLabel label="BROWSE" focused={focused} />,
+          tabBarLabel: ({ focused }) => <TabBarLabel label="HOME" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="community"
+        options={{
+          title: 'COMMUNITY',
+          tabBarIcon: ({ color, focused }) => (
+            <Users color={focused ? palette.foreground : color} size={20} strokeWidth={1.6} />
+          ),
+          tabBarLabel: ({ focused }) => <TabBarLabel label="COMMUNITY" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="swipe"
         options={{
-          title: 'DISCOVER',
+          title: 'MATCH',
           tabBarIcon: ({ color, focused }) => (
             <Sparkles color={focused ? palette.foreground : color} size={20} strokeWidth={1.6} />
           ),
-          tabBarLabel: ({ focused }) => <TabBarLabel label="DISCOVER" focused={focused} />,
+          tabBarLabel: ({ focused }) => <TabBarLabel label="MATCH" focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -57,16 +67,6 @@ export default function TabsLayout() {
             <MessageCircle color={focused ? palette.foreground : color} size={20} strokeWidth={1.6} />
           ),
           tabBarLabel: ({ focused }) => <TabBarLabel label="CHAT" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="wishlist"
-        options={{
-          title: 'SAVED',
-          tabBarIcon: ({ color, focused }) => (
-            <Heart color={focused ? palette.foreground : color} size={20} strokeWidth={1.6} />
-          ),
-          tabBarLabel: ({ focused }) => <TabBarLabel label="SAVED" focused={focused} />,
         }}
       />
       <Tabs.Screen
