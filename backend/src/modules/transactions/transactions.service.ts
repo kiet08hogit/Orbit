@@ -35,6 +35,17 @@ export class TransactionsService {
             data: { status: 'RESERVED' }
         });
 
+        // Check for an accepted offer
+        const acceptedOffer = await this.prisma.offer.findFirst({
+            where: {
+                listingId: listing.id,
+                buyerId: buyer.id,
+                status: 'ACCEPTED'
+            }
+        });
+
+        const finalPrice = acceptedOffer ? acceptedOffer.price : listing.price;
+
         const transaction = await this.prisma.transaction.create({
             data: {
                 listingId: listing.id,
@@ -43,7 +54,7 @@ export class TransactionsService {
                 paymentMethod: 'DIRECT',
                 paymentStatus: 'UNPAID_EXTERNAL',
                 orderStatus: 'PENDING_MEETUP',
-                amount: Math.round(listing.price * 100),
+                amount: Math.round(finalPrice * 100),
             }
         });
 

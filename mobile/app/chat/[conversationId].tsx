@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -8,51 +9,99 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
-import { Send } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
+import { ImagePlus, Send } from 'lucide-react-native';
 import { palette, radius, spacing, type } from '@/theme';
-import { Screen, AppHeader, Input, Avatar } from '@/components/ui';
-import { useMessages } from '@/hooks/useConversations';
-import { mockUser } from '@/data/mock';
+import { AppHeader, Input, Avatar } from '@/components/ui';
+import { chatApi, getImageUrl } from '@/lib/api';
 import { formatRelative } from '@/lib/format';
 import { getSocket } from '@/lib/socket';
-import type { Message } from '@/lib/types';
+import type { Message, User } from '@/lib/types';
 
 export default function Thread() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
-  const id = conversationId || 'c1';
-  const { data, appendLocal } = useMessages(id);
+  const id = conversationId || '';
+  const { user } = useUser();
+  const router = useRouter();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [other, setOther] = useState<User | undefined>();
   const [draft, setDraft] = useState('');
+  const [busy, setBusy] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const data = await chatApi.messages(id);
+      setMessages(data);
+      const someoneElse = data.find((m) => m.sender && m.sender.clerkUserId !== user?.id)?.sender;
+      if (someoneElse) setOther(someoneElse);
+    } catch {
+      // leave empty state
+    } finally {
+      setLoading(false);
+    }
+  }, [id, user?.id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
     const onMessage = (msg: Message) => {
-      if (msg.conversationId === id) appendLocal(msg);
+      if (msg.conversationId !== id) return;
+      setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+      socket.emit('mark_read', { conversationId: id });
     };
-    socket.on('message', onMessage);
+    socket.on('receive_message', onMessage);
+    socket.emit('mark_read', { conversationId: id });
     return () => {
-      socket.off('message', onMessage);
+      socket.off('receive_message', onMessage);
     };
-  }, [id, appendLocal]);
+  }, [id]);
 
   const send = () => {
     const content = draft.trim();
     if (!content) return;
-    const msg: Message = {
-      id: `local-${Date.now()}`,
-      conversationId: id,
-      sender: mockUser,
-      content,
-      createdAt: new Date().toISOString(),
-      read: false,
-    };
-    appendLocal(msg);
     setDraft('');
     getSocket()?.emit('send_message', { conversationId: id, content });
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+  };
+
+  const pickAndSendImage = async () => {
+    if (busy) return;
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: 4,
+      quality: 0.8,
+    });
+    if (res.canceled) return;
+    
+    setBusy(true);
+    try {
+      const form = new FormData();
+      res.assets.forEach((a, i) => {
+        form.append('images', {
+          uri: a.uri,
+          name: `chat-${i}.jpg`,
+          type: 'image/jpeg',
+        } as unknown as Blob);
+      });
+      const msg = await chatApi.sendImages(id, form);
+      // Let the socket handle updating the UI for consistency, but we can optimistically scroll
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+    } catch {
+      // ignore
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -61,16 +110,32 @@ export default function Thread() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <AppHeader back title="Conversation" />
-      <FlatList
-        ref={listRef}
-        data={data}
-        keyExtractor={(m) => m.id}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => <Bubble message={item} />}
-        ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-      />
+        <AppHeader 
+          back 
+          title={other?.name ?? other?.username ?? 'Conversation'} 
+          trailing={
+            other ? (
+              <Pressable onPress={() => router.push(`/profile/${other.clerkUserId}` as any)}>
+                <Avatar name={other.name ?? '?'} uri={getImageUrl(other.avatarUrl) || undefined} size={32} />
+              </Pressable>
+            ) : null
+          }
+        />
+        {loading ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator color={palette.foreground} />
+          </View>
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(m) => m.id}
+            contentContainerStyle={styles.list}
+            renderItem={({ item }) => <Bubble message={item} myClerkId={user?.id} />}
+            ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
+            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+          />
+        )}
 
         <View style={styles.composer}>
           <Input
@@ -82,11 +147,16 @@ export default function Thread() {
             returnKeyType="send"
             onSubmitEditing={send}
             trailingIcon={
-              <Pressable onPress={send} accessibilityLabel="Send" hitSlop={8}>
-                <View style={[styles.sendBtn, !draft && { opacity: 0.4 }]}>
-                  <Send color={palette.background} size={14} strokeWidth={2} />
-                </View>
-              </Pressable>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                <Pressable onPress={pickAndSendImage} accessibilityLabel="Send Image" hitSlop={8} disabled={busy}>
+                  {busy ? <ActivityIndicator size="small" color={palette.muted} /> : <ImagePlus color={palette.muted} size={20} strokeWidth={1.6} />}
+                </Pressable>
+                <Pressable onPress={send} accessibilityLabel="Send" hitSlop={8}>
+                  <View style={[styles.sendBtn, !draft && { opacity: 0.4 }]}>
+                    <Send color={palette.background} size={14} strokeWidth={2} />
+                  </View>
+                </Pressable>
+              </View>
             }
           />
         </View>
@@ -95,20 +165,48 @@ export default function Thread() {
   );
 }
 
-function Bubble({ message }: { message: Message }) {
-  const mine = message.sender.id === mockUser.id;
+function Bubble({ message, myClerkId }: { message: Message; myClerkId?: string }) {
+  const mine = message.sender?.clerkUserId === myClerkId;
   return (
     <View style={[styles.bubbleRow, mine ? styles.bubbleRowRight : styles.bubbleRowLeft]}>
-      {!mine ? <Avatar name={message.sender.name} size={28} /> : null}
-      <View
-        style={[
-          styles.bubble,
-          mine ? styles.bubbleMine : styles.bubbleTheirs,
-        ]}
-      >
-        <Text style={[type.body, { color: mine ? palette.background : palette.foreground }]}>
-          {message.content}
-        </Text>
+      {!mine ? (
+        <Avatar
+          name={message.sender?.name ?? '?'}
+          uri={getImageUrl(message.sender?.avatarUrl) || undefined}
+          size={28}
+        />
+      ) : null}
+      <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}>
+        {message.replyTo ? (
+          <View style={styles.replyPreview}>
+            <Text
+              style={[type.caption, { color: mine ? `${palette.background}aa` : palette.muted }]}
+              numberOfLines={1}
+            >
+              ↩ {message.replyTo.content}
+            </Text>
+          </View>
+        ) : null}
+        
+        {message.imageUrls && message.imageUrls.length > 0 ? (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: message.content ? 4 : 0 }}>
+            {message.imageUrls.map(url => (
+              <Image 
+                key={url} 
+                source={{ uri: getImageUrl(url) }} 
+                style={styles.chatImage} 
+                contentFit="cover" 
+              />
+            ))}
+          </View>
+        ) : null}
+
+        {message.content ? (
+          <Text style={[type.body, { color: mine ? palette.background : palette.foreground }]}>
+            {message.content}
+          </Text>
+        ) : null}
+        
         <Text
           style={[
             type.monoSm,
@@ -146,6 +244,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.hairline,
   },
+  replyPreview: {
+    borderLeftWidth: 2,
+    borderLeftColor: palette.accent,
+    paddingLeft: spacing.xs,
+    marginBottom: 4,
+  },
   composer: {
     flexDirection: 'row',
     paddingHorizontal: spacing.base,
@@ -162,5 +266,11 @@ const styles = StyleSheet.create({
     backgroundColor: palette.accent,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  chatImage: {
+    width: 120,
+    height: 120,
+    borderRadius: radius.sm,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
 });

@@ -1,41 +1,78 @@
-import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useStripe } from '@stripe/stripe-react-native';
 import { ShieldCheck } from 'lucide-react-native';
 import { palette, radius, spacing, type } from '@/theme';
-import { Screen, AppHeader, Button, Card, Divider } from '@/components/ui';
-import { useListing } from '@/hooks/useListings';
+import { AppHeader, Button, Card, Divider } from '@/components/ui';
+import { listingsApi, paymentsApi, getImageUrl } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
-import { paymentsApi } from '@/lib/api';
+import { stripePublishableKey } from '@/lib/auth';
+import type { Listing } from '@/lib/types';
 
 export default function Checkout() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data } = useListing(id || '');
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const [data, setData] = useState<Listing | null>(null);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (!id) return;
+    listingsApi
+      .get(id)
+      .then(setData)
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: palette.background }}>
+        <AppHeader back title="Checkout" />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={palette.foreground} />
+        </View>
+      </SafeAreaView>
+    );
+  }
   if (!data) return null;
 
-  const fee = Math.round(data.price * 0.03);
-  const total = data.price + fee;
-
   const pay = async () => {
+    if (!stripePublishableKey) {
+      Alert.alert(
+        'Payments not configured',
+        'Set EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY in mobile/.env to enable protected checkout.',
+      );
+      return;
+    }
     setBusy(true);
     try {
-      // The Stripe-RN Payment Sheet is wired here in production. For now we hit our backend.
-      await paymentsApi.paymentSheet(data.id);
+      const { clientSecret } = await paymentsApi.createIntent(data.id);
+      const init = await initPaymentSheet({
+        paymentIntentClientSecret: clientSecret,
+        merchantDisplayName: 'Orbit',
+        defaultBillingDetails: {},
+      });
+      if (init.error) throw new Error(init.error.message);
+
+      const result = await presentPaymentSheet();
+      if (result.error) {
+        if (result.error.code !== 'Canceled') {
+          Alert.alert('Payment failed', result.error.message);
+        }
+        return;
+      }
       Alert.alert(
-        'Reserved',
-        `${data.title} is held for you. Confirm pickup to release payment.`,
-        [{ text: 'Done', onPress: () => router.replace('/(tabs)/listings') }],
+        'Payment held',
+        `${data.title} is reserved. Funds release to the seller when you confirm pickup.`,
+        [{ text: 'Done', onPress: () => router.replace('/(tabs)/home') }],
       );
     } catch (e) {
-      Alert.alert(
-        'Could not start checkout',
-        e instanceof Error ? e.message : 'Try again later.',
-      );
+      Alert.alert('Could not start checkout', e instanceof Error ? e.message : 'Try again later.');
     } finally {
       setBusy(false);
     }
@@ -48,7 +85,7 @@ export default function Checkout() {
         <Card padded>
           <View style={styles.itemRow}>
             <Image
-              source={{ uri: data.images[0]?.url }}
+              source={{ uri: getImageUrl(data.images?.[0]?.url) }}
               style={styles.itemImage}
               contentFit="cover"
             />
@@ -57,7 +94,7 @@ export default function Checkout() {
                 {data.title}
               </Text>
               <Text style={[type.bodySm, { color: palette.muted, marginTop: 2 }]}>
-                Sold by {data.seller.name}
+                Sold by {data.seller?.name ?? data.seller?.username ?? 'a student'}
               </Text>
               <Text style={[type.price, { color: palette.foreground, marginTop: spacing.xs }]}>
                 {formatPrice(data.price)}
@@ -69,23 +106,20 @@ export default function Checkout() {
         <View style={{ marginTop: spacing.lg }}>
           <Text style={[type.captionUpper, styles.label]}>BREAKDOWN</Text>
           <Card padded={false}>
-            <Row label="Subtotal" value={formatPrice(data.price)} />
-            <Divider strength="soft" />
-            <Row label="Orbit fee (3%)" value={formatPrice(fee)} />
-            <Divider strength="soft" />
-            <Row label="Total" value={formatPrice(total)} strong />
+            <Row label="Total" value={formatPrice(data.price)} strong />
           </Card>
         </View>
 
         <View style={styles.trustRow}>
           <ShieldCheck color={palette.success} size={16} strokeWidth={1.6} />
           <Text style={[type.bodySm, { color: palette.body, marginLeft: spacing.xs, flex: 1 }]}>
-            Payment is held until you confirm pickup. If anything's off, you have 24 hours to flag.
+            Payment is held in escrow until you confirm pickup. If anything's off, you have 24 hours
+            to flag it.
           </Text>
         </View>
 
         <Button
-          label={busy ? 'Reserving…' : `Pay ${formatPrice(total)}`}
+          label={busy ? 'Preparing…' : `Pay ${formatPrice(data.price)}`}
           onPress={pay}
           loading={busy}
           size="lg"

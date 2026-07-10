@@ -1,15 +1,45 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useUser } from '@clerk/clerk-expo';
 import { palette, spacing, type } from '@/theme';
 import { Screen, Avatar, EmptyState } from '@/components/ui';
-import { useConversations } from '@/hooks/useConversations';
+import { chatApi, getImageUrl } from '@/lib/api';
+import { getSocket } from '@/lib/socket';
 import { formatRelative } from '@/lib/format';
-import type { Conversation } from '@/lib/types';
+import type { Conversation, Message, User } from '@/lib/types';
 
 export default function ChatTab() {
   const router = useRouter();
-  const { data, loading } = useConversations();
+  const { user } = useUser();
+  const [data, setData] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(() => {
+    chatApi
+      .inbox()
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+    const onMessage = () => load();
+    socket.on('receive_message', onMessage);
+    return () => {
+      socket.off('receive_message', onMessage);
+    };
+  }, [load]);
+
+  const myClerkId = user?.id;
 
   return (
     <Screen padded={false}>
@@ -37,6 +67,7 @@ export default function ChatTab() {
           renderItem={({ item }) => (
             <ConversationRow
               conversation={item}
+              myClerkId={myClerkId}
               onPress={() => router.push(`/chat/${item.id}` as any)}
             />
           )}
@@ -46,25 +77,39 @@ export default function ChatTab() {
   );
 }
 
+function otherMember(conversation: Conversation, myClerkId?: string): User | undefined {
+  const members = conversation.members ?? [];
+  const other = members.find((m) => m.user.clerkUserId !== myClerkId);
+  return (other ?? members[0])?.user;
+}
+
 function ConversationRow({
   conversation,
+  myClerkId,
   onPress,
 }: {
   conversation: Conversation;
+  myClerkId?: string;
   onPress: () => void;
 }) {
-  const other = conversation.participants[1] ?? conversation.participants[0];
-  const last = conversation.lastMessage;
+  const other = otherMember(conversation, myClerkId);
+  const last: Message | undefined = conversation.messages?.[0];
+  const unread = !!last && !last.isRead && last.sender?.clerkUserId !== myClerkId;
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: palette.card }]}
     >
-      <Avatar name={other.name} uri={other.avatarUrl} size={44} />
+      <Avatar
+        name={other?.name ?? other?.username ?? '?'}
+        uri={getImageUrl(other?.avatarUrl) || undefined}
+        size={44}
+      />
       <View style={styles.rowBody}>
         <View style={styles.rowTop}>
           <Text style={[type.bodyStrong, { color: palette.foreground }]} numberOfLines={1}>
-            {other.name}
+            {other?.name ?? other?.username ?? 'Unknown'}
           </Text>
           <Text style={[type.monoSm, { color: palette.muted }]}>
             {formatRelative(conversation.updatedAt)}
@@ -74,13 +119,13 @@ function ConversationRow({
           <Text
             style={[
               type.body,
-              { color: conversation.unread ? palette.foreground : palette.body, flex: 1 },
+              { color: unread ? palette.foreground : palette.body, flex: 1 },
             ]}
             numberOfLines={1}
           >
-            {last?.content ?? 'No messages yet'}
+            {last?.content || (last?.imageUrls?.length ? 'Sent a photo' : 'No messages yet')}
           </Text>
-          {conversation.unread ? <View style={styles.dot} /> : null}
+          {unread ? <View style={styles.dot} /> : null}
         </View>
       </View>
     </Pressable>

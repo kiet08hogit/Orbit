@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
+import { useFocusEffect } from 'expo-router';
 import Animated, {
   runOnJS,
   useAnimatedStyle,
@@ -10,19 +11,47 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Heart, Sparkles, X } from 'lucide-react-native';
-import { palette, radius, spacing, type, categoryColors } from '@/theme';
+import { palette, radius, spacing, type, categoryColors, categoryLabels } from '@/theme';
 import { Screen, Pill, Button } from '@/components/ui';
-import { useListings } from '@/hooks/useListings';
+import { listingsApi, getImageUrl } from '@/lib/api';
 import { formatPrice } from '@/lib/format';
+import type { Listing } from '@/lib/types';
 
 const SWIPE_THRESHOLD = 120;
 
 export default function SwipeTab() {
-  const { data, loading } = useListings();
+  const [data, setData] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    listingsApi
+      .feed()
+      .then((listings) => {
+        setData(listings);
+        setIndex(0);
+      })
+      .catch(() => setData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   const x = useSharedValue(0);
   const y = useSharedValue(0);
+
+  const commitSwipe = (swipedIndex: number, dir: 'left' | 'right') => {
+    const listing = data[swipedIndex];
+    if (listing) {
+      listingsApi.swipe(listing.id, dir === 'right' ? 'LIKE' : 'SKIP').catch(() => {});
+    }
+    setIndex(swipedIndex + 1);
+  };
 
   const advance = (dir: 'left' | 'right' | 'reset') => {
     if (dir === 'reset') {
@@ -30,8 +59,9 @@ export default function SwipeTab() {
       y.value = withSpring(0);
       return;
     }
+    const current = index;
     x.value = withTiming(dir === 'right' ? 500 : -500, { duration: 220 }, () => {
-      runOnJS(setIndex)(index + 1);
+      runOnJS(commitSwipe)(current, dir);
       x.value = 0;
       y.value = 0;
     });
@@ -72,46 +102,60 @@ export default function SwipeTab() {
   return (
     <Screen padded={false}>
       <View style={styles.header}>
-        <Text style={[type.captionUpper, { color: palette.muted }]}>DISCOVER</Text>
+        <Text style={[type.captionUpper, { color: palette.muted }]}>MATCH YOUR NEEDS</Text>
         <Text style={[type.displayLg, { color: palette.foreground }]}>
           One at a time.
         </Text>
       </View>
 
       <View style={styles.deck}>
-        {loading ? null : !current ? (
+        {loading ? (
+          <ActivityIndicator color={palette.foreground} />
+        ) : !current ? (
           <View style={styles.empty}>
             <Sparkles color={palette.accent} size={32} strokeWidth={1.5} />
             <Text style={[type.displaySm, { color: palette.foreground, marginTop: spacing.base }]}>
-              That’s all the new ones
+              That's all for now
             </Text>
             <Text style={[type.body, { color: palette.body, textAlign: 'center', marginTop: spacing.xs }]}>
-              Reset and start over — fresh items land every few hours.
+              You've seen every new listing. Fresh items land every few hours.
             </Text>
             <View style={{ marginTop: spacing.lg }}>
-              <Button label="Reset deck" onPress={() => setIndex(0)} variant="secondary" />
+              <Button label="Check again" onPress={load} variant="secondary" />
             </View>
           </View>
         ) : (
           <>
-            {/* Next card in stack */}
             {next ? (
               <View style={[styles.card, styles.cardBack]}>
-                <Image source={{ uri: next.images[0]?.url }} style={styles.cardImage} contentFit="cover" />
+                <Image
+                  source={{ uri: getImageUrl(next.images?.[0]?.url) }}
+                  style={styles.cardImage}
+                  contentFit="cover"
+                />
               </View>
             ) : null}
 
             <GestureDetector gesture={pan}>
               <Animated.View style={[styles.card, cardStyle]}>
-                <Image source={{ uri: current.images[0]?.url }} style={styles.cardImage} contentFit="cover" />
+                <Image
+                  source={{ uri: getImageUrl(current.images?.[0]?.url) }}
+                  style={styles.cardImage}
+                  contentFit="cover"
+                />
                 <Animated.View style={[styles.badge, styles.like, likeStyle]}>
-                  <Text style={[type.captionUpper, { color: palette.success }]}>SAVE</Text>
+                  <Text style={[type.captionUpper, { color: palette.success }]}>LIKE</Text>
                 </Animated.View>
                 <Animated.View style={[styles.badge, styles.nope, nopeStyle]}>
-                  <Text style={[type.captionUpper, { color: palette.error }]}>PASS</Text>
+                  <Text style={[type.captionUpper, { color: palette.error }]}>SKIP</Text>
                 </Animated.View>
                 <View style={styles.cardBody}>
-                  <Pill label={current.category} tone="category" color={categoryColors[current.category]} dot />
+                  <Pill
+                    label={categoryLabels[current.category] ?? current.category}
+                    tone="category"
+                    color={categoryColors[current.category]}
+                    dot
+                  />
                   <Text style={[type.displaySm, { color: palette.foreground, marginTop: spacing.sm }]} numberOfLines={1}>
                     {current.title}
                   </Text>
@@ -129,10 +173,10 @@ export default function SwipeTab() {
       </View>
 
       <View style={styles.controls}>
-        <RoundButton onPress={() => advance('left')} label="Pass">
+        <RoundButton onPress={() => current && advance('left')} label="Skip">
           <X color={palette.body} size={22} strokeWidth={1.6} />
         </RoundButton>
-        <RoundButton onPress={() => advance('right')} label="Save" accent>
+        <RoundButton onPress={() => current && advance('right')} label="Like" accent>
           <Heart color={palette.background} size={22} strokeWidth={2} fill={palette.background} />
         </RoundButton>
       </View>
