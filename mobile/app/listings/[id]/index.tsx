@@ -437,7 +437,7 @@ export default function ListingDetail() {
                     />
                   }
                   onPress={toggleSave} 
-                  style={[{ flex: 1 }, saved && { backgroundColor: '#fef2f2', borderColor: '#fecaca' }]}
+                  style={{ flex: 1, ...(saved ? { backgroundColor: '#fef2f2', borderColor: '#fecaca' } : {}) }}
                 />
                 <Button 
                   label="Talk To Seller" 

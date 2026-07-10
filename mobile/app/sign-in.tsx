@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSignIn, useOAuth } from '@clerk/clerk-expo';
+import { useSignIn, useOAuth, useAuth } from '@clerk/clerk-expo';
 import * as WebBrowser from 'expo-web-browser';
 import { useWarmUpBrowser } from '@/hooks/useWarmUpBrowser';
 
@@ -11,6 +11,7 @@ import { Screen, Button, Input } from '@/components/ui';
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const { signOut } = useAuth();
   const router = useRouter();
   
   useWarmUpBrowser();
@@ -38,16 +39,68 @@ export default function SignInScreen() {
   };
 
   const onPressOAuth = React.useCallback(async () => {
-    try {
+    if (busy) return;
+    setBusy(true);
+
+    let originalOpen: any = null;
+    const patchWebBrowser = () => {
+      try {
+        if (Platform.OS === 'ios') {
+          const WB = require('expo-web-browser');
+          if (WB.openAuthSessionAsync && !originalOpen) {
+            originalOpen = WB.openAuthSessionAsync;
+            WB.openAuthSessionAsync = async (url: string, redirectUrl: string) => {
+              return originalOpen(url, redirectUrl, { preferEphemeralSession: true });
+            };
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to patch WebBrowser', e);
+      }
+    };
+
+    const restoreWebBrowser = () => {
+      try {
+        if (originalOpen && Platform.OS === 'ios') {
+          const WB = require('expo-web-browser');
+          WB.openAuthSessionAsync = originalOpen;
+          originalOpen = null;
+        }
+      } catch (e) {}
+    };
+
+    const attemptFlow = async () => {
       const { createdSessionId, setActive: setOAuthActive } = await startOAuthFlow();
       if (createdSessionId) {
         setOAuthActive!({ session: createdSessionId });
         router.replace('/(tabs)/home');
       }
-    } catch (err) {
+    };
+
+    try {
+      patchWebBrowser();
+      await attemptFlow();
+    } catch (err: any) {
       console.error('OAuth error', err);
+      const isAlreadySignedIn = 
+        err?.errors?.[0]?.code === 'session_exists' || 
+        err?.errors?.[0]?.message?.includes('already signed in') ||
+        err?.message?.includes('already signed in');
+        
+      if (isAlreadySignedIn) {
+        try {
+          await signOut();
+          // Retry once after signing out
+          await attemptFlow();
+        } catch (retryErr) {
+          console.error('OAuth retry error', retryErr);
+        }
+      }
+    } finally {
+      restoreWebBrowser();
+      setBusy(false);
     }
-  }, []);
+  }, [busy, startOAuthFlow, router, signOut]);
 
   return (
     <Screen scroll>

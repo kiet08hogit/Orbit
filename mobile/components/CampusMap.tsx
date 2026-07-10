@@ -13,8 +13,8 @@ export default function CampusMap({ locationName }: CampusMapProps) {
     return uicBuildings.find(b => b.name === locationName || b.shortName === locationName) || defaultLocation;
   }, [locationName]);
 
-  const lat = building.coordinates ? building.coordinates[1] : building.lat;
-  const lng = building.coordinates ? building.coordinates[0] : building.lng;
+  const lat = (building as any).coordinates ? (building as any).coordinates[1] : (building as any).lat;
+  const lng = (building as any).coordinates ? (building as any).coordinates[0] : (building as any).lng;
   
   const token = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 

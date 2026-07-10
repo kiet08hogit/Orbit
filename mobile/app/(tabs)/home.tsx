@@ -14,7 +14,6 @@ import { ChevronRight, Eye, Flame } from 'lucide-react-native';
 import { palette, radius, spacing, type } from '@/theme';
 import { Screen } from '@/components/ui';
 import { GlobalHeader } from '@/components/GlobalHeader';
-import { CategoryRail } from '@/components/CategoryRail';
 import { ListingCard } from '@/components/ListingCard';
 import { listingsApi } from '@/lib/api';
 import type { Listing } from '@/lib/types';
@@ -61,7 +60,6 @@ export default function HomeTab() {
   return (
     <Screen padded={false}>
       <GlobalHeader />
-      <CategoryRail value="HOME" />
 
       {loading ? (
         <View style={styles.loading}>

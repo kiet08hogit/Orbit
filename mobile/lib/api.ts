@@ -27,7 +27,8 @@ export const baseURL =
 export function getImageUrl(url?: string | null): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return `${baseURL}${url}`;
+  const prefix = url.startsWith('/') ? '' : '/';
+  return `${baseURL}${prefix}${url}`;
 }
 
 type TokenGetter = () => Promise<string | null>;

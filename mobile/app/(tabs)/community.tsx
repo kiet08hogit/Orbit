@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Image as RNImage,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,7 +14,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { Heart, ImagePlus, MessageCircle, Send, Trash2, X } from 'lucide-react-native';
+import { ChevronDown, Ghost, Heart, ImagePlus, MessageCircle, Send, Trash2, X } from 'lucide-react-native';
 import { palette, radius, spacing, type } from '@/theme';
 import { Screen, Avatar, EmptyState, Input, Pill } from '@/components/ui';
 import { postsApi, getImageUrl } from '@/lib/api';
@@ -138,6 +139,8 @@ function Composer({ onPosted }: { onPosted: () => void }) {
   const [postType, setPostType] = useState<PostType>('DISCUSSION');
   const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const pickImages = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -159,6 +162,7 @@ function Composer({ onPosted }: { onPosted: () => void }) {
       const form = new FormData();
       form.append('content', text);
       form.append('postType', postType);
+      form.append('isAnonymous', isAnonymous ? 'true' : 'false');
       images.forEach((uri, i) => {
         form.append('images', {
           uri,
@@ -169,6 +173,7 @@ function Composer({ onPosted }: { onPosted: () => void }) {
       await postsApi.create(form);
       setContent('');
       setImages([]);
+      setIsAnonymous(false);
       onPosted();
     } catch {
       // surface via input state; keep draft
@@ -203,18 +208,29 @@ function Composer({ onPosted }: { onPosted: () => void }) {
         </ScrollView>
       ) : null}
       <View style={styles.composerRow}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', gap: spacing.xs }}>
-            {POST_TYPES.filter((t) => t.key !== 'ALL').map((t) => (
-              <Pill
-                key={t.key}
-                label={t.label}
-                selected={postType === t.key}
-                onPress={() => setPostType(t.key as PostType)}
-              />
-            ))}
-          </View>
-        </ScrollView>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: spacing.sm }}>
+          <Pressable
+            style={styles.categoryDropdown}
+            onPress={() => setShowDropdown(true)}
+            accessibilityLabel="Select post category"
+          >
+            <Text style={[type.bodySm, { color: palette.foreground, fontWeight: '600' }]}>
+              {POST_TYPES.find((t) => t.key === postType)?.label}
+            </Text>
+            <ChevronDown color={palette.foreground} size={14} strokeWidth={2} style={{ marginLeft: 4 }} />
+          </Pressable>
+
+          <Pressable
+            style={[styles.anonToggle, isAnonymous && styles.anonToggleActive]}
+            onPress={() => setIsAnonymous(!isAnonymous)}
+            accessibilityLabel="Toggle Anonymous Mode"
+          >
+            <Ghost color={isAnonymous ? palette.primaryForeground : palette.muted} size={14} strokeWidth={2} />
+            <Text style={[type.caption, { color: isAnonymous ? palette.primaryForeground : palette.muted, marginLeft: 4, fontWeight: '600' }]}>
+              Anon
+            </Text>
+          </Pressable>
+        </View>
       </View>
       <View style={styles.composerActions}>
         <Pressable onPress={pickImages} hitSlop={8} accessibilityLabel="Add photos">
@@ -237,6 +253,31 @@ function Composer({ onPosted }: { onPosted: () => void }) {
           )}
         </Pressable>
       </View>
+
+      {/* Category Dropdown Modal */}
+      {showDropdown && (
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowDropdown(false)}
+        >
+          <View style={styles.dropdownContent}>
+            {POST_TYPES.filter((t) => t.key !== 'ALL').map((t) => (
+              <Pressable
+                key={t.key}
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setPostType(t.key as PostType);
+                  setShowDropdown(false);
+                }}
+              >
+                <Text style={[styles.dropdownItemText, postType === t.key && styles.dropdownItemTextActive]}>
+                  {t.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -352,14 +393,17 @@ function PostCard({
 
       {post.imageUrls && post.imageUrls.length > 0 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: spacing.sm }}>
-          {post.imageUrls.map((url) => (
-            <Image
-              key={url}
-              source={{ uri: getImageUrl(url) }}
-              style={styles.postImage}
-              contentFit="cover"
-            />
-          ))}
+          {post.imageUrls.map((url, idx) => {
+            const uri = getImageUrl(url);
+            return (
+              <RNImage
+                key={url}
+                source={{ uri, cache: 'reload' }}
+                style={styles.postImage}
+                resizeMode="cover"
+              />
+            );
+          })}
         </ScrollView>
       ) : null}
 
@@ -432,6 +476,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.xs,
     paddingHorizontal: spacing.base,
+    paddingTop: spacing.xs,
     paddingBottom: spacing.sm,
   },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -447,6 +492,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing.sm,
+  },
+  categoryDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: palette.surfaceElevated,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  anonToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: palette.surfaceElevated,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: palette.border,
+  },
+  anonToggleActive: {
+    backgroundColor: palette.primary,
+    borderColor: palette.primary,
   },
   composerActions: {
     flexDirection: 'row',
@@ -516,4 +585,38 @@ const styles = StyleSheet.create({
   },
   commentRow: { flexDirection: 'row', alignItems: 'flex-start' },
   commentComposer: { flexDirection: 'row', marginTop: spacing.xs },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  dropdownContent: {
+    backgroundColor: palette.card,
+    borderRadius: radius.lg,
+    padding: spacing.xs,
+    width: 200,
+    borderWidth: 1,
+    borderColor: palette.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  dropdownItem: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.base,
+    borderRadius: radius.md,
+  },
+  dropdownItemText: {
+    ...type.body,
+    fontSize: 15,
+    color: palette.mutedForeground,
+  },
+  dropdownItemTextActive: {
+    color: palette.foreground,
+    fontFamily: type.titleMd.fontFamily,
+  },
 });
