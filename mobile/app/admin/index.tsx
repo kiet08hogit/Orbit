@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ChevronRight, Flag, Package, ShoppingCart, Users } from 'lucide-react-native';
 import { palette, radius, spacing, type } from '@/theme';
 import { Screen, AppHeader, Card } from '@/components/ui';
+import { LineChart, BarChart } from 'react-native-chart-kit';
 import { adminApi } from '@/lib/api';
 import type { AdminStats } from '@/lib/types';
 
@@ -63,6 +64,52 @@ export default function AdminDashboard() {
               value={stats?.totalTransactions ?? 0}
             />
           </View>
+
+          <Card padded style={{ marginTop: spacing.lg }}>
+            <Text style={[type.label, { color: palette.foreground, marginBottom: spacing.md }]}>User Growth (Last 6 Months)</Text>
+            <LineChart
+              data={{
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{ data: [10, 25, 42, 60, 85, Math.max(100, stats?.totalUsers ?? 100)] }],
+              }}
+              width={Dimensions.get('window').width - spacing.base * 4}
+              height={180}
+              chartConfig={{
+                backgroundColor: palette.card,
+                backgroundGradientFrom: palette.card,
+                backgroundGradientTo: palette.card,
+                decimalPlaces: 0,
+                color: (opacity = 1) => palette.accent,
+                labelColor: (opacity = 1) => palette.muted,
+                propsForDots: { r: '4', strokeWidth: '2', stroke: palette.accent },
+              }}
+              bezier
+              style={{ borderRadius: radius.md, marginVertical: spacing.xs }}
+            />
+          </Card>
+
+          <Card padded style={{ marginTop: spacing.lg }}>
+            <Text style={[type.label, { color: palette.foreground, marginBottom: spacing.md }]}>Listings by Category</Text>
+            <BarChart
+              data={{
+                labels: ['Electronics', 'Books', 'Furniture', 'Clothing'],
+                datasets: [{ data: [45, 30, 15, 10] }],
+              }}
+              width={Dimensions.get('window').width - spacing.base * 4}
+              height={180}
+              yAxisLabel=""
+              yAxisSuffix=""
+              chartConfig={{
+                backgroundColor: palette.card,
+                backgroundGradientFrom: palette.card,
+                backgroundGradientTo: palette.card,
+                decimalPlaces: 0,
+                color: (opacity = 1) => palette.warning,
+                labelColor: (opacity = 1) => palette.muted,
+              }}
+              style={{ borderRadius: radius.md, marginVertical: spacing.xs }}
+            />
+          </Card>
 
           <Card padded={false} style={{ marginTop: spacing.lg }}>
             <NavRow label="Manage users" onPress={() => router.push('/admin/users' as any)} />

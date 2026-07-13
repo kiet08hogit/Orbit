@@ -1,20 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedProps,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  type SharedValue,
-} from 'react-native-reanimated';
-import Svg, { Circle, Ellipse } from 'react-native-svg';
-import { palette } from '@/theme';
+import Svg, { Circle, Ellipse, Defs, RadialGradient, Stop } from 'react-native-svg';
 
-const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
-/** Marker locations as [latitude, longitude] — same cities as the web cobe globe. */
 const MARKERS: Array<[number, number, number]> = [
   [14.6, 120.98, 3],
   [19.08, 72.88, 5],
@@ -26,60 +13,74 @@ const MARKERS: Array<[number, number, number]> = [
   [41.0, 28.98, 3.5],
 ];
 
-const MERIDIAN_COUNT = 5;
-const PARALLELS = [-50, -25, 0, 25, 50];
+const MERIDIAN_COUNT = 7;
+const PARALLELS = [-60, -40, -20, 0, 20, 40, 60];
 
-/**
- * React Native stand-in for `frontend/components/ui/globe.tsx` (cobe/WebGL).
- * A slowly spinning orthographic wireframe globe: static parallels, meridians
- * whose apparent width breathes with the rotation, and Cursor-Orange markers
- * that traverse the surface and fade behind the horizon.
- */
 export function Globe({ size = 320 }: { size?: number }) {
-  const spin = useSharedValue(0);
+  const [spin, setSpin] = useState(0);
 
   useEffect(() => {
-    spin.value = withRepeat(
-      withTiming(1, { duration: 24000, easing: Easing.linear }),
-      -1,
-      false,
-    );
-  }, [spin]);
+    let animationFrameId: number;
+    let start: number;
+    const animate = (time: number) => {
+      if (!start) start = time;
+      const progress = ((time - start) % 18000) / 18000;
+      setSpin(progress);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    animationFrameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, []);
 
-  const r = size / 2 - 4;
+  const r = size / 2 - 8;
   const c = size / 2;
 
   return (
     <View style={[styles.root, { width: size, height: size }]} pointerEvents="none">
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Sphere silhouette */}
-        <Circle cx={c} cy={c} r={r} stroke="rgba(247,247,244,0.28)" strokeWidth={1.2} fill="rgba(247,247,244,0.04)" />
+        <Defs>
+          <RadialGradient id="globeGrad" cx="50%" cy="50%" rx="50%" ry="50%" fx="30%" fy="30%">
+            <Stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+            <Stop offset="70%" stopColor="#d4d4d4" stopOpacity="0.9" />
+            <Stop offset="100%" stopColor="#7a7a7a" stopOpacity="0.9" />
+          </RadialGradient>
+          <RadialGradient id="glowGrad" cx="50%" cy="50%" rx="50%" ry="50%">
+            <Stop offset="80%" stopColor="#ffffff" stopOpacity="0.4" />
+            <Stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          </RadialGradient>
+        </Defs>
 
-        {/* Parallels — fixed under a vertical-axis spin */}
+        {/* Outer Glow */}
+        <Circle cx={c} cy={c} r={size / 2} fill="url(#glowGrad)" />
+
+        {/* Solid Sphere */}
+        <Circle cx={c} cy={c} r={r} fill="url(#globeGrad)" />
+
+        {/* Parallels (Latitudes) */}
         {PARALLELS.map((lat) => {
           const latRad = (lat * Math.PI) / 180;
           const rx = r * Math.cos(latRad);
-          const cy = c - r * Math.sin(latRad) * 0.98;
+          const cy = c - r * Math.sin(latRad);
           return (
             <Ellipse
               key={`p${lat}`}
               cx={c}
               cy={cy}
               rx={rx}
-              ry={rx * 0.16}
-              stroke="rgba(247,247,244,0.14)"
+              ry={rx * 0.15}
+              stroke="rgba(0,0,0,0.15)"
               strokeWidth={1}
               fill="none"
             />
           );
         })}
 
-        {/* Meridians — rx breathes as the globe turns */}
+        {/* Meridians (Longitudes) */}
         {Array.from({ length: MERIDIAN_COUNT }).map((_, i) => (
           <Meridian key={`m${i}`} index={i} spin={spin} c={c} r={r} />
         ))}
 
-        {/* Markers */}
+        {/* Orange Markers */}
         {MARKERS.map(([lat, lon, s], i) => (
           <Marker key={`mk${i}`} lat={lat} lon={lon} size={s} spin={spin} c={c} r={r} />
         ))}
@@ -88,67 +89,45 @@ export function Globe({ size = 320 }: { size?: number }) {
   );
 }
 
-function Meridian({
-  index,
-  spin,
-  c,
-  r,
-}: {
-  index: number;
-  spin: SharedValue<number>;
-  c: number;
-  r: number;
-}) {
-  const props = useAnimatedProps(() => {
-    const phase = spin.value * 2 * Math.PI + (index * Math.PI) / MERIDIAN_COUNT;
-    const rx = Math.abs(Math.cos(phase)) * r;
-    const front = Math.sin(phase) >= 0;
-    return {
-      rx: Math.max(rx, 0.5),
-      opacity: front ? 0.16 : 0.07,
-    };
-  });
+function Meridian({ index, spin, c, r }: { index: number; spin: number; c: number; r: number }) {
+  const progress = (spin + index / MERIDIAN_COUNT) % 1;
+  let widthScale = Math.cos(progress * Math.PI * 2);
+  const rx = Math.max(0.1, r * Math.abs(widthScale));
+  const strokeOpacity = widthScale > 0 ? 0.25 : 0.05;
 
   return (
-    <AnimatedEllipse
-      animatedProps={props}
+    <Ellipse
       cx={c}
       cy={c}
       ry={r}
-      stroke="rgba(247,247,244,1)"
-      strokeWidth={1}
+      rx={rx}
+      stroke="#000000"
+      strokeWidth={0.8}
+      strokeOpacity={strokeOpacity}
       fill="none"
     />
   );
 }
 
-function Marker({
-  lat,
-  lon,
-  size,
-  spin,
-  c,
-  r,
-}: {
-  lat: number;
-  lon: number;
-  size: number;
-  spin: SharedValue<number>;
-  c: number;
-  r: number;
-}) {
-  const props = useAnimatedProps(() => {
-    const latRad = (lat * Math.PI) / 180;
-    const lonRad = (lon * Math.PI) / 180 + spin.value * 2 * Math.PI;
-    const depth = Math.cos(latRad) * Math.cos(lonRad); // >0 → front hemisphere
-    return {
-      cx: c + r * Math.cos(latRad) * Math.sin(lonRad),
-      cy: c - r * Math.sin(latRad) * 0.98,
-      opacity: depth > 0.05 ? Math.min(depth + 0.25, 1) : 0,
-    };
-  });
+function Marker({ lat, lon, size, spin, c, r }: { lat: number; lon: number; size: number; spin: number; c: number; r: number }) {
+  const latRad = (lat * Math.PI) / 180;
+  const yOffset = Math.sin(latRad) * r;
+  const ringRadius = Math.cos(latRad) * r;
+  const baseLonProgress = (lon + 180) / 360;
+  const currentProgress = (baseLonProgress + spin) % 1;
+  const angle = currentProgress * Math.PI * 2;
+  const xOffset = Math.cos(angle) * ringRadius;
+  const isFront = Math.sin(angle) > 0;
 
-  return <AnimatedCircle animatedProps={props} r={size} fill={palette.accent} />;
+  return (
+    <Circle 
+      cx={c + xOffset}
+      cy={c - yOffset}
+      r={isFront ? size + 1.5 : size * 0.6}
+      opacity={isFront ? 1 : 0.2}
+      fill="#fb6415" 
+    />
+  );
 }
 
 const styles = StyleSheet.create({

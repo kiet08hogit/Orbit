@@ -14,13 +14,18 @@ import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUser } from '@clerk/clerk-expo';
-import { ImagePlus, Send } from 'lucide-react-native';
+import { ImagePlus, Send, MoreVertical, ChevronLeft } from 'lucide-react-native';
 import { palette, radius, spacing, type } from '@/theme';
 import { AppHeader, Input, Avatar } from '@/components/ui';
+import { ImageViewerModal } from '@/components/ImageViewerModal';
 import { chatApi, getImageUrl } from '@/lib/api';
 import { formatRelative } from '@/lib/format';
 import { getSocket } from '@/lib/socket';
 import type { Message, User } from '@/lib/types';
+import { LinkPreview } from '@/components/LinkPreview';
+import { SharedMediaModal } from '@/components/SharedMediaModal';
+import { SellerVerificationModal } from '@/components/SellerVerificationModal';
+import { BuyerPurchasesModal } from '@/components/BuyerPurchasesModal';
 
 export default function Thread() {
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
@@ -32,6 +37,11 @@ export default function Thread() {
   const [other, setOther] = useState<User | undefined>();
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showSharedMedia, setShowSharedMedia] = useState(false);
+  const [showSellerModal, setShowSellerModal] = useState(false);
+  const [showBuyerModal, setShowBuyerModal] = useState(false);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  
   const listRef = useRef<FlatList<Message>>(null);
 
   const load = useCallback(async () => {
@@ -104,23 +114,47 @@ export default function Thread() {
     }
   };
 
+  // Determine active listing and roles based on the latest message that references a listing
+  const activeListingMessage = [...messages].reverse().find(m => m.listingId && m.listing);
+  const activeListingId = activeListingMessage?.listingId;
+  const isSeller = activeListingMessage && activeListingMessage.listing?.sellerId === user?.id;
+  const isBuyer = activeListingMessage && activeListingMessage.listing?.sellerId !== user?.id;
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: palette.background }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <AppHeader 
-          back 
-          title={other?.name ?? other?.username ?? 'Conversation'} 
-          trailing={
-            other ? (
-              <Pressable onPress={() => router.push(`/profile/${other.clerkUserId}` as any)}>
-                <Avatar name={other.name ?? '?'} uri={getImageUrl(other.avatarUrl) || undefined} size={32} />
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
+            <ChevronLeft color={palette.foreground} size={24} strokeWidth={1.5} />
+          </Pressable>
+          <Pressable 
+            onPress={() => other && router.push(`/profile/${other.clerkUserId}` as any)}
+            style={styles.headerProfile}
+          >
+            {other && <Avatar name={other.name ?? '?'} uri={getImageUrl(other.avatarUrl) || undefined} size={28} />}
+            <Text numberOfLines={1} style={styles.headerName}>
+              {other?.name ?? other?.username ?? 'Conversation'}
+            </Text>
+          </Pressable>
+          <View style={styles.headerActions}>
+            {isSeller && (
+              <Pressable onPress={() => setShowSellerModal(true)} style={styles.actionBtn}>
+                <Text style={[type.caption, { color: palette.background, fontWeight: '700' }]}>Verify</Text>
               </Pressable>
-            ) : null
-          }
-        />
+            )}
+            {isBuyer && (
+              <Pressable onPress={() => setShowBuyerModal(true)} style={[styles.actionBtn, { backgroundColor: palette.surfaceElevated, borderWidth: 1, borderColor: palette.hairline }]}>
+                <Text style={[type.caption, { color: palette.foreground, fontWeight: '700' }]}>Purchases</Text>
+              </Pressable>
+            )}
+            <Pressable onPress={() => setShowSharedMedia(true)} hitSlop={8}>
+              <MoreVertical color={palette.foreground} size={24} />
+            </Pressable>
+          </View>
+        </View>
         {loading ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
             <ActivityIndicator color={palette.foreground} />
@@ -131,7 +165,9 @@ export default function Thread() {
             data={messages}
             keyExtractor={(m) => m.id}
             contentContainerStyle={styles.list}
-            renderItem={({ item }) => <Bubble message={item} myClerkId={user?.id} />}
+            renderItem={({ item }) => (
+              <Bubble message={item} myClerkId={user?.id} onImagePress={setEnlargedImage} />
+            )}
             ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           />
@@ -161,11 +197,32 @@ export default function Thread() {
           />
         </View>
       </KeyboardAvoidingView>
+      
+      <SharedMediaModal 
+        visible={showSharedMedia} 
+        onClose={() => setShowSharedMedia(false)} 
+        messages={messages} 
+      />
+      <SellerVerificationModal
+        visible={showSellerModal}
+        onClose={() => setShowSellerModal(false)}
+        buyerId={other?.id}
+      />
+      <BuyerPurchasesModal
+        visible={showBuyerModal}
+        onClose={() => setShowBuyerModal(false)}
+        sellerId={other?.id}
+      />
+      <ImageViewerModal
+        visible={!!enlargedImage}
+        onClose={() => setEnlargedImage(null)}
+        imageUrl={enlargedImage ? getImageUrl(enlargedImage) : null}
+      />
     </SafeAreaView>
   );
 }
 
-function Bubble({ message, myClerkId }: { message: Message; myClerkId?: string }) {
+function Bubble({ message, myClerkId, onImagePress }: { message: Message; myClerkId?: string; onImagePress: (url: string) => void }) {
   const mine = message.sender?.clerkUserId === myClerkId;
   return (
     <View style={[styles.bubbleRow, mine ? styles.bubbleRowRight : styles.bubbleRowLeft]}>
@@ -191,12 +248,13 @@ function Bubble({ message, myClerkId }: { message: Message; myClerkId?: string }
         {message.imageUrls && message.imageUrls.length > 0 ? (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: message.content ? 4 : 0 }}>
             {message.imageUrls.map(url => (
-              <Image 
-                key={url} 
-                source={{ uri: getImageUrl(url) }} 
-                style={styles.chatImage} 
-                contentFit="cover" 
-              />
+              <Pressable key={url} onPress={() => onImagePress(url)}>
+                <Image 
+                  source={{ uri: getImageUrl(url) }} 
+                  style={styles.chatImage} 
+                  contentFit="cover" 
+                />
+              </Pressable>
             ))}
           </View>
         ) : null}
@@ -206,6 +264,11 @@ function Bubble({ message, myClerkId }: { message: Message; myClerkId?: string }
             {message.content}
           </Text>
         ) : null}
+
+        {message.content ? (() => {
+          const match = message.content.match(/https?:\/\/[^\s]+/);
+          return match ? <LinkPreview url={match[0]} /> : null;
+        })() : null}
         
         <Text
           style={[
@@ -221,6 +284,36 @@ function Bubble({ message, myClerkId }: { message: Message; myClerkId?: string }
 }
 
 const styles = StyleSheet.create({
+  header: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.base,
+    backgroundColor: palette.background,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.hairline,
+  },
+  backBtn: {
+    marginRight: spacing.sm,
+  },
+  headerProfile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  headerName: {
+    ...type.body,
+    color: palette.foreground,
+    fontWeight: '600',
+    flexShrink: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginLeft: spacing.sm,
+  },
   list: {
     paddingHorizontal: spacing.base,
     paddingVertical: spacing.base,
@@ -272,5 +365,11 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: radius.sm,
     backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  actionBtn: {
+    backgroundColor: palette.accent,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.full,
   },
 });
