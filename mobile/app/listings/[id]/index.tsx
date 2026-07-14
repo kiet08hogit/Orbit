@@ -21,6 +21,7 @@ import CampusMap from '@/components/CampusMap';
 import { listingsApi, chatApi, transactionsApi, reportsApi, offersApi, getImageUrl } from '@/lib/api';
 import { formatPrice, formatRelative } from '@/lib/format';
 import type { Listing, Offer } from '@/lib/types';
+import { ImageViewerModal } from '@/components/ImageViewerModal';
 
 export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,6 +34,7 @@ export default function ListingDetail() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [existingOffer, setExistingOffer] = useState<Offer | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -249,12 +251,13 @@ export default function ListingDetail() {
           style={{ height: width * 0.88 }}
         >
           {(images.length > 0 ? images : [{ url: '' }]).map((img, i) => (
-            <Image
-              key={i}
-              source={{ uri: getImageUrl(img.url) }}
-              style={{ width, height: width * 0.88, backgroundColor: palette.surfaceElevated }}
-              contentFit="cover"
-            />
+            <Pressable key={i} onPress={() => setEnlargedImage(img.url)}>
+              <Image
+                source={{ uri: getImageUrl(img.url) }}
+                style={{ width, height: width * 0.88, backgroundColor: palette.surfaceElevated }}
+                contentFit="cover"
+              />
+            </Pressable>
           ))}
         </ScrollView>
 
@@ -452,6 +455,12 @@ export default function ListingDetail() {
           </View>
         ) : null}
       </ScrollView>
+
+      <ImageViewerModal
+        visible={!!enlargedImage}
+        onClose={() => setEnlargedImage(null)}
+        imageUrl={enlargedImage ? getImageUrl(enlargedImage) : null}
+      />
     </SafeAreaView>
   );
 }

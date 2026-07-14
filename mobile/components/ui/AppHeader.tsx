@@ -10,10 +10,11 @@ interface Props {
   back?: boolean;
   onBack?: () => void;
   trailing?: React.ReactNode;
+  centerNode?: React.ReactNode;
   borderless?: boolean;
 }
 
-export function AppHeader({ title, eyebrow, back, onBack, trailing, borderless }: Props) {
+export function AppHeader({ title, eyebrow, back, onBack, trailing, centerNode, borderless }: Props) {
   const router = useRouter();
   return (
     <View style={[styles.bar, !borderless && styles.barBorder]}>
@@ -31,12 +32,18 @@ export function AppHeader({ title, eyebrow, back, onBack, trailing, borderless }
         ) : null}
       </View>
       <View style={styles.center}>
-        {eyebrow ? <Text style={[type.captionUpper, styles.eyebrow]}>{eyebrow}</Text> : null}
-        {title ? (
-          <Text numberOfLines={1} style={[type.titleMd, { color: palette.foreground }]}>
-            {title}
-          </Text>
-        ) : null}
+        {centerNode ? (
+          centerNode
+        ) : (
+          <>
+            {eyebrow ? <Text style={[type.captionUpper, styles.eyebrow]}>{eyebrow}</Text> : null}
+            {title ? (
+              <Text numberOfLines={1} style={[type.titleMd, { color: palette.foreground }]}>
+                {title}
+              </Text>
+            ) : null}
+          </>
+        )}
       </View>
       <View style={styles.right}>{trailing}</View>
     </View>
@@ -55,9 +62,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: palette.hairline,
   },
-  left: { width: 44, alignItems: 'flex-start' },
-  center: { flex: 1, alignItems: 'center' },
-  right: { width: 44, alignItems: 'flex-end' },
+  left: { flex: 1, alignItems: 'flex-start' },
+  center: { flex: 2, alignItems: 'center', justifyContent: 'center' },
+  right: { flex: 1, alignItems: 'flex-end' },
   backBtn: {
     width: 44,
     height: 44,
