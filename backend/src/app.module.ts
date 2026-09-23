@@ -76,7 +76,8 @@ import { S3PresignInterceptor } from './common/interceptors/s3-presign.intercept
                     throttlers: [
                         {
                             ttl: 60000,
-                            limit: 100,
+                            // Default stays 100 req/min/IP. Raise THROTTLE_LIMIT for a local k6 run.
+                            limit: Number(configService.get('THROTTLE_LIMIT', 100)),
                         },
                     ],
                     storage: new ThrottlerStorageRedisService(`redis://${host}:${port}`),
