@@ -1,5 +1,8 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { Counter } from 'k6/metrics';
+
+const responsesByStatus = new Counter('responses_by_status');
 
 // 500 virtual users browsing the public listings feed.
 // The API rate-limits each IP to 100 requests/minute unless the process
@@ -33,8 +36,11 @@ export default function () {
     tags: { endpoint: 'listings_all' },
   });
 
+  responsesByStatus.add(1, { status: String(res.status) });
+
   check(res, {
-    'listings status is 200': (r) => r.status === 200,
+    'status is 200': (r) => r.status === 200,
+    'body is a listings payload': (r) => r.status === 200 && r.body && r.body.length > 200,
   });
 
   sleep(1);
