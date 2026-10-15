@@ -25,7 +25,7 @@ export default function AboutPage() {
             The Problem
           </h2>
           <p className="text-[17px] md:text-[21px] text-foreground leading-[1.47] font-normal">
-            Buying and selling on campus shouldn't be sketchy or complicated.
+            Buying and selling on campus shouldn&apos;t be sketchy or complicated.
             Traditional marketplaces are full of scammers, irrelevant listings,
             and people who live miles away. Students lack a secure, localized
             space to trade dorm essentials, find subleases, or offer their
@@ -54,10 +54,10 @@ export default function AboutPage() {
             The Ecosystem
           </h2>
           <p className="text-[17px] md:text-[21px] text-foreground leading-[1.47] font-normal">
-            Orbit isn't just a marketplace for buying textbooks or selling your
-            dorm fridge. It's the central hub for your entire university
+            Orbit isn&apos;t just a marketplace for buying textbooks or selling your
+            dorm fridge. It&apos;s the central hub for your entire university
             ecosystem. Need CS help, a resume review, or someone to help you
-            move out? We've got you covered.
+            move out? We&apos;ve got you covered.
           </p>
         </div>
 
@@ -66,13 +66,13 @@ export default function AboutPage() {
             The Challenge
           </h2>
           <p className="text-gray-500 dark:text-[#807d72] mb-6 leading-relaxed">
-            Building Orbit wasn't just about creating a marketplace; it was
+            Building Orbit wasn&apos;t just about creating a marketplace; it was
             about engineering trust. The biggest challenge was designing a
             system that guaranteed safety without adding friction. We had to
             implement a strict yet seamless .edu verification process and build
             a custom escrow-like payment flow using Stripe and Meetup Codes. We
             needed to ensure that sellers felt confident they would get paid,
-            and buyers felt confident they wouldn't get scammed—all while
+            and buyers felt confident they wouldn&apos;t get scammed—all while
             keeping the platform lightning fast and visually engaging for Gen Z
             students.
           </p>

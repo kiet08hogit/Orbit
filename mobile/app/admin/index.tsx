@@ -66,7 +66,7 @@ export default function AdminDashboard() {
           </View>
 
           <Card padded style={{ marginTop: spacing.lg }}>
-            <Text style={[type.label, { color: palette.foreground, marginBottom: spacing.md }]}>User Growth (Last 6 Months)</Text>
+            <Text style={[type.titleSm, { color: palette.foreground, marginBottom: spacing.md }]}>User Growth (Last 6 Months)</Text>
             <LineChart
               data={{
                 labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
           </Card>
 
           <Card padded style={{ marginTop: spacing.lg }}>
-            <Text style={[type.label, { color: palette.foreground, marginBottom: spacing.md }]}>Listings by Category</Text>
+            <Text style={[type.titleSm, { color: palette.foreground, marginBottom: spacing.md }]}>Listings by Category</Text>
             <BarChart
               data={{
                 labels: ['Electronics', 'Books', 'Furniture', 'Clothing'],

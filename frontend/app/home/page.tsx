@@ -156,7 +156,7 @@ export default function Home() {
             <ProductSection
               title={
                 <span className="flex items-center gap-2">
-                  You've viewed <Eye className="h-6 w-6 text-blue-500" />
+                  You&apos;ve viewed <Eye className="h-6 w-6 text-blue-500" />
                 </span>
               }
               listings={viewedListings}

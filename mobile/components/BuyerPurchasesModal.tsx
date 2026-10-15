@@ -49,7 +49,7 @@ export function BuyerPurchasesModal({ visible, onClose, sellerId }: BuyerPurchas
         <View style={styles.content}>
           <View style={styles.header}>
             <View>
-              <Text style={[type.h3, { color: palette.foreground }]}>My Purchases</Text>
+              <Text style={[type.titleMd, { color: palette.foreground }]}>My Purchases</Text>
               <Text style={[type.caption, { color: palette.muted }]}>Manage your active purchases from this seller.</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={8}>
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   directContainer: {
     marginTop: spacing.md,
     padding: spacing.sm,
-    backgroundColor: palette.surface,
+    backgroundColor: palette.surfaceElevated,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: palette.hairlineSoft,

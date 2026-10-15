@@ -162,7 +162,7 @@ export default function OnboardingPage() {
             Welcome to Orbit!
           </h1>
           <p className="text-muted-foreground text-lg font-medium">
-            Let's set up your student profile before you enter the marketplace.
+            Let&apos;s set up your student profile before you enter the marketplace.
           </p>
         </div>
 

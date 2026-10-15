@@ -39,7 +39,7 @@ export function SharedMediaModal({ visible, onClose, messages }: SharedMediaModa
       <View style={styles.overlay}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={[type.h3, { color: palette.foreground }]}>Shared Media</Text>
+            <Text style={[type.titleMd, { color: palette.foreground }]}>Shared Media</Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <X color={palette.muted} size={24} />
             </Pressable>

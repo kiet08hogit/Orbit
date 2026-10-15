@@ -70,7 +70,7 @@ export function SellerVerificationModal({ visible, onClose, buyerId }: SellerVer
         <View style={styles.content}>
           <View style={styles.header}>
             <View>
-              <Text style={[type.h3, { color: palette.foreground }]}>Verify Meetups</Text>
+              <Text style={[type.titleMd, { color: palette.foreground }]}>Verify Meetups</Text>
               <Text style={[type.caption, { color: palette.muted }]}>Manage your active transactions with this buyer.</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={8}>
@@ -125,7 +125,7 @@ export function SellerVerificationModal({ visible, onClose, buyerId }: SellerVer
                   <View style={styles.actions}>
                     {item.paymentMethod === 'DIRECT' && item.orderStatus !== 'COMPLETED_BY_SELLER' && (
                       <Button
-                        title="Mark as Sold"
+                        label="Mark as Sold"
                         onPress={() => handleMarkAsSold(item.id)}
                         loading={actionLoading[item.id]}
                         style={{ backgroundColor: palette.success }}
@@ -143,7 +143,7 @@ export function SellerVerificationModal({ visible, onClose, buyerId }: SellerVer
                           onChangeText={(text) => setCodes((prev) => ({ ...prev, [item.id]: text }))}
                         />
                         <Button
-                          title="Verify"
+                          label="Verify"
                           onPress={() => handleVerifyCode(item.id)}
                           loading={actionLoading[item.id]}
                           disabled={!codes[item.id] || codes[item.id].length !== 6}
