@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ListingsController } from './listings.controller';
 import { ListingsService } from './listings.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ExecutionContext } from '@nestjs/common';
 import { ListingStatus, ListingCategory } from '@prisma/client';
@@ -41,6 +42,8 @@ describe('ListingsController', () => {
       ],
     })
       .overrideGuard(ClerkAuthGuard)
+      .useValue(mockClerkAuthGuard)
+      .overrideGuard(AdminGuard)
       .useValue(mockClerkAuthGuard)
       .overrideInterceptor(CacheInterceptor)
       .useValue(mockCacheInterceptor)

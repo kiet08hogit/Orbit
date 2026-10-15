@@ -2,7 +2,9 @@ import { Controller,Body,UseGuards, Post, Get, Param, Query, NotFoundException, 
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ListingsService } from './listings.service';
+import { Throttle } from '@nestjs/throttler';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import {CreateListingDto} from './create-listing.dto';
 import { AuthUser } from '../../common/types/auth-user.type';
@@ -14,6 +16,7 @@ export class ListingsController {
 
     @Post('ai-suggest')
     @UseGuards(ClerkAuthGuard)
+    @Throttle({ default: { ttl: 60000, limit: 10 } }) // Each call is a paid Gemini vision request
     @UseInterceptors(FilesInterceptor('image', 1))
     async suggestListingDetails(@UploadedFiles() files: any[]) {
         if (!files || files.length === 0) {
@@ -27,8 +30,6 @@ export class ListingsController {
     @UseInterceptors(FilesInterceptor('images', 6))
     async createListing(@CurrentUser() clerkUser: AuthUser, @Body() createListingDto: CreateListingDto, @UploadedFiles() files: any[])
      {
-        console.log("Create listing request body:", createListingDto);
-        console.log("Uploaded files:", files?.length);
         return this.listingsService.create(clerkUser.clerkUserId, clerkUser.email, createListingDto, files);
     }
 
@@ -77,6 +78,8 @@ export class ListingsController {
     }
 
     @Post('backfill')
+    @UseGuards(AdminGuard)
+    @Throttle({ default: { ttl: 60000, limit: 1 } })
     async backfill() {
         return this.listingsService.backfillEmbeddings();
     }

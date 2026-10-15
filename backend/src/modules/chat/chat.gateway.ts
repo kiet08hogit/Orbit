@@ -12,11 +12,8 @@ import { UseGuards } from '@nestjs/common';
 import { WsClerkAuthGuard } from '../../common/guards/ws-clerk-auth.guard';
 import { ChatService } from './chat.service';
 
-@WebSocketGateway({
-  cors: {
-    origin: '*', // Allows our frontend to connect during local dev
-  },
-})
+// CORS for the socket server is configured in main.ts (CorsIoAdapter) from CORS_ORIGINS.
+@WebSocketGateway()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;

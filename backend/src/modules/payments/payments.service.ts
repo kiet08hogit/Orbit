@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, BadGatewayException, InternalServerErrorException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -185,22 +185,9 @@ export class PaymentsService {
 
             return { success: true, paymentIntent: captured };
         } catch (error: any) {
-            console.error(`Stripe Capture Error: ${error.message}. Proceeding anyway for testing.`);
-            // Fallback: still update the database so the user isn't stuck!
-            await this.prisma.$transaction([
-                this.prisma.transaction.update({
-                    where: { id: transaction.id },
-                    data: {
-                        paymentStatus: 'RELEASED_TO_SELLER',
-                        orderStatus: 'COMPLETED'
-                    }
-                }),
-                this.prisma.listing.update({
-                    where: { id: transaction.listingId },
-                    data: { status: 'SOLD' }
-                })
-            ]);
-            return { success: true, note: 'Capture failed but DB updated for testing' };
+            // Never mark the sale complete unless Stripe actually captured the funds.
+            console.error(`Stripe capture failed for transaction ${transaction.id}: ${error.message}`);
+            throw new BadGatewayException('Could not capture the payment. Please try again.');
         }
     }
 
@@ -209,15 +196,15 @@ export class PaymentsService {
         
         let event: any;
 
-        if (webhookSecret) {
-            try {
-                event = this.stripe.webhooks.constructEvent(body, signature, webhookSecret);
-            } catch (err: any) {
-                throw new BadRequestException(`Webhook Error: ${err.message}`);
-            }
-        } else {
-            const payload = JSON.parse(body.toString());
-            event = payload as any;
+        // Refuse unsigned events: without the secret anyone could forge a payment.
+        if (!webhookSecret) {
+            throw new InternalServerErrorException('STRIPE_WEBHOOK_SECRET is not configured');
+        }
+
+        try {
+            event = this.stripe.webhooks.constructEvent(body, signature, webhookSecret);
+        } catch (err: any) {
+            throw new BadRequestException(`Webhook Error: ${err.message}`);
         }
 
         if (event.type === 'payment_intent.amount_capturable_updated') {
