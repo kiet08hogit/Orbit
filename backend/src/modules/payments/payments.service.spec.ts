@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, BadGatewayException } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../../database/prisma.service';
 import { TransactionsService } from '../transactions/transactions.service';
@@ -289,9 +289,24 @@ describe('PaymentsService', () => {
       prisma.transaction.findUnique.mockResolvedValueOnce(heldTx);
       mockStripe.paymentIntents.capture.mockRejectedValueOnce(new Error('card_declined'));
 
-      await expect(service.capturePaymentAndPayout(heldTx.id)).rejects.toThrow();
+      await expect(service.capturePaymentAndPayout(heldTx.id)).rejects.toBeInstanceOf(BadGatewayException);
       expect(prisma.transaction.update).not.toHaveBeenCalled();
       expect(prisma.listing.update).not.toHaveBeenCalled();
+    });
+
+    it('does not report a failed capture when the database update fails after Stripe captured', async () => {
+      prisma.transaction.findUnique.mockResolvedValueOnce(heldTx);
+      mockStripe.paymentIntents.capture.mockResolvedValueOnce({ id: 'pi_1', status: 'succeeded' });
+      const dbError = new Error('connection lost');
+      prisma.$transaction.mockRejectedValueOnce(dbError);
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      const attempt = service.capturePaymentAndPayout(heldTx.id);
+
+      await expect(attempt).rejects.toBe(dbError);
+      await expect(attempt).rejects.not.toBeInstanceOf(BadGatewayException);
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('Stripe capture succeeded for PaymentIntent pi_1'));
+      consoleError.mockRestore();
     });
   });
 

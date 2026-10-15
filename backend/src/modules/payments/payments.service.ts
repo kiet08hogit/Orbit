@@ -166,9 +166,16 @@ export class PaymentsService {
             throw new BadRequestException('No Stripe PaymentIntent associated');
         }
 
+        let captured: any;
         try {
-            const captured = await this.stripe.paymentIntents.capture(transaction.stripePaymentIntentId);
+            captured = await this.stripe.paymentIntents.capture(transaction.stripePaymentIntentId);
+        } catch (error: any) {
+            // Never mark the sale complete unless Stripe actually captured the funds.
+            console.error(`Stripe capture failed for transaction ${transaction.id}: ${error.message}`);
+            throw new BadGatewayException('Could not capture the payment. Please try again.');
+        }
 
+        try {
             await this.prisma.$transaction([
                 this.prisma.transaction.update({
                     where: { id: transaction.id },
@@ -182,13 +189,12 @@ export class PaymentsService {
                     data: { status: 'SOLD' }
                 })
             ]);
-
-            return { success: true, paymentIntent: captured };
         } catch (error: any) {
-            // Never mark the sale complete unless Stripe actually captured the funds.
-            console.error(`Stripe capture failed for transaction ${transaction.id}: ${error.message}`);
-            throw new BadGatewayException('Could not capture the payment. Please try again.');
+            console.error(`Stripe capture succeeded for PaymentIntent ${captured.id} (transaction ${transaction.id}) but the database update failed: ${error.message}`);
+            throw error;
         }
+
+        return { success: true, paymentIntent: captured };
     }
 
     async handleWebhook(signature: string, body: Buffer) {
