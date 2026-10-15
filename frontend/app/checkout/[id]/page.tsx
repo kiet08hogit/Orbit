@@ -185,7 +185,7 @@ export default function CheckoutPage() {
               Protected by Orbit Escrow
             </h3>
             <p className="text-xs text-emerald-800 leading-relaxed">
-              Your payment is held securely in escrow. We won't release the
+              Your payment is held securely in escrow. We won&apos;t release the
               funds to the seller until you meet up and enter the 6-digit
               confirmation code.
             </p>

@@ -344,11 +344,11 @@ export default function ListingsGridPage() {
                 </h2>
                 <p className="text-muted-foreground font-medium mt-1">
                   ( {displayedListings.length} of {listings.length} listings )
-                  matching "
+                  matching &quot;
                   <span className="text-[#3252DF] font-bold">
                     {searchQuery}
                   </span>
-                  "
+                  &quot;
                 </p>
               </div>
               <Link href="/listings" className="mt-4 sm:mt-0">

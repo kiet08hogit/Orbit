@@ -136,7 +136,7 @@ export function NotificationsMenu() {
       setUnreadCount((prev) => Math.max(0, prev - 1));
 
       if (linkUrl) {
-        window.location.href = linkUrl;
+        window.location.assign(linkUrl);
       }
     } catch (err) {
       console.error(err);

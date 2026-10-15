@@ -667,7 +667,7 @@ export default function ListingDetailPage() {
             <Separator className="mb-5 bg-secondary" />
 
             <p className="text-xs text-muted-foreground mb-4">
-              Meet the seller to seal the deal – you'll only be charged once you
+              Meet the seller to seal the deal – you&apos;ll only be charged once you
               give them the verification to confirm the transaction.
             </p>
 

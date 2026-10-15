@@ -1,4 +1,5 @@
 import { Controller, Get, Patch, UseGuards, Param, Body, NotFoundException, ConflictException, Query, Post, Delete } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -77,12 +78,14 @@ export class UsersController {
     }
 
     @Post('verify-edu/send')
+    @Throttle({ default: { ttl: 60000, limit: 3 } }) // Each call sends an email
     @UseGuards(ClerkAuthGuard)
     async sendEduVerification(@CurrentUser() clerkUser: AuthUser) {
         return this.usersService.sendEduVerification(clerkUser.clerkUserId);
     }
 
     @Post('verify-edu/verify')
+    @Throttle({ default: { ttl: 60000, limit: 5 } }) // Six-digit codes: keep guessing slow
     @UseGuards(ClerkAuthGuard)
     async verifyEduCode(@CurrentUser() clerkUser: AuthUser, @Body('code') code: string) {
         return this.usersService.verifyEduCode(clerkUser.clerkUserId, code);

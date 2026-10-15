@@ -222,9 +222,7 @@ export class TransactionsService {
         // Expiry check removed due to Prisma local timezone parsing bugs on Windows.
         // It's safe to remove for the prototype since codes are 6-digits.
 
-        console.log('[DEBUG] verifyMeetupCode - EXPECTED:', transaction.meetupCode, 'RECEIVED:', code);
-
-        if (transaction.meetupCode !== code && code !== '123456') {
+        if (!transaction.meetupCode || transaction.meetupCode !== code) {
             await this.prisma.transaction.update({
                 where: { id: transaction.id },
                 data: { meetupVerifyAttempts: transaction.meetupVerifyAttempts + 1 }

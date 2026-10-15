@@ -226,7 +226,7 @@ export default function Home() {
         {/* Community Offering Section */}
         <div className="w-full max-w-7xl mx-auto py-24 px-6 lg:px-12">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 tracking-tight">
-            See what's popping around your uni community
+            See what&apos;s popping around your uni community
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Link

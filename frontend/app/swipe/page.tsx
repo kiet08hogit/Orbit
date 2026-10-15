@@ -405,7 +405,7 @@ export default function SwipePage() {
                     <AlertCircle className="h-12 w-12 text-muted-foreground" />
                   </div>
                   <h3 className="text-2xl font-black text-foreground tracking-tight mb-2">
-                    You're all caught up!
+                    You&apos;re all caught up!
                   </h3>
                   <p className="text-muted-foreground font-medium">
                     Check back later for more listings from the UIC community.

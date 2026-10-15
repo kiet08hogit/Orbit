@@ -1144,7 +1144,7 @@ export default function ChatPage() {
                         <p className="text-xs text-amber-800 leading-relaxed">
                           Collect payment (Cash, Zelle, etc.) directly from the
                           buyer when you meet. After they have paid and received
-                          the item, click "Mark as Sold" at the top.
+                          the item, click &quot;Mark as Sold&quot; at the top.
                         </p>
                       </div>
                     </div>
@@ -1356,7 +1356,7 @@ export default function ChatPage() {
                           </span>
                         </div>
                         <p className="text-xs text-indigo-800 leading-relaxed max-w-[280px]">
-                          Looks like you're discussing a meetup. Want to
+                          Looks like you&apos;re discussing a meetup. Want to
                           officially propose{" "}
                           <strong>{aiSuggestion.location}</strong> at{" "}
                           <strong>{aiSuggestion.time}</strong>?
@@ -1723,7 +1723,7 @@ export default function ChatPage() {
                   No Active Meetups
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  You don't have any pending transactions with this buyer.
+                  You don&apos;t have any pending transactions with this buyer.
                 </p>
               </div>
             ) : (
@@ -1912,7 +1912,7 @@ export default function ChatPage() {
                   No Active Purchases
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  You don't have any pending purchases with this seller.
+                  You don&apos;t have any pending purchases with this seller.
                 </p>
               </div>
             ) : (

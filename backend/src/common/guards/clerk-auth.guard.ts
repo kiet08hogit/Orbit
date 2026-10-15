@@ -20,17 +20,6 @@ export class ClerkAuthGuard implements CanActivate {
 
     const token = authHeader.split(' ')[1];
 
-    // Development backdoor for Postman testing
-    /*
-    if (process.env.NODE_ENV !== 'production' && token === 'dev-token') {
-      request.user = {
-        clerkUserId: 'dev_user_12345',
-        email: 'dev@uni.edu',
-      };
-      return true;
-    }
-    */
-
     try {
       // 2. Verify the token using Clerk
       const verifiedSession = await verifyToken(token, {

@@ -9,58 +9,38 @@ on:
 jobs:
   backend-test:
     runs-on: ubuntu-latest
-    
-    services:
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-          
+
+    # Unit tests mock Prisma, Stripe, Clerk, S3 and Gemini, so CI needs no real credentials.
     env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/orbit
       REDIS_HOST: localhost
       REDIS_PORT: 6379
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-      CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      NODE_TLS_REJECT_UNAUTHORIZED: "0"
-      
+
     defaults:
       run:
         working-directory: ./backend
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Use Node.js 20.x
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: './backend/package-lock.json'
-        
+
     - name: Install dependencies
-      run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
-      
+      run: npm ci --legacy-peer-deps
+
     - name: Generate Prisma Client
       run: npx prisma generate
-      
+
     - name: Run Backend Build
       run: npm run build
-      
+
     - name: Run Backend Tests
-      run: npm run test
+      run: npm run test:cov
 
   frontend-build:
     runs-on: ubuntu-latest
@@ -74,17 +54,42 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Use Node.js 20.x
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
         cache: 'npm'
         cache-dependency-path: './frontend/package-lock.json'
-        
+
     - name: Install dependencies
-      run: npm ci || npm install
-      
+      run: npm ci
+
+    - name: Lint
+      run: npm run lint
+
     - name: Run Frontend Build
-      # NextJS builds require CI to be set to false to ignore ESLint warnings as errors if not configured properly, but usually we just run build
       run: npm run build
+
+  mobile-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./mobile
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        cache-dependency-path: './mobile/package-lock.json'
+
+    - name: Install dependencies
+      # react-native-chart-kit declares an old react peer range
+      run: npm ci --legacy-peer-deps
+
+    - name: Type check
+      run: npm run typecheck

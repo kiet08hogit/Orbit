@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { TransactionsService } from './transactions.service';
 import { ClerkAuthGuard } from '../../common/guards/clerk-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -52,6 +53,7 @@ export class TransactionsController {
     }
 
     @Post('verify-meetup-code')
+    @Throttle({ default: { ttl: 60000, limit: 5 } }) // Six-digit codes: keep guessing slow
     async verifyMeetupCode(
         @CurrentUser() clerkUser: AuthUser,
         @Body() body: { transactionId: string, code: string }

@@ -683,7 +683,7 @@ export default function ProfilePage() {
                             <p className="leading-relaxed">{userProfile.bio}</p>
                           ) : (
                             <p className="italic text-zinc-400">
-                              This student hasn't written a bio yet.
+                              This student hasn&apos;t written a bio yet.
                             </p>
                           )}
                         </div>
@@ -1050,7 +1050,7 @@ export default function ProfilePage() {
                   No reviews yet
                 </h3>
                 <p className="text-sm text-muted-foreground text-center max-w-sm mt-1">
-                  {userProfile.name?.split(" ")[0] || "This user"} hasn't received any reviews.
+                  {userProfile.name?.split(" ")[0] || "This user"} hasn&apos;t received any reviews.
                 </p>
               </div>
             )}

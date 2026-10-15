@@ -685,7 +685,7 @@ All routes are served from the backend root (`http://localhost:3000` in developm
 | `POST` | `/listings/ai-suggest` 🔒 | Draft listing fields from a photo |
 | `POST` | `/listings/:id/view` · `/:id/swipe` 🔒 | Record view or LIKE/SKIP |
 | `PUT` · `DELETE` | `/listings/:id` 🔒 | Update or remove (owner only) |
-| `POST` | `/listings/backfill` | Generate embeddings for unindexed listings |
+| `POST` | `/listings/backfill` 🔒 | Generate embeddings for unindexed listings (admin only) |
 
 ### Chat and community
 
@@ -751,35 +751,18 @@ docker compose up -d        # Redis on :6379, pgvector Postgres on :5433
 
 ### 2. Environment variables
 
-Create `backend/.env`:
+Copy the examples and fill in your keys:
 
 ```bash
-DATABASE_URL=postgresql://postgres:password@localhost:5433/Orbit
-REDIS_HOST=localhost
-REDIS_PORT=6379
-CLERK_SECRET_KEY=...
-CLERK_WEBHOOK_SECRET=...
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
-AWS_REGION=...
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_S3_BUCKET_NAME=...
-STRIPE_SECRET_KEY=...
-STRIPE_WEBHOOK_SECRET=...
-GEMINI_API_KEY=...
-RESEND_API_KEY=...
-# Optional: raise the per-IP rate limit for local load testing
-# THROTTLE_LIMIT=100000
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+cp mobile/.env.example mobile/.env
 ```
 
-Create `frontend/.env`:
+`backend/.env.example` lists every variable the API reads. Two to know about:
 
-```bash
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
-CLERK_SECRET_KEY=...
-NEXT_PUBLIC_MAPBOX_TOKEN=...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=...
-```
+- `CORS_ORIGINS`: comma-separated web origins allowed to call the REST API and Socket.io server. Defaults to `http://localhost:3001`. Set it to your deployed frontend URL in production. The native mobile app sends no `Origin` header, so CORS doesn't affect it.
+- `THROTTLE_LIMIT`: requests per minute per IP (default 100). Raise it only for local load tests. Code-verification, email, and AI endpoints have their own stricter limits.
 
 ### 3. Backend
 
@@ -852,19 +835,27 @@ flowchart LR
 
     subgraph BE["job: backend-test"]
         direction TB
-        B1["Spin up Redis service container"] --> B2["npm ci --legacy-peer-deps"]
-        B2 --> B3["npx prisma generate"]
-        B3 --> B4["npm run build"]
-        B4 --> B5["npm run test (Jest)"]
+        B1["npm ci --legacy-peer-deps"] --> B2["npx prisma generate"]
+        B2 --> B3["npm run build"]
+        B3 --> B4["npm run test:cov (Jest)"]
     end
 
     subgraph FE["job: frontend-build"]
         direction TB
-        F1["npm ci"] --> F2["next build"]
+        F1["npm ci"] --> F2["npm run lint (ESLint)"]
+        F2 --> F3["next build"]
+    end
+
+    subgraph MO["job: mobile-check"]
+        direction TB
+        M1["npm ci --legacy-peer-deps"] --> M2["npm run typecheck (tsc)"]
     end
 
     Push --> B1
     Push --> F1
+    Push --> M1
 ```
+
+Backend unit tests mock Prisma, Stripe, Clerk, S3, and Gemini, so CI needs no real credentials or database.
 
 The production target is AWS: Amplify for the web client, ECS Fargate or App Runner for the API, RDS for Postgres, ElastiCache for Redis, and S3 for uploads.
