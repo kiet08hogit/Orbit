@@ -685,7 +685,7 @@ All routes are served from the backend root (`http://localhost:3000` in developm
 | `POST` | `/listings/ai-suggest` 🔒 | Draft listing fields from a photo |
 | `POST` | `/listings/:id/view` · `/:id/swipe` 🔒 | Record view or LIKE/SKIP |
 | `PUT` · `DELETE` | `/listings/:id` 🔒 | Update or remove (owner only) |
-| `POST` | `/listings/backfill` | Generate embeddings for unindexed listings |
+| `POST` | `/listings/backfill` 🔒 | Generate embeddings for unindexed listings (admin only) |
 
 ### Chat and community
 
@@ -848,7 +848,7 @@ flowchart LR
 
     subgraph MO["job: mobile-check"]
         direction TB
-        M1["npm ci"] --> M2["npm run typecheck (tsc)"]
+        M1["npm ci --legacy-peer-deps"] --> M2["npm run typecheck (tsc)"]
     end
 
     Push --> B1
