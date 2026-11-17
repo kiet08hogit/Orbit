@@ -16,11 +16,12 @@ Recommended environments:
 - Local frontend (Next.js)
 - Local backend (NestJS)
 - Local PostgreSQL (Neon or Docker)
-- Local Redis (Docker)
+- Redis: Amazon ElastiCache (same setup as production; see infra/elasticache-waf.yml)
   
 ### Production  
 - Frontend Hosting: AWS Amplify (or Vercel)
 - Backend Hosting: AWS ECS (Fargate) or App Runner
 - Database: Amazon RDS (PostgreSQL)
 - Caching & Queues: Amazon ElastiCache (Redis)
+- Edge: AWS WAF on the API load balancer (infra/elasticache-waf.yml)
 - File Storage: Amazon S3

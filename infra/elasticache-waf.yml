@@ -1,0 +1,162 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Orbit production Redis and edge filter. ElastiCache replication group with
+  in-transit encryption and an AUTH token, plus a regional WAF web ACL for the
+  API load balancer.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: At least two private subnets in different Availability Zones.
+  AppSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security group of the API tasks. Only this group can reach Redis.
+  RedisAuthToken:
+    Type: String
+    NoEcho: true
+    MinLength: 16
+    MaxLength: 128
+    Description: >
+      ElastiCache AUTH token. 16-128 printable characters, excluding @, ", and /.
+      Put the real token in at deploy time, then set the same value as REDIS_AUTH_TOKEN.
+  NodeType:
+    Type: String
+    Default: cache.t4g.micro
+  AlbArn:
+    Type: String
+    Default: ''
+    Description: ARN of the API load balancer. Leave empty to create the web ACL without attaching it.
+
+Conditions:
+  HasAlb: !Not [!Equals [!Ref AlbArn, '']]
+
+Resources:
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Orbit ElastiCache Redis
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !Ref AppSecurityGroupId
+      Tags:
+        - Key: Name
+          Value: orbit-redis
+
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Orbit ElastiCache subnets
+      SubnetIds: !Ref PrivateSubnetIds
+
+  RedisReplicationGroup:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupDescription: Orbit Redis
+      Engine: redis
+      CacheNodeType: !Ref NodeType
+      NumCacheClusters: 2
+      AutomaticFailoverEnabled: true
+      MultiAZEnabled: true
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      SecurityGroupIds:
+        - !GetAtt RedisSecurityGroup.GroupId
+      TransitEncryptionEnabled: true
+      AtRestEncryptionEnabled: true
+      AuthToken: !Ref RedisAuthToken
+      Port: 6379
+
+  WebAcl:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: orbit-api
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: orbit-api
+      Rules:
+        - Name: AWSManagedRulesAmazonIpReputationList
+          Priority: 0
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesAmazonIpReputationList
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: orbit-ip-reputation
+        - Name: AWSManagedRulesCommonRuleSet
+          Priority: 1
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: orbit-common-rules
+        - Name: AWSManagedRulesKnownBadInputsRuleSet
+          Priority: 2
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: orbit-known-bad-inputs
+        - Name: AWSManagedRulesSQLiRuleSet
+          Priority: 3
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesSQLiRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: orbit-sqli
+        - Name: RateLimitPerIp
+          Priority: 4
+          Action:
+            Block: {}
+          Statement:
+            RateBasedStatement:
+              Limit: 2000
+              AggregateKeyType: IP
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: orbit-rate-limit
+
+  WebAclAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Condition: HasAlb
+    Properties:
+      ResourceArn: !Ref AlbArn
+      WebACLArn: !GetAtt WebAcl.Arn
+
+Outputs:
+  RedisPrimaryEndpoint:
+    Description: Set this as REDIS_HOST. TLS is enabled for this hostname.
+    Value: !GetAtt RedisReplicationGroup.PrimaryEndPoint.Address
+  RedisPrimaryPort:
+    Description: Set this as REDIS_PORT.
+    Value: !GetAtt RedisReplicationGroup.PrimaryEndPoint.Port
+  WebAclArn:
+    Description: Regional web ACL. Attach it to the API load balancer when AlbArn was left empty.
+    Value: !GetAtt WebAcl.Arn

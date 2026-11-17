@@ -26,6 +26,7 @@ import { OffersModule } from './modules/offers/offers.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { S3PresignInterceptor } from './common/interceptors/s3-presign.interceptor';
+import { bullRedisConnection, readRedisSettingsFrom, redisUrl } from './common/config/redis';
 @Module({
     imports: [
         ServeStaticModule.forRoot({
@@ -56,11 +57,10 @@ import { S3PresignInterceptor } from './common/interceptors/s3-presign.intercept
             imports: [ConfigModule],
             inject: [ConfigService],
             useFactory: async (configService: ConfigService) => {
-                const host = configService.get('REDIS_HOST', 'localhost');
-                const port = configService.get('REDIS_PORT', 6379);
+                const redis = readRedisSettingsFrom((key) => configService.get(key));
                 return {
                     store: await redisStore({
-                        url: `redis://${host}:${port}`,
+                        url: redisUrl(redis),
                         ttl: 60000,
                     }),
                 };
@@ -70,8 +70,7 @@ import { S3PresignInterceptor } from './common/interceptors/s3-presign.intercept
             imports: [ConfigModule],
             inject: [ConfigService],
             useFactory: (configService: ConfigService) => {
-                const host = configService.get('REDIS_HOST', 'localhost');
-                const port = configService.get('REDIS_PORT', 6379);
+                const redis = readRedisSettingsFrom((key) => configService.get(key));
                 return {
                     throttlers: [
                         {
@@ -80,17 +79,14 @@ import { S3PresignInterceptor } from './common/interceptors/s3-presign.intercept
                             limit: Number(configService.get('THROTTLE_LIMIT', 100)),
                         },
                     ],
-                    storage: new ThrottlerStorageRedisService(`redis://${host}:${port}`),
+                    storage: new ThrottlerStorageRedisService(redisUrl(redis)),
                 };
             },
         }),
         BullModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => ({
-                connection: {
-                    host: configService.get('REDIS_HOST', 'localhost'),
-                    port: configService.get('REDIS_PORT', 6379),
-                },
+                connection: bullRedisConnection(readRedisSettingsFrom((key) => configService.get(key))),
             }),
             inject: [ConfigService],
         }),

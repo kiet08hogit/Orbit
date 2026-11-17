@@ -129,7 +129,8 @@ Orbit/
 ├── mobile/             Expo + React Native client
 ├── load-tests/         k6 scripts
 ├── Architecture/       design notes and diagrams (Obsidian vault)
-└── docker-compose.yml  local Redis + pgvector Postgres
+├── infra/              ElastiCache Redis + AWS WAF
+└── docker-compose.yml  local pgvector Postgres
 ```
 
 ---
@@ -622,7 +623,7 @@ stateDiagram-v2
 
 ## How Redis Is Used
 
-One Redis instance backs three separate concerns:
+One Redis instance backs three separate concerns. Production runs it on an ElastiCache replication group with in-transit encryption. The API turns TLS on for `*.cache.amazonaws.com` and authenticates with `REDIS_AUTH_TOKEN`.
 
 ```mermaid
 graph LR
@@ -738,7 +739,7 @@ All routes are served from the backend root (`http://localhost:3000` in developm
 ### Prerequisites
 
 - Node.js 18+ (verified on v24)
-- Docker, for local Redis and Postgres
+- Docker, for local Postgres. Redis is Amazon ElastiCache (`infra/elasticache-waf.yml`). A machine without AWS can use Homebrew Redis with `REDIS_HOST=localhost` and `REDIS_TLS=false`.
 - API keys: Clerk, Stripe, Google Gemini, AWS S3, Mapbox
 
 ### 1. Clone and start infrastructure
@@ -746,7 +747,7 @@ All routes are served from the backend root (`http://localhost:3000` in developm
 ```bash
 git clone https://github.com/kiet08hogit/Orbit.git
 cd Orbit
-docker compose up -d        # Redis on :6379, pgvector Postgres on :5433
+docker compose up -d        # pgvector Postgres on :5433. Redis is ElastiCache.
 ```
 
 ### 2. Environment variables
@@ -763,6 +764,7 @@ cp mobile/.env.example mobile/.env
 
 - `CORS_ORIGINS`: comma-separated web origins allowed to call the REST API and Socket.io server. Defaults to `http://localhost:3001`. Set it to your deployed frontend URL in production. The native mobile app sends no `Origin` header, so CORS doesn't affect it.
 - `THROTTLE_LIMIT`: requests per minute per IP (default 100). Raise it only for local load tests. Code-verification, email, and AI endpoints have their own stricter limits.
+- `REDIS_HOST` / `REDIS_AUTH_TOKEN`: ElastiCache primary endpoint and AUTH token. TLS is on for `*.cache.amazonaws.com`. Put the token in when you have it.
 
 ### 3. Backend
 
@@ -807,6 +809,30 @@ cd backend && THROTTLE_LIMIT=100000 npm run start:dev
 
 k6 run load-tests/backend.k6.js
 ```
+
+`load-tests/stripe-transactions.k6.js` creates 1,000 Stripe PaymentIntents in test mode (USD, manual capture, the same shape Orbit uses for protected payments). It calls Stripe's API directly and does not write listings or transactions. Live keys are refused. Put a test secret key in first:
+
+```bash
+k6 run -e STRIPE_SECRET_KEY=sk_test_replace_me load-tests/stripe-transactions.k6.js
+```
+
+`ITERATIONS` defaults to 1000. The run leaves uncaptured test-mode PaymentIntents on the Stripe account.
+
+Results from a run of 1,000 test-mode PaymentIntents (5 virtual users, unconfirmed $5.00 USD, manual capture). These numbers are Stripe's latency, because the script calls Stripe's API directly:
+
+| Metric | Value |
+|---|---|
+| PaymentIntents created | 1,000 |
+| Failed requests | 0.00% |
+| Throughput | ~10.9 req/s |
+| Wall clock | 1m 32s |
+| Median latency | 238 ms |
+| Average latency | 255 ms |
+| **p95 latency** | **307 ms** |
+| p99 latency | 355 ms |
+| Max latency | 2.2 s |
+
+All three thresholds passed: failure rate under 1%, p95 under 2.5 seconds, and 1,000 successes.
 
 Results from a local run against `GET /listings/all`:
 
@@ -858,4 +884,4 @@ flowchart LR
 
 Backend unit tests mock Prisma, Stripe, Clerk, S3, and Gemini, so CI needs no real credentials or database.
 
-The production target is AWS: Amplify for the web client, ECS Fargate or App Runner for the API, RDS for Postgres, ElastiCache for Redis, and S3 for uploads.
+The production target is AWS: Amplify for the web client, ECS Fargate or App Runner for the API, AWS WAF on the load balancer, RDS for Postgres, ElastiCache for Redis, and S3 for uploads. `infra/elasticache-waf.yml` is the ElastiCache replication group and the regional web ACL.
