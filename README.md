@@ -56,7 +56,7 @@ This README documents how Orbit is actually built — the services, the data mod
 | **Mobile** | Expo SDK 51, Expo Router, React Native |
 | **Backend** | NestJS 11, TypeScript, Socket.io |
 | **Database** | PostgreSQL with the `pgvector` extension, via Prisma 7 (Amazon RDS) |
-| **Cache / Queue** | Redis — response cache, rate-limit store, and BullMQ broker |
+| **Cache / Queue** | Amazon ElastiCache (Redis) — response cache, rate-limit store, and BullMQ broker |
 | **Auth** | Clerk (`@clerk/backend`, `@clerk/nextjs`, `@clerk/clerk-expo`) |
 | **Payments** | Stripe Connect with manual capture |
 | **AI** | Google Gemini — embeddings, vision, and LangChain structured output |
@@ -81,9 +81,11 @@ graph TB
         Workers["BullMQ Workers"]
     end
 
+    WAF["AWS WAF<br/>regional web ACL"]
+
     subgraph data["Data Layer"]
         PG[("PostgreSQL + pgvector")]
-        Redis[("Redis")]
+        Redis[("Amazon ElastiCache<br/>Redis · TLS")]
         S3[("Amazon S3")]
     end
 
@@ -93,8 +95,9 @@ graph TB
         Gemini["Google Gemini"]
     end
 
-    Web -->|"HTTPS · Bearer JWT"| Pipeline
-    Mobile -->|"HTTPS · Bearer JWT"| Pipeline
+    Web -->|"HTTPS · Bearer JWT"| WAF
+    Mobile -->|"HTTPS · Bearer JWT"| WAF
+    WAF --> Pipeline
     Web <-->|"WebSocket"| WS
     Mobile <-->|"WebSocket"| WS
 
@@ -189,7 +192,7 @@ Every HTTP request passes through the same pipeline before it reaches a controll
 
 ```mermaid
 flowchart TD
-    Req["Incoming request"] --> Throttle{"ThrottlerGuard<br/>global · Redis-backed"}
+    Req["Incoming request"] --> Throttle{"ThrottlerGuard<br/>global · ElastiCache-backed"}
     Throttle -->|"over 100 req/min per IP"| R429["429 Too Many Requests"]
     Throttle -->|"within limit"| Auth{"Route has ClerkAuthGuard?"}
 
@@ -203,7 +206,7 @@ flowchart TD
     Cache -->|"hit"| Presign
     Cache -->|"miss"| Validate["ValidationPipe<br/>whitelist · transform"]
     Validate --> Handler["Controller and Service<br/>Prisma queries"]
-    Handler --> Store["Store response in Redis<br/>TTL 60s"]
+    Handler --> Store["Store response in ElastiCache<br/>TTL 60s"]
     Store --> Presign["S3PresignInterceptor<br/>rewrite S3 URLs · 1h signed"]
     Presign --> Res["JSON response"]
 ```
@@ -627,7 +630,7 @@ One Redis instance backs three separate concerns. Production runs it on an Elast
 
 ```mermaid
 graph LR
-    Redis[("Redis")]
+    Redis[("ElastiCache Redis<br/>TLS · AUTH token")]
 
     subgraph c1["1 · Response cache"]
         CM["CacheModule + CacheInterceptor<br/>TTL 60s"]
